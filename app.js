@@ -13,9 +13,13 @@ var session = require('express-session');
 
 var app = express();
 
-
 // Connect to database
 mongoose.connect('mongodb://olinjs:catalyst@ds025239.mlab.com:25239/catalyst');
+var connection = mongoose.connection;
+connection.on('error', console.error.bind(console, 'connection error:'));
+connection.once('open', function(){
+  console.log('Mongodb Connection Successful');
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -46,14 +50,13 @@ app.get('/auth/facebook/callback',
                                       failureRedirect: '/' })
 );
 
+// Logout of Facebook
+app.get("/logout", function(req, res) {
+    req.logout();
+    res.redirect("/");
+});
 
-// // Logout of Facebook
-// app.get("/logout", function(req, res) {
-//     req.logout();
-//     res.redirect("/");
-// });
-
-// // Routes for Our Backend Models
+// Routes for Our Backend Models
 app.use('/', index);
 
 // catch 404 and forward to error handler
