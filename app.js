@@ -5,9 +5,6 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
-// var login = require('./routes/login');
-// var users = require('./routes/users');
-// var articles = require('./routes/articles');
 var index = require('./routes/index');
 
 var passport = require('passport');
@@ -16,10 +13,9 @@ var session = require('express-session');
 
 var app = express();
 
-// var password = require("./password")(passport);
 
 // Connect to database
-mongoose.connect('mongodb://nytinder:olinjstinder7@ds019668.mlab.com:19668/nytinder')
+mongoose.connect('mongodb://olinjs:catalyst@ds025239.mlab.com:25239/catalyst');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -59,9 +55,6 @@ app.get('/auth/facebook/callback',
 
 // // Routes for Our Backend Models
 app.use('/', index);
-// app.use('/api/login', login);
-// app.use('/api/user', users);
-// app.use('/api/article', articles);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
