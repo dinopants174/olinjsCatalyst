@@ -1,7 +1,8 @@
-var routes = {};
+var express = require('express');
+var router = express.Router();
 
-routes.getUser = function (req, res){
-	
-}
+router.get('/', function(req, res, next) {
+	res.render('index', {});
+});
 
-module.exports = routes;
+module.exports = router;
