@@ -1,4 +1,5 @@
 var Example = require('./example.jsx');
+var Login = require('./login.jsx');
 
 var CatalystBox = React.createClass({
     render: function () {
@@ -6,6 +7,7 @@ var CatalystBox = React.createClass({
             <div>
                 <h1>Welcome to Catalyst</h1>
                 <Example />
+                <Login />
             </div>
         );
     }
