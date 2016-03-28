@@ -1,0 +1,81 @@
+input:focus, button:focus {
+	outline: 0;
+}
+
+button, input {
+	font-family: 'Old Standard TT', serif;
+}
+
+
+div#embed-form {
+	width: 50%;
+	text-align: center;
+/*	margin: 25% 25% 0;
+*/  position: relative;
+  z-index: 1;
+  background: rgba(170,170,170,0.85);
+  padding: 1% 0 2%;
+  border-radius: 1%;
+}
+
+.embed-code {
+	border: none;
+  border-bottom: solid 0.1vw #c9c9c9;
+  transition: border 0.1s;
+  font-size: 1.5vw;
+  width: 60%;
+  text-align: center;
+  margin: 2vw;
+  padding: 0.2vw;
+}
+
+/*div#login-error-message {
+	color: #AE0202;
+	display: inline;
+	padding: 0 1vw;
+}*/
+
+div.embed-button {
+	display: inline-block;
+	margin: 0 0.5vw;
+}
+
+button#embed-upload {
+/*	background: url('/img/lock.png') no-repeat #484B4F;
+*/	background-size: 2vw 2vw;
+	background-position: 0.6vw 0.3vw;
+  width: 7vw;
+  cursor: pointer;
+  border-radius: 4.5vw;
+  padding: 0.6vw 0 0.6vw 0;
+  color: white;
+  font-size: 1vw;
+  text-align: left;
+  text-indent: 2.8vw;
+  display: block;
+  margin: 0 auto;
+  border: none;
+ 
+  /* Animations: */
+  -moz-transition: all 0.4s ease-in-out;
+  -o-transition: all 0.4s ease-in-out;
+  -ms-transition: all 0.4s ease-in-out;
+  transition: all 0.4s ease-in-out;
+}
+
+button#embed-upload:hover {
+/*  background-image: url('/img/openlock.png');
+*/  background-color: #EEEEEE;
+  color: black;
+  background-size: 2vw 2vw;
+  background-position: 4.5vw 0.3vw;
+  text-indent: 1vw;  
+}
+
+div#embed-background-grid {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  border-collapse: collapse;
+}
