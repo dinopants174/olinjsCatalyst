@@ -16,7 +16,8 @@ var auth = require('./secrets.js');
 passport.use(new FacebookStrategy({
     clientID: auth.facebook.clientID,
     clientSecret: auth.facebook.clientSecret,
-    callbackURL: auth.facebook.callbackURL
+    callbackURL: auth.facebook.callbackURL,
+    profileFields: ['id', 'displayName', 'name', 'gender', 'picture.type(large)']
   },
   function(accessToken, refreshToken, profile, done) {
     done(null, profile);
@@ -51,6 +52,12 @@ app.use(session({ 	//copied from olinjs example code using sessions
   saveUninitialized: false ,
   cookie: {}
 }));
+passport.serializeUser(function(user, done) {
+  done(null, user);
+});
+passport.deserializeUser(function(obj, done) {
+  done(null, obj);
+});
 app.use(passport.initialize());
 app.use(passport.session());
 
