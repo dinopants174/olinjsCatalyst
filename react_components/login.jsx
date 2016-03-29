@@ -1,14 +1,6 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
 
-// var Login = React.createClass({
-//     render: function(){
-//         return (
-//         	<a href='/auth/facebook'>Login with Facebook</a>
-//         );
-//     }
-// });
-
 // Component to control the login page
 
 var loginPage = React.createClass({
@@ -19,7 +11,6 @@ var loginPage = React.createClass({
 
 	onInputFocus: function(input) {
 		if (input == 'email') {
-			console.log("here")
 			$( "#email" ).animate({"opacity":"0"}, 200);
 		} else {
 			$( "#password" ).animate({"opacity":"0"}, 200);
@@ -28,7 +19,6 @@ var loginPage = React.createClass({
 
 	onInputBlur: function(input) {
 		if (input == 'email') {
-			console.log("here")
 			$( "#email" ).animate({"opacity":"1"}, 200);
 		} else {
 			$( "#password" ).animate({"opacity":"1"}, 200);
