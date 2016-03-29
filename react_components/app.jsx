@@ -2,6 +2,7 @@ var React = require('react');
 var ReactDOM = require('react-dom');
 var Upload = require('./upload.jsx');
 var Navbar = require('./navbar.jsx');
+var LoginPage = require('./login.jsx');
 
 var DisplayEnum = Object.freeze({
     DISPLAY_UPLOAD: 0,
@@ -15,7 +16,7 @@ var CatalystBox = React.createClass({
     getInitialState: function() {
         return {
             user: {},
-            display: DisplayEnum.DISPLAY_UPLOAD,
+            display: DisplayEnum.DISPLAY_LOGIN,
             displayName: ''
         };
     },
@@ -27,6 +28,12 @@ var CatalystBox = React.createClass({
     componentDidMount: function() {
         // this.loginFacebook();
         return null;
+    },
+
+    handleUserLogin: function() {
+        this.setState({
+            display: DisplayEnum.DISPLAY_HOME,
+        })
     },
 
     showUpload: function() {
@@ -83,7 +90,7 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_LOGIN:
                 page = (
                     <div>
-                        <h1>Login Page</h1>
+                        <LoginPage onUserLogin={this.handleUserLogin}/>
                     </div>
                 );
                 break;
