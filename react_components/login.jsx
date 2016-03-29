@@ -27,33 +27,37 @@ var loginPage = React.createClass({
 
 	render: function() {
 		return (
-			<div id="loginpage">
-   			 <form className="login">
+			<div>
+				<div id='login-background-grid'>
+				</div>
+				<div id="loginpage">
+   			 		<form className="login">
   
-			  <fieldset>
-			    
-			  	<legend className="legend">Login</legend>
-			    
-			    <div className="input">
-			    	<input onBlur={this.onInputBlur.bind(null,'email')} onFocus={this.onInputFocus.bind(null,'email')} type="email" placeholder="Email" required />
-			      <span><i id="email" className="fa fa-envelope-o"></i></span>
-			    </div>
-			    
-			    <div className="input">
-			    	<input onBlur={this.onInputBlur.bind(null,'password')} onFocus={this.onInputFocus.bind(null, 'password')} type="password" placeholder="Password" required />
-			      <span><i id="password" className="fa fa-lock"></i></span>
-			    </div>
+			  			<fieldset>
+				    
+				  			<legend className="legend">Login</legend>
+				    
+				    		<div className="input">
+				    			<input onBlur={this.onInputBlur.bind(null,'email')} onFocus={this.onInputFocus.bind(null,'email')} type="email" placeholder="Email" required />
+				      			<span><i id="email" className="fa fa-envelope-o"></i></span>
+				    		</div>
+				    
+				    		<div className="input">
+				    			<input onBlur={this.onInputBlur.bind(null,'password')} onFocus={this.onInputFocus.bind(null, 'password')} type="password" placeholder="Password" required />
+				      			<span><i id="password" className="fa fa-lock"></i></span>
+				    		</div>
 
-				<div className="btn-group">
-					<a className='btn btn-primary disabled'><i className="fa fa-facebook" style={{"width":"16px", "height":"15px"}}></i></a>
-					<a className='btn btn-primary ' href='/auth/facebook' style={{"width":"12em", "margin":"0"}}> Sign in with Facebook</a>
-				</div>	
+							<div className="btn-group">
+								<a className='btn btn-primary disabled'><i className="fa fa-facebook" style={{"width":"16px", "height":"15px"}}></i></a>
+								<a className='btn btn-primary ' href='/auth/facebook' style={{"width":"12em", "margin":"0"}}> Sign in with Facebook</a>
+							</div>	
 
-			    <button type="submit" className="submit"><i className="fa fa-long-arrow-right"></i></button>
-		        
-			  </fieldset>
+				    		<button type="submit" className="submit"><i className="fa fa-long-arrow-right"></i></button>
+			        
+			  			</fieldset>
 			  
-			</form>
+					</form>
+				</div>
 			</div>
 		);
 	},
