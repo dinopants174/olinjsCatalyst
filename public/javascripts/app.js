@@ -19290,7 +19290,7 @@ var Navbar = React.createClass({displayName: "Navbar",
             React.createElement("ul", {className: "navbar", style: {float:"right"}}, 
               React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchHome}, "Home")), 
               React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchMyBoard}, this.props.displayName)), 
-              React.createElement("li", {className: "linav logout"}, React.createElement("a", {href: "/logout"}, React.createElement("i", {className: "fa fa-facebook"}, "Logout")))
+              React.createElement("li", {className: "linav logout"}, React.createElement("a", {href: "/auth/facebook/logout"}, React.createElement("i", {className: "fa fa-facebook"}, "Logout")))
             )
           )
       )
