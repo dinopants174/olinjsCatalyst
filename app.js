@@ -62,19 +62,6 @@ passport.deserializeUser(function(obj, done) {
 app.use(passport.initialize());
 app.use(passport.session());
 
-//GET Requests for Facebook LogIn
-// app.get('/auth/facebook', passport.authenticate('facebook'));
-
-// app.get('/auth/facebook/callback',
-//   passport.authenticate('facebook', { successRedirect: '/',
-//                                       failureRedirect: '/' })
-// );
-
-// // Logout of Facebook
-// app.get("/logout", function(req, res) {
-//     req.logout();
-//     res.redirect("/");
-// });
 
 // Routes for Our Backend Models
 app.use('/', index);

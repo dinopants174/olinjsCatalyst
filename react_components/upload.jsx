@@ -10,17 +10,6 @@ var Upload = React.createClass({
 	    };
 	},
 
-	handleEmbed: function() {
-		// if (this.state.embedcode.length < 5 || this.state.embedcode.length > 20) {
-		// 	this.setState({
-		// 		errorMessage: 'Username must be between 5 and 20 characters.'
-		// 	});
-		// 	return;
-		// }
-		console.log(this.state.embedcode);
-		// handles login with site account
-	},
-
 	handleEmbedChange: function(ev) {
 		this.setState({
 			embedcode: ev.target.value,
@@ -58,7 +47,7 @@ var Upload = React.createClass({
 						<div className="embedplayer" dangerouslySetInnerHTML={this.rawMarkup()} />
 					</div>
 					<div className='embed-button'>
-						<button id='embed-upload' onClick={this.handleEmbed}>Upload</button>
+						<button id='embed-upload' onClick={this.props.uploadCode.bind(null,this.state)}>Upload</button>
 					</div>
 				</div>
 			</div>

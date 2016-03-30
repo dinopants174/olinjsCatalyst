@@ -21,23 +21,31 @@ var CatalystBox = React.createClass({
         };
     },
 
-    handleUploadCode: function(username) {
-
+    handleUploadCode: function(uploadcode) {
+        $.ajax({
+            url: '/api/user/postUpload/',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {src: uploadcode.embedcode},
+            success: function(user) {
+                this.setState({
+                    display: DisplayEnum.DISPLAY_MYBOARD, 
+                    user: user,
+                });
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error('/api/user/postUpload', status, err.toString());
+            }.bind(this)
+        });
     },
 
     componentDidMount: function() {
-        // this.loginFacebook();
+        this.loginFacebook();
         return null;
     },
 
-    handleUserLogin: function() {
-        this.setState({
-            display: DisplayEnum.DISPLAY_HOME,
-        })
-    },
-
     showUpload: function() {
-        console.log("hello")
         this.setState({
             display: DisplayEnum.DISPLAY_UPLOAD,
         });
@@ -55,6 +63,25 @@ var CatalystBox = React.createClass({
         });
     },
 
+    loginFacebook: function(){
+        $.ajax({
+            url: '/api/user',
+            dataType: 'json',
+            type: 'GET',
+            success: function(user) {
+                this.setState({
+                    display: DisplayEnum.DISPLAY_HOME, 
+                    user: user,
+                    displayName: user.name,
+                });
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.log("not logged in!")
+                this.setState({display: DisplayEnum.DISPLAY_LOGIN});
+            }.bind(this)
+        });
+    },
+
     render: function() {
         var page;
 
@@ -63,7 +90,7 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_UPLOAD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.user.displayName || ''} />
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.displayName || ''} />
                         <Upload uploadCode = {this.handleUploadCode} />
                     </div>
                 );
@@ -72,7 +99,7 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_MYBOARD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.user.displayName || ''} />
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.displayName || ''} />
                         <h1>My Board</h1>
                     </div>
                 );
@@ -81,7 +108,7 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_HOME:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.user.displayName || ''} />
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.displayName || ''} />
                         <h1>Home</h1>
                     </div>
                 );
@@ -90,7 +117,7 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_LOGIN:
                 page = (
                     <div>
-                        <LoginPage onUserLogin={this.handleUserLogin}/>
+                        <LoginPage/>
                     </div>
                 );
                 break;

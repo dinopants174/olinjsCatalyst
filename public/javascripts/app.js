@@ -19054,23 +19054,31 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
         };
     },
 
-    handleUploadCode: function(username) {
-
+    handleUploadCode: function(uploadcode) {
+        $.ajax({
+            url: '/api/user/postUpload/',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {src: uploadcode.embedcode},
+            success: function(user) {
+                this.setState({
+                    display: DisplayEnum.DISPLAY_MYBOARD, 
+                    user: user,
+                });
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error('/api/user/postUpload', status, err.toString());
+            }.bind(this)
+        });
     },
 
     componentDidMount: function() {
-        // this.loginFacebook();
+        this.loginFacebook();
         return null;
     },
 
-    handleUserLogin: function() {
-        this.setState({
-            display: DisplayEnum.DISPLAY_HOME,
-        })
-    },
-
     showUpload: function() {
-        console.log("hello")
         this.setState({
             display: DisplayEnum.DISPLAY_UPLOAD,
         });
@@ -19088,6 +19096,25 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
         });
     },
 
+    loginFacebook: function(){
+        $.ajax({
+            url: '/api/user',
+            dataType: 'json',
+            type: 'GET',
+            success: function(user) {
+                this.setState({
+                    display: DisplayEnum.DISPLAY_HOME, 
+                    user: user,
+                    displayName: user.name,
+                });
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.log("not logged in!")
+                this.setState({display: DisplayEnum.DISPLAY_LOGIN});
+            }.bind(this)
+        });
+    },
+
     render: function() {
         var page;
 
@@ -19096,7 +19123,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             case DisplayEnum.DISPLAY_UPLOAD:
                 page = (
                     React.createElement("div", null, 
-                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchUpload: this.showUpload, displayName: this.state.user.displayName || ''}), 
+                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchUpload: this.showUpload, displayName: this.state.displayName || ''}), 
                         React.createElement(Upload, {uploadCode: this.handleUploadCode})
                     )
                 );
@@ -19105,7 +19132,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             case DisplayEnum.DISPLAY_MYBOARD:
                 page = (
                     React.createElement("div", null, 
-                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchUpload: this.showUpload, displayName: this.state.user.displayName || ''}), 
+                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchUpload: this.showUpload, displayName: this.state.displayName || ''}), 
                         React.createElement("h1", null, "My Board")
                     )
                 );
@@ -19114,7 +19141,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             case DisplayEnum.DISPLAY_HOME:
                 page = (
                     React.createElement("div", null, 
-                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchUpload: this.showUpload, displayName: this.state.user.displayName || ''}), 
+                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchUpload: this.showUpload, displayName: this.state.displayName || ''}), 
                         React.createElement("h1", null, "Home")
                     )
                 );
@@ -19123,7 +19150,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             case DisplayEnum.DISPLAY_LOGIN:
                 page = (
                     React.createElement("div", null, 
-                        React.createElement(LoginPage, {onUserLogin: this.handleUserLogin})
+                        React.createElement(LoginPage, null)
                     )
                 );
                 break;
@@ -19224,6 +19251,7 @@ var Navbar = React.createClass({displayName: "Navbar",
           React.createElement("ul", {className: "navbar"}, 
             
             React.createElement("ul", {className: "navbar", style: {float:"right"}}, 
+              React.createElement("li", {className: "linav"}, React.createElement("a", null, "Logged in as ", this.props.displayName)), 
               React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchHome}, "Home")), 
               React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchMyBoard}, "My Board")), 
               React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchUpload}, "Upload")), 
@@ -19247,17 +19275,6 @@ var Upload = React.createClass({displayName: "Upload",
 	    	title: '',
 	     	embedcode: ''
 	    };
-	},
-
-	handleEmbed: function() {
-		// if (this.state.embedcode.length < 5 || this.state.embedcode.length > 20) {
-		// 	this.setState({
-		// 		errorMessage: 'Username must be between 5 and 20 characters.'
-		// 	});
-		// 	return;
-		// }
-		console.log(this.state.embedcode);
-		// handles login with site account
 	},
 
 	handleEmbedChange: function(ev) {
@@ -19297,7 +19314,7 @@ var Upload = React.createClass({displayName: "Upload",
 						React.createElement("div", {className: "embedplayer", dangerouslySetInnerHTML: this.rawMarkup()})
 					), 
 					React.createElement("div", {className: "embed-button"}, 
-						React.createElement("button", {id: "embed-upload", onClick: this.handleEmbed}, "Upload")
+						React.createElement("button", {id: "embed-upload", onClick: this.props.uploadCode.bind(null,this.state)}, "Upload")
 					)
 				)
 			)
