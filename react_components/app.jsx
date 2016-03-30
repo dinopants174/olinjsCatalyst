@@ -3,6 +3,9 @@ var ReactDOM = require('react-dom');
 var Upload = require('./upload.jsx');
 var Navbar = require('./navbar.jsx');
 var Feed = require('./feed.jsx'); 
+var LoginPage = require('./login.jsx');
+
+var MyBoard = require('./myboard.jsx');
 
 var DisplayEnum = Object.freeze({
     DISPLAY_UPLOAD: 0,
@@ -16,22 +19,42 @@ var CatalystBox = React.createClass({
     getInitialState: function() {
         return {
             user: {},
-            display: DisplayEnum.DISPLAY_UPLOAD,
+            display: DisplayEnum.DISPLAY_LOGIN,
             displayName: ''
         };
     },
 
-    handleUploadCode: function(username) {
-
+    handleUploadCode: function(uploadcode) {
+        $.ajax({
+            url: '/api/user/postUpload/',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {src: uploadcode.embedcode, title: uploadcode.title},
+            success: function(user) {
+                this.setState({
+                    display: DisplayEnum.DISPLAY_MYBOARD, 
+                    user: user,
+                });
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error('/api/user/postUpload', status, err.toString());
+            }.bind(this)
+        });
     },
 
     componentDidMount: function() {
-        // this.loginFacebook();
+        this.loginFacebook();
         return null;
     },
 
+    handleAdd: function(){
+        this.setState({
+            display: DisplayEnum.DISPLAY_UPLOAD,
+        });
+    },
+
     showUpload: function() {
-        console.log("hello")
         this.setState({
             display: DisplayEnum.DISPLAY_UPLOAD,
         });
@@ -50,6 +73,25 @@ var CatalystBox = React.createClass({
         });
     },
 
+    loginFacebook: function(){
+        $.ajax({
+            url: '/api/user',
+            dataType: 'json',
+            type: 'GET',
+            success: function(user) {
+                this.setState({
+                    display: DisplayEnum.DISPLAY_HOME, 
+                    user: user,
+                    displayName: user.name,
+                });
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.log("not logged in!")
+                this.setState({display: DisplayEnum.DISPLAY_LOGIN});
+            }.bind(this)
+        });
+    },
+
     render: function() {
         var page;
 
@@ -58,8 +100,8 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_UPLOAD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.user.displayName || ''} />
-                        <Upload uploadCode = {this.handleUploadCode}/>
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
+                        <Upload uploadCode = {this.handleUploadCode} />
                     </div>
                 );
                 break;
@@ -67,8 +109,9 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_MYBOARD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.user.displayName || ''} />
-                        <h1>My Board</h1>
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
+                        <MyBoard uploads={this.state.user.uploads} inspirations={this.state.user.inspirations}/>
+                        <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
                 break;
@@ -76,10 +119,9 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_HOME:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.user.displayName || ''} />
-                        <h1>Home yooo</h1>
-                        <h2> yoooo </h2>
-                        <Feed />
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.user.displayName || ''} />                      <Feed />
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
+                        <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
                 break;
@@ -87,7 +129,7 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_LOGIN:
                 page = (
                     <div>
-                        <h1>Login Page</h1>
+                        <LoginPage/>
                     </div>
                 );
                 break;

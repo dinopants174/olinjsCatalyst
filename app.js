@@ -11,12 +11,14 @@ var FacebookStrategy = require('passport-facebook').Strategy;
 
 var index = require('./routes/index');
 var login = require('./routes/auth');
-var auth = require('./secrets.js');
+var auth = require('./secrets');
+var user = require('./routes/user');
 
 passport.use(new FacebookStrategy({
     clientID: auth.facebook.clientID,
     clientSecret: auth.facebook.clientSecret,
-    callbackURL: auth.facebook.callbackURL
+    callbackURL: auth.facebook.callbackURL,
+    profileFields: ['id', 'displayName', 'name', 'gender', 'picture.type(large)']
   },
   function(accessToken, refreshToken, profile, done) {
     done(null, profile);
@@ -51,26 +53,20 @@ app.use(session({ 	//copied from olinjs example code using sessions
   saveUninitialized: false ,
   cookie: {}
 }));
+passport.serializeUser(function(user, done) {
+  done(null, user);
+});
+passport.deserializeUser(function(obj, done) {
+  done(null, obj);
+});
 app.use(passport.initialize());
 app.use(passport.session());
 
-//GET Requests for Facebook LogIn
-// app.get('/auth/facebook', passport.authenticate('facebook'));
-
-// app.get('/auth/facebook/callback',
-//   passport.authenticate('facebook', { successRedirect: '/',
-//                                       failureRedirect: '/' })
-// );
-
-// // Logout of Facebook
-// app.get("/logout", function(req, res) {
-//     req.logout();
-//     res.redirect("/");
-// });
 
 // Routes for Our Backend Models
 app.use('/', index);
 app.use('/auth/facebook', login);
+app.use('/api/user', user);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

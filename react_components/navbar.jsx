@@ -14,9 +14,8 @@ var Navbar = React.createClass({
             
             <ul className="navbar" style={{float:"right"}}>
               <li className="linav"><a onClick={this.props.switchHome}>Home</a></li>
-              <li className="linav"><a onClick={this.props.switchMyBoard}>My Board</a></li>
-              <li className="linav"><a onClick={this.props.switchUpload}>Upload</a></li>
-              <li className="linav logout"><a href="/logout"><i className="fa fa-facebook">Logout</i></a></li>
+              <li className="linav"><a onClick={this.props.switchMyBoard}>{this.props.displayName}</a></li>
+              <li className="linav logout"><a href="/auth/facebook/logout"><i className="fa fa-facebook">Logout</i></a></li>
             </ul>
           </ul>
       </div>

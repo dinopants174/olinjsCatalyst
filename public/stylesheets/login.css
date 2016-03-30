@@ -1,0 +1,123 @@
+* {
+  -ms-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+html,
+body {
+  width: 100%;
+  height: 100%;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 200;
+}
+
+.omb_login .omb_socialButtons .omb_btn-facebook {background: #3b5998;}
+
+.loginfacebook {
+  position: relative;
+  font-size: 1em;
+  color: #aaa;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+}
+
+div#login-background-grid {
+  background-color: #CCC;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  border-collapse: collapse;
+}
+
+
+div#loginpage {
+  text-align: center;
+  margin: 15% 40% 0;
+  position: absolute;
+  z-index: 1;
+  padding: 1% 0 2%;
+  border-radius: 1%;
+}
+
+.login {
+  position: relative;
+  width: 250px;
+  display: table;
+  background: #fff;
+  border-radius: 4px;
+}
+.legend {
+  position: relative;
+  width: 100%;
+  display: block;
+  background: black;
+  padding: 15px;
+  color: #fff;
+  font-size: 20px;
+}
+.legend:after {
+  content: "";
+  background-size: 100px 100px;
+  background-repeat: no-repeat;
+  background-position: 152px -16px;
+  opacity: 0.06;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  position: absolute;
+}
+.input {
+  position: relative;
+  width: 90%;
+  margin: 15px auto;
+}
+.input span {
+  position: absolute;
+  display: block;
+  color: #d4d4d4;
+  left: 10px;
+  top: 8px;
+  font-size: 20px;
+}
+.input input {
+  width: 100%;
+  padding: 10px 5px 10px 40px;
+  display: block;
+  border: 1px solid #EDEDED;
+  border-radius: 4px;
+  transition: 0.2s ease-out;
+  color: #a1a1a1;
+}
+.input input:focus {
+  padding: 10px 5px 10px 10px;
+  outline: 0;
+  border-color: #black;
+}
+.submit {
+  width: 45px;
+  height: 45px;
+  display: block;
+  margin: 5% auto -15px auto;
+  background: #fff;
+  border-radius: 100%;
+  border: 1px solid black;
+  color: black;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0px 0px 0px 7px #fff;
+  transition: 0.2s ease-out;
+}
+.submit:hover,
+.submit:focus {
+  background: black;
+  color: #fff;
+  outline: 0;
+}
