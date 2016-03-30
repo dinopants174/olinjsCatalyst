@@ -29,7 +29,7 @@ var CatalystBox = React.createClass({
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {src: uploadcode.embedcode},
+            data: {src: uploadcode.embedcode, title: uploadcode.title},
             success: function(user) {
                 this.setState({
                     display: DisplayEnum.DISPLAY_MYBOARD, 
