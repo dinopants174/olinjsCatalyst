@@ -119,8 +119,8 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_HOME:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.user.displayName || ''} />                      <Feed />
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
+                        <Feed />
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
