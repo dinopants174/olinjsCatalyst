@@ -29,6 +29,7 @@ router.get('/', ensureAuthenticated, function(req, res) {
 	}
 });
 
+//yo for these next two routes, you need to replace $push 
 router.post('/postInspiration', ensureAuthenticated, function(req, res){
 	User.findOneAndUpdate({fbId: req.user.id}, {$push: {inspirations: req.body.src}}, {new: true}, function(err, user){
 		if (err){
@@ -46,7 +47,7 @@ router.post('/postUpload', ensureAuthenticated, function(req, res){
 			console.log("Error: ", err);
 		} else {
 			// res.json(user);
-			var newPiece = new Piece({author: req.user.id, src: req.body.src, date: new Date()});
+			var newPiece = new Piece({author: req.user.id, src: req.body.src, date: new Date(), title: req.body.title});
 			newPiece.save(function(err, piece){
 				if (err){
 					console.log("Error: ", err);
