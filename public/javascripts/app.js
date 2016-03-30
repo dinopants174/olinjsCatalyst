@@ -19037,6 +19037,8 @@ var Upload = require('./upload.jsx');
 var Navbar = require('./navbar.jsx');
 var LoginPage = require('./login.jsx');
 
+var MyBoard = require('./myboard.jsx');
+
 var DisplayEnum = Object.freeze({
     DISPLAY_UPLOAD: 0,
     DISPLAY_MYBOARD: 1,
@@ -19133,7 +19135,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                 page = (
                     React.createElement("div", null, 
                         React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchUpload: this.showUpload, displayName: this.state.displayName || ''}), 
-                        React.createElement("h1", null, "My Board")
+                        React.createElement(MyBoard, {uploads: this.state.user.uploads, inspirations: this.state.user.inspirations})
                     )
                 );
                 break;
@@ -19168,7 +19170,7 @@ ReactDOM.render(
   React.createElement(CatalystBox, null),
   document.getElementById('content')
 );
-},{"./login.jsx":160,"./navbar.jsx":161,"./upload.jsx":162,"react":158,"react-dom":29}],160:[function(require,module,exports){
+},{"./login.jsx":160,"./myboard.jsx":161,"./navbar.jsx":162,"./upload.jsx":163,"react":158,"react-dom":29}],160:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
 
@@ -19236,6 +19238,33 @@ var loginPage = React.createClass({displayName: "loginPage",
 
 module.exports = loginPage;
 },{"react":158,"react-dom":29}],161:[function(require,module,exports){
+var React = require('react');
+var ReactDOM = require('react-dom');
+
+var MyBoard = React.createClass({displayName: "MyBoard",
+
+	rawMarkup: function(elem) {
+    	return { __html: elem };
+  	},
+
+    render: function(){
+    	var parenThis = this;
+
+    	var images = (this.props.uploads).map(function(elem, i) {
+			return React.createElement("div", {key: 'div'+i, dangerouslySetInnerHTML: parenThis.rawMarkup(elem)})
+		});
+
+
+        return (
+        	React.createElement("div", null, 
+        		images
+			)
+        );
+    }
+});
+
+module.exports = MyBoard;
+},{"react":158,"react-dom":29}],162:[function(require,module,exports){
 // Navigation/header bar on the top of the page. Holds login and search bar
 var React = require('react');
 var ReactDOM = require('react-dom');
@@ -19251,7 +19280,7 @@ var Navbar = React.createClass({displayName: "Navbar",
           React.createElement("ul", {className: "navbar"}, 
             
             React.createElement("ul", {className: "navbar", style: {float:"right"}}, 
-              React.createElement("li", {className: "linav"}, React.createElement("a", null, "Logged in as ", this.props.displayName)), 
+              React.createElement("li", {className: "linav"}, React.createElement("a", null, "Logged in as ", React.createElement("i", null, this.props.displayName))), 
               React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchHome}, "Home")), 
               React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchMyBoard}, "My Board")), 
               React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchUpload}, "Upload")), 
@@ -19264,7 +19293,7 @@ var Navbar = React.createClass({displayName: "Navbar",
 });
 
 module.exports = Navbar;
-},{"react":158,"react-dom":29}],162:[function(require,module,exports){
+},{"react":158,"react-dom":29}],163:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
 

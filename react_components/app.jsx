@@ -4,6 +4,8 @@ var Upload = require('./upload.jsx');
 var Navbar = require('./navbar.jsx');
 var LoginPage = require('./login.jsx');
 
+var MyBoard = require('./myboard.jsx');
+
 var DisplayEnum = Object.freeze({
     DISPLAY_UPLOAD: 0,
     DISPLAY_MYBOARD: 1,
@@ -100,7 +102,7 @@ var CatalystBox = React.createClass({
                 page = (
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.displayName || ''} />
-                        <h1>My Board</h1>
+                        <MyBoard uploads={this.state.user.uploads} inspirations={this.state.user.inspirations}/>
                     </div>
                 );
                 break;
