@@ -19080,6 +19080,12 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
         return null;
     },
 
+    handleAdd: function(){
+        this.setState({
+            display: DisplayEnum.DISPLAY_UPLOAD,
+        });
+    },
+
     showUpload: function() {
         this.setState({
             display: DisplayEnum.DISPLAY_UPLOAD,
@@ -19125,7 +19131,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             case DisplayEnum.DISPLAY_UPLOAD:
                 page = (
                     React.createElement("div", null, 
-                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchUpload: this.showUpload, displayName: this.state.displayName || ''}), 
+                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, displayName: this.state.displayName || ''}), 
                         React.createElement(Upload, {uploadCode: this.handleUploadCode})
                     )
                 );
@@ -19134,8 +19140,9 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             case DisplayEnum.DISPLAY_MYBOARD:
                 page = (
                     React.createElement("div", null, 
-                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchUpload: this.showUpload, displayName: this.state.displayName || ''}), 
-                        React.createElement(MyBoard, {uploads: this.state.user.uploads, inspirations: this.state.user.inspirations})
+                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, displayName: this.state.displayName || ''}), 
+                        React.createElement(MyBoard, {uploads: this.state.user.uploads, inspirations: this.state.user.inspirations}), 
+                        React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )
                 );
                 break;
@@ -19143,8 +19150,9 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             case DisplayEnum.DISPLAY_HOME:
                 page = (
                     React.createElement("div", null, 
-                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchUpload: this.showUpload, displayName: this.state.displayName || ''}), 
-                        React.createElement("h1", null, "Home")
+                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, displayName: this.state.displayName || ''}), 
+                        React.createElement("h1", null, "Home"), 
+                        React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )
                 );
                 break;
@@ -19280,10 +19288,8 @@ var Navbar = React.createClass({displayName: "Navbar",
           React.createElement("ul", {className: "navbar"}, 
             
             React.createElement("ul", {className: "navbar", style: {float:"right"}}, 
-              React.createElement("li", {className: "linav"}, React.createElement("a", null, "Logged in as ", React.createElement("i", null, this.props.displayName))), 
               React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchHome}, "Home")), 
-              React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchMyBoard}, "My Board")), 
-              React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchUpload}, "Upload")), 
+              React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchMyBoard}, this.props.displayName)), 
               React.createElement("li", {className: "linav logout"}, React.createElement("a", {href: "/logout"}, React.createElement("i", {className: "fa fa-facebook"}, "Logout")))
             )
           )

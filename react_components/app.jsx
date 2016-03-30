@@ -47,6 +47,12 @@ var CatalystBox = React.createClass({
         return null;
     },
 
+    handleAdd: function(){
+        this.setState({
+            display: DisplayEnum.DISPLAY_UPLOAD,
+        });
+    },
+
     showUpload: function() {
         this.setState({
             display: DisplayEnum.DISPLAY_UPLOAD,
@@ -92,7 +98,7 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_UPLOAD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.displayName || ''} />
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
                         <Upload uploadCode = {this.handleUploadCode} />
                     </div>
                 );
@@ -101,8 +107,9 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_MYBOARD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.displayName || ''} />
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
                         <MyBoard uploads={this.state.user.uploads} inspirations={this.state.user.inspirations}/>
+                        <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
                 break;
@@ -110,8 +117,9 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_HOME:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.displayName || ''} />
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
                         <h1>Home</h1>
+                        <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
                 break;

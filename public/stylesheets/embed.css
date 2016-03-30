@@ -1,3 +1,34 @@
+.add-article {
+  position: fixed;
+  bottom: 7%;
+  right: 7%;
+  background: #72bfb7;
+    transition: background-color .2s ease-in-out;
+   -moz-transition: background-color .2s ease-in-out;
+   -webkit-transition: background-color .2s ease-in-out;
+  height: 60px;
+  width: 60px;
+  border-radius: 30px;
+  border: none;
+  font-size: 30px;
+  text-align: center;
+  text-decoration: bold;
+  color: #fff;
+  text-shadow: 2px 2px #72bfb7;
+  box-shadow: 5px 5px 10px #cccccc;
+}
+
+.add-article:hover {
+  background-color: #bf727a;
+  text-shadow: 2px 2px #bf727a;
+}
+
+.add-article:active {
+  background-color: #72bf91;
+  text-shadow: 2px 2px #72bf91;
+}
+
+
 input:focus, button:focus {
 	outline: 0;
 }
