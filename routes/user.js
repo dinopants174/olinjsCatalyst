@@ -1,5 +1,6 @@
 var express = require('express');
 var User = require('../models/userModel');
+var Piece = require('../models/pieceModel');
 var router = express.Router();
 
 router.get('/', ensureAuthenticated, function(req, res) {
@@ -44,13 +45,29 @@ router.post('/postUpload', ensureAuthenticated, function(req, res){
 		if (err){
 			console.log("Error: ", err);
 		} else {
-			res.json(user);
+			// res.json(user);
+			var newPiece = new Piece({author: req.user.id, src: req.body.src, date: new Date()});
+			newPiece.save(function(err, piece){
+				if (err){
+					console.log("Error: ", err);
+				} else {
+					console.log("A piece was created, here it is: ", piece);
+					res.json(user);
+				}
+			});
 		}
 	});
 });
 
 router.get('/feed', ensureAuthenticated, function(req, res){
-
+	Piece.find({}, null, {sort: {date: -1}}, function(err, pieces){
+		if (err){
+			console.log("Error: ", err);
+		} else {
+			console.log("Here is your feed: ", pieces);
+			res.json(pieces);
+		}
+	});
 });
 
 function ensureAuthenticated(req, res, next) {
