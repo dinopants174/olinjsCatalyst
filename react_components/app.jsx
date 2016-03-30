@@ -2,6 +2,7 @@ var React = require('react');
 var ReactDOM = require('react-dom');
 var Upload = require('./upload.jsx');
 var Navbar = require('./navbar.jsx');
+var Feed = require('./feed.jsx'); 
 
 var DisplayEnum = Object.freeze({
     DISPLAY_UPLOAD: 0,
@@ -43,6 +44,7 @@ var CatalystBox = React.createClass({
     },
 
     showHome: function() {
+        console.log("In show home");
         this.setState({
             display: DisplayEnum.DISPLAY_HOME,
         });
@@ -75,7 +77,9 @@ var CatalystBox = React.createClass({
                 page = (
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchUpload={this.showUpload} displayName={this.state.user.displayName || ''} />
-                        <h1>Home</h1>
+                        <h1>Home yooo</h1>
+                        <h2> yoooo </h2>
+                        <Feed />
                     </div>
                 );
                 break;
