@@ -20,7 +20,8 @@ var CatalystBox = React.createClass({
         return {
             user: {},
             display: DisplayEnum.DISPLAY_LOGIN,
-            displayName: ''
+            displayName: '', 
+            feed: []
         };
     },
 
@@ -41,6 +42,24 @@ var CatalystBox = React.createClass({
                 console.error('/api/user/postUpload', status, err.toString());
             }.bind(this)
         });
+    },
+
+    handleFeed: function(object){ 
+        $.ajax({ 
+            url: '/api/user/feed',
+            dataType: 'json', 
+            type: 'GET', 
+            success: function(feedItems){ 
+                object.display= DisplayEnum.DISPLAY_HOME;
+                object.feed = feedItems;
+                console.log(object); 
+                this.setState(object); 
+
+            }.bind(this), 
+            error: function(xhr, status, err){ 
+                console.log("cannot get feed, '/api/user/feed'", status, err.toString()); 
+            }.bind(this)
+        })
     },
 
     componentDidMount: function() {
@@ -68,9 +87,7 @@ var CatalystBox = React.createClass({
 
     showHome: function() {
         console.log("In show home");
-        this.setState({
-            display: DisplayEnum.DISPLAY_HOME,
-        });
+        this.handleFeed({}); 
     },
 
     loginFacebook: function(){
@@ -79,11 +96,12 @@ var CatalystBox = React.createClass({
             dataType: 'json',
             type: 'GET',
             success: function(user) {
-                this.setState({
-                    display: DisplayEnum.DISPLAY_HOME, 
-                    user: user,
-                    displayName: user.name,
-                });
+                // this.setState({
+                //     display: DisplayEnum.DISPLAY_HOME, 
+                //     user: user,
+                //     displayName: user.name,
+                // });
+                this.handleFeed({user: user, displayName: user.name})
             }.bind(this),
             error: function(xhr, status, err) {
                 console.log("not logged in!")
@@ -120,7 +138,7 @@ var CatalystBox = React.createClass({
                 page = (
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
-                        <Feed />
+                        <Feed feedObjects = {this.state.feed}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
