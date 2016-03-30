@@ -1,8 +1,9 @@
 var mongoose = require('mongoose');
 
 var userSchema = mongoose.Schema({
-  name: String,
-  fbId: String,
+  fbId: {type: String, required: true, unique: true},
+  name: {type: String, required: true},
+  proPic: {type: String, required: true},
   inspirations: [String],
   uploads: [String]
 });
