@@ -38,8 +38,6 @@ var Upload = React.createClass({
   	},
 
     render: function(){
-
-
         return (
         	<div>
 	        	<h1>Upload</h1>

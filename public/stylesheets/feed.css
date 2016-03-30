@@ -1,0 +1,33 @@
+.images{ 
+	height: 5px;
+}
+
+div#feed {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	z-index: 0;
+}
+
+div#feed table tr td img {
+	margin-top: -4.8vw;
+	width: 25vw;
+	height: 15vw;
+	display: block;
+
+  -webkit-transform: scale(1);
+	transform: scale(1);
+  -moz-transition: all 0.4s ease-in-out;
+  -o-transition: all 0.4s ease-in-out;
+  -ms-transition: all 0.4s ease-in-out;
+  transition: all 0.4s ease-in-out;
+  z-index: 1;
+  position: absolute;
+}
+
+
+table#feedItems td {
+	width: 25vw !important;
+	height: 15vw !important;
+	border: none;
+}
