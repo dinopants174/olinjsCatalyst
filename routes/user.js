@@ -113,6 +113,24 @@ router.post('/postUpload2', ensureAuthenticated, function(req, res){
 	});
 });
 
+router.post('/postUpload3', ensureAuthenticated, function(req, res){
+	User.findOne({fbId: req.user.id}, function(err, user){
+		var newPiece = new Piece({author: user.id, src: req.body.src, date: new Date(), title: req.body.title});
+		newPiece.save(function(err, piece){
+			if (err){
+				console.log("Error: ", err);
+			} else {
+				console.log("A piece was created, here it is: ", piece);
+				user.uploads.push(piece.id);
+				user.save(function(err, user){
+					
+				});
+			}
+		})
+	});
+
+});
+
 router.get('/feed', ensureAuthenticated, function(req, res){
 	Piece.find({}, null, {sort: {date: -1}}, function(err, pieces){
 		if (err){
