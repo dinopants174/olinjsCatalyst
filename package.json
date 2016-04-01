@@ -31,6 +31,7 @@
     "hbs": "^4.0.0",
     "mongoose": "^4.4.10",
     "morgan": "^1.7.0",
+    "node-dir": "^0.1.11",
     "nodemon": "^1.9.1",
     "passport": "^0.3.2",
     "passport-facebook": "^2.1.0",

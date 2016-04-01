@@ -8,18 +8,24 @@ var MyBoard = React.createClass({
   	},
 
     render: function(){
-    	var parenThis = this;
+        var parent = this; 
+        var image_divs = (this.props.uploads).map(function(elem, i) {
+            return <td key={'td'+i}><div key={'td'+i} dangerouslySetInnerHTML = {parent.rawMarkup(elem.src)}/></td>
+        });
 
-    	var images = (this.props.uploads).map(function(elem, i) {
-			return <div key={'div'+i} dangerouslySetInnerHTML={parenThis.rawMarkup(elem)} />
-		});
+        var rows = Array.apply(null, {length: 2}).map(function(elem, i) {
+            return <tr key={'tr'+i}>{image_divs.slice(3*(i), 3*(i+1))}</tr>
+        })
 
-
-        return (
-        	<div>
-        		{images}
-			</div>
-        );
+        return(
+            <div id= "feed"> 
+                <table id = "feedItems"> 
+                    <tbody> 
+                        {rows}
+                    </tbody>
+                </table>
+            </div>
+        ); 
     }
 });
 

@@ -14,7 +14,6 @@ var fs = require('fs');
 var Feed = React.createClass({ 
 
 	getInitialState: function(){ 
-		console.log("In initial state"); 
 		return{
 			images: this.props.feedObjects
 		};
@@ -31,9 +30,7 @@ var Feed = React.createClass({
 			return <td key={'td'+i}><div key={'td'+i} dangerouslySetInnerHTML = {parent.rawMarkup(elem.src)}/></td>
 		});
 
-		console.log("image_divs", image_divs)
 		var rows = Array.apply(null, {length: 2}).map(function(elem, i) {
-			// console.log("slices", image_divs.slice(1*(i), 1*(i+1)))
 			return <tr key={'tr'+i}>{image_divs.slice(3*(i), 3*(i+1))}</tr>
 		})
 
