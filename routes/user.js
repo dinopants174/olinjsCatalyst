@@ -30,6 +30,7 @@ router.get('/', ensureAuthenticated, function(req, res) {
 });
 
 router.get('/2', ensureAuthenticated, function(req, res){
+	console.log("PROFILE FROM SERVER", req.user);
 	if (req.user){
 		User.findOne({fbId: req.user.id}).populate('inspirations uploads').exec(function (err, user){
 			if (err){

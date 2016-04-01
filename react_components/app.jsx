@@ -27,7 +27,7 @@ var CatalystBox = React.createClass({
 
     handleUploadCode: function(uploadcode) {
         $.ajax({
-            url: '/api/user/postUpload/',
+            url: '/api/user/postUpload2/',
             dataType: 'json',
             cache: false,
             type: 'POST',
@@ -73,35 +73,24 @@ var CatalystBox = React.createClass({
         });
     },
 
-    showUpload: function() {
-        this.setState({
-            display: DisplayEnum.DISPLAY_UPLOAD,
-        });
-    },
-
     showMyBoard: function() {
+        console.log(this.state.user);
         this.setState({
             display: DisplayEnum.DISPLAY_MYBOARD,
         });
     },
 
     showHome: function() {
-        console.log("In show home");
         this.handleFeed({}); 
     },
 
     loginFacebook: function(){
         $.ajax({
-            url: '/api/user',
+            url: '/api/user/2',
             dataType: 'json',
             type: 'GET',
             success: function(user) {
-                // this.setState({
-                //     display: DisplayEnum.DISPLAY_HOME, 
-                //     user: user,
-                //     displayName: user.name,
-                // });
-                this.handleFeed({user: user, displayName: user.name})
+                this.handleFeed({user: user, displayName: user.name});
             }.bind(this),
             error: function(xhr, status, err) {
                 console.log("not logged in!")
