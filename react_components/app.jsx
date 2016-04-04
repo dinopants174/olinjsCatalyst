@@ -86,7 +86,7 @@ var CatalystBox = React.createClass({
 
     loginFacebook: function(){
         $.ajax({
-            url: '/api/user/2',
+            url: '/api/user/',
             dataType: 'json',
             type: 'GET',
             success: function(user) {

@@ -76,6 +76,7 @@ router.post('/postUpload2', ensureAuthenticated, function(req, res){
 								console.log("Error: ", err);
 							} else {
 								console.log("And here should be your final updated user", user);
+								res.json(user);
 							}
 						});			
 					}
@@ -86,11 +87,11 @@ router.post('/postUpload2', ensureAuthenticated, function(req, res){
 });
 
 router.get('/feed', ensureAuthenticated, function(req, res){
-	Piece.find({}, null, {sort: {date: -1}}, function(err, pieces){
+	Piece.find({}, null, {sort: {date: -1}}).populate('author').exec(function (err, pieces){
 		if (err){
 			console.log("Error: ", err);
 		} else {
-			console.log("Here is your feed: ", pieces);
+			console.log("Here is your feed", pieces);
 			res.json(pieces);
 		}
 	});
