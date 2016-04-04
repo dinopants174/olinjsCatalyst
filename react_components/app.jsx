@@ -99,6 +99,33 @@ var CatalystBox = React.createClass({
         });
     },
 
+    addInspiration: function(item){ 
+        console.log("you're about to add this inspiration", item)
+
+        $.ajax({ 
+            url: '/api/user/postInspiration',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {srcId: item._id}, 
+            success: function(userObject){ 
+                console.log("alleged user object", userObject)
+
+                userObject.inspirations.forEach(function(i){ 
+                    console.log(i)
+                })
+                
+                this.setState({user: userObject}); 
+            }.bind(this), 
+            error: function(xhr, status, err){ 
+                console.log("there has been an error")
+                console.error('/api/user/postInspiration', status, err.toString())
+
+            }.bind(this)
+        })
+
+    }, 
+
     render: function() {
         var page;
 
@@ -127,7 +154,7 @@ var CatalystBox = React.createClass({
                 page = (
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
-                        <Feed feedObjects = {this.state.feed}/>
+                        <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
