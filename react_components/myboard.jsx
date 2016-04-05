@@ -1,5 +1,6 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
+var UploadsDasboard = require('./myuploads.jsx');
 
 var MyBoard = React.createClass({
 
@@ -19,11 +20,7 @@ var MyBoard = React.createClass({
 
         return(
             <div id= "feed"> 
-                <table id = "feedItems"> 
-                    <tbody> 
-                        {rows}
-                    </tbody>
-                </table>
+                <UploadsDasboard uploadslist={this.props.uploads}/>
             </div>
         ); 
     }

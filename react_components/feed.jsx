@@ -58,8 +58,8 @@ var Gallery = React.createClass({
 		var parent = this; 
         var childElements = this.props.images.map(function(element, i){
            return (
-           		<div className="image-div-class">
-	                <div key={'div'+i} dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
+           		<div key={'div'+i} className="image-div-class">
+	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
 	            	<p>{element.title}</p>
 	            	<a href="" className="button add"> + Add Inspiration</a>
 	            </div>

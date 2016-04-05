@@ -1,0 +1,190 @@
+/*Dashboard History Carousel*/
+
+.carouselhistory {
+  width: 80vw;
+  margin: 0 auto;
+}
+
+.carouselhistory h1 {
+  font-weight: 100;
+}
+
+.carouselhistory figure {
+    margin: 0;
+}
+
+.react-3d-carousel {
+    width: 100%;
+    height: 35vw;
+    position: relative;
+    perspective: 1000px;
+}
+
+.react-3d-carousel .carousel {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    transform-style: preserve-3d;
+}
+
+.react-3d-carousel .carousel  figure {
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 38vw;
+    left: 10px;
+    top: 10px;
+    line-height: 116px;
+    font-size: 80px;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+}
+
+.react-3d-carousel .carousel figure {
+    background: black;
+    width: 100%;
+}
+
+.react-3d-carousel   .prev {
+    position: absolute;
+    height: 100%;
+    width: 10%;
+    top: 0px;
+    left: 0px;
+}
+
+.react-3d-carousel   .prev:before {
+    content: url("http://s3.postimg.org/o6xpvkidb/chevron_left_white.png");
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 43px;
+    height: 49px;
+    margin: auto;
+}
+
+.react-3d-carousel  .next {
+    position: absolute;
+    height: 100%;
+    width: 10%;
+    top: 0px;
+    right: -5px;
+}
+.react-3d-carousel  .next:before
+{
+    content: url("http://s2.postimg.org/l0n6eaoad/chevron_right_white.png");
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 43px;
+    height: 49px;
+    margin: auto;
+}
+
+.imagedashdiv { 
+   position: relative; 
+   height: 100%;
+   width: 100%;
+}
+
+.imagedash {
+  position: absolute;
+  height: 100%;
+  z-index: 0;
+  opacity: 0.7;
+  -moz-transition: all 0.3s ease-in-out;
+  -o-transition: all 0.3s ease-in-out;
+  -ms-transition: all 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
+}
+
+/*.imagedashdiv:hover > .imagedash {
+  opacity: 0.2;
+}*/
+
+.imagetextdash {
+  width: 80%;
+  margin-left: 4vw;
+  margin-right: 4vw;
+  text-align:center;
+  position: absolute; 
+  line-height: 4vw;
+  display: none;
+  -moz-transition: all 0.3s ease-in-out;
+  -o-transition: all 0.3s ease-in-out;
+  -ms-transition: all 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
+}
+
+/*.imagedashdiv:hover > .imagetextdash {
+  height: 100%;
+}*/
+
+.imagetextdash p {
+  font-weight: 100;
+  -moz-transition: all 0.3s ease-in-out;
+  -o-transition: all 0.3s ease-in-out;
+  -ms-transition: all 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
+}
+
+.carousel-button {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.carousel-button button {
+  /*display: block;*/
+  width: 3vw;
+  height: 3vw;
+  border: 2px solid white;
+  border-radius: 40px;
+  margin: 0 1%;
+  background-color: #999;
+  -moz-transition: all 0.3s ease-in-out;
+  -o-transition: all 0.3s ease-in-out;
+  -ms-transition: all 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
+  position: relative;
+}
+
+.carousel-button button:hover {
+  background-color: #eee;
+}
+
+.carousel-button button:focus {
+  outline: none;
+}
+
+.carousel-button button img {
+  margin-top: 1px;
+}
+
+.imageheadline, .imageauthor {
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+.imageauthor, .imagedate {
+  line-height: 1.5vw;
+  font-size: 1.5vw;
+}
+
+.imagedate {
+  margin: 0;
+}
+
+div.imagedash iframe {
+  padding-top: 3vw;
+  padding-left: 3vw;
+  padding-right: 3vw;
+  width: 80vw;
+  height: 35vw;
+}
