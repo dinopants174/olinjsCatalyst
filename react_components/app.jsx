@@ -154,7 +154,7 @@ var CatalystBox = React.createClass({
                 page = (
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
-                        <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed}/>
+                        <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
