@@ -38,6 +38,16 @@ router.post('/postInspiration', ensureAuthenticated, function(req, res){
 	});
 });
 
+router.post('/deleteInspiration', ensureAuthenticated, function(req, res){
+	User.findOneAndUpdate({fbId: req.user.id}, {$pull: {inspirations: req.body.srcId}}, {new: true}).populate('inspirations uploads').exec(function (err, user){
+		if (err){
+			console.log("Error: ", err);
+		} else {
+			res.json(user);
+		}
+	});
+});
+
 router.post('/postUpload', ensureAuthenticated, function(req, res){
 	User.findOne({fbId: req.user.id}, function(err, user){
 		console.log("Here is your current user: ", user);
@@ -64,7 +74,7 @@ router.post('/postUpload', ensureAuthenticated, function(req, res){
 					}
 				});
 			}
-		})
+		});
 	});
 });
 
