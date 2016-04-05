@@ -36,9 +36,6 @@ var DashboardHistory = React.createClass({
     render: function () {
         return (
             <div className="carouselhistory">
-                <div className='centering-div'>
-            	   <h1>Your Uploads</h1>
-                </div>
                 <div>
                 <Carousel all_info={this.props.uploadslist}
                 		  width={this.state.width}

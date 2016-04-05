@@ -23767,6 +23767,33 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
         });
     },
 
+    addInspiration: function(item){ 
+        console.log("you're about to add this inspiration", item)
+
+        $.ajax({ 
+            url: '/api/user/postInspiration',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {srcId: item._id}, 
+            success: function(userObject){ 
+                console.log("alleged user object", userObject)
+
+                userObject.inspirations.forEach(function(i){ 
+                    console.log(i)
+                })
+                
+                this.setState({user: userObject}); 
+            }.bind(this), 
+            error: function(xhr, status, err){ 
+                console.log("there has been an error")
+                console.error('/api/user/postInspiration', status, err.toString())
+
+            }.bind(this)
+        })
+
+    }, 
+
     render: function() {
         var page;
 
@@ -23795,7 +23822,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                 page = (
                     React.createElement("div", null, 
                         React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, displayName: this.state.displayName || ''}), 
-                        React.createElement(Feed, {feedObjects: this.state.feed}), 
+                        React.createElement(Feed, {addInspir: this.addInspiration, feedObjects: this.state.feed, userInspirations: this.state.user.inspirations}), 
                         React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )
                 );
@@ -24167,11 +24194,6 @@ var Masonry = require('./masonry.jsx');
 var masonryOptions = {
     transitionDuration: 0
 };
-// var images = ['http://www.google.com/logos/2011/thanksgiving-2011-hp.jpg',
-// 'http://searchengineland.com/figz/wp-content/seloads/2014/11/Thanksgiving-2014-Google-logo.png', 
-// 'http://www.pawderosa.com/images/puppies.jpg', 
-// 'https://i.vimeocdn.com/portrait/10277584_300x300.jpg', 
-// 'http://www.tiptopcanning.com/images/big-tomatoes.png']; 
 
 
 var Feed = React.createClass({displayName: "Feed", 
@@ -24182,59 +24204,138 @@ var Feed = React.createClass({displayName: "Feed",
 		};
 	}, 
 
+	checkIfInInspirations: function(object, inspirations){ 
+		var i; 
+		for(i = 0; i < inspirations.length; i++){ 
+			if(inspirations[i]._id === object._id){ 
+				return true;
+			}
+		}
+		return false; 
+	},
+
+	handleClick: function(item){ 
+		console.log("you've clicked this item", item)
+		this.props.addInspir(item)
+	},
+
 	rawMarkup: function(e){ 
 		return {__html: e}
 	},
 
 	render: function(){ 
 
-		// var parent = this; 
 		// var image_divs = this.state.images.map(function(elem, i) {
-		// 	return <td key={'td'+i}><div key={'td'+i} dangerouslySetInnerHTML = {parent.rawMarkup(elem.src)}/></td>
+		// 	console.log(elem);
+
+		// 	var inInspirations = parent.checkIfInInspirations(elem, parent.props.userInspirations)
+		// 	return <td key={'td'+i}><FeedItem item = {elem} pinned = {inInspirations} addInspiration = {parent.props.addInspir}/></td>	
 		// });
 
-		// var rows = Array.apply(null, {length: 2}).map(function(elem, i) {
-		// 	return <tr key={'tr'+i}>{image_divs.slice(3*(i), 3*(i+1))}</tr>
-		// })
+
+		var parent = this; 
+        var childElements = this.state.images.map(function(element, i){
+			var pinButton; 
+			if(parent.checkIfInInspirations(element, parent.props.userInspirations)){ 
+				pinButton = React.createElement("button", {className: "button add", disabled: true}, " Already Pinned ")
+			}
+			else{ 
+				pinButton = React.createElement("button", {className: "button add", onClick: parent.handleClick.bind(null, element)}, " + Add Inspiration ")
+			}
+           return (
+           		React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
+	                React.createElement("div", {dangerouslySetInnerHTML: parent.rawMarkup(element.src)}), 
+	            	React.createElement("p", null, element.title), 
+	            	pinButton
+	            )
+            );
+        });
+
+
+		// return(
+		// 	<div key = {this.props.item.title + "button"}> 
+		// 		{pinButton}
+		// 		<div key={this.props.item.title} dangerouslySetInnerHTML = {parent.rawMarkup(this.props.item.src)}/> 
+		// 	</div> 	
+
+		// ); 
 
 		return(
 			React.createElement("div", {id: "feed"}, 
-				React.createElement(Gallery, {images: this.state.images})
+				React.createElement(Masonry, {
+	                className: 'my-gallery-class', 
+	                elementType: 'div', 
+	                disableImagesLoaded: false
+	            }, 
+	                childElements
+	            )
 			)
 		); 
 	}
 
 }); 
 
-var Gallery = React.createClass({displayName: "Gallery",
+// var Gallery = React.createClass({
 
-	rawMarkup: function(e){ 
-		return {__html: e}
-	},
+// 	getInitialState: function(){ 
+// 	// here i would get if it is already part of inspirations
+// 		return {pinned: this.props.pinned}
+// 	}, 
 
-    render: function () {
-		var parent = this; 
-        var childElements = this.props.images.map(function(element, i){
-           return (
-           		React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
-	                React.createElement("div", {dangerouslySetInnerHTML: parent.rawMarkup(element.src)}), 
-	            	React.createElement("p", null, element.title), 
-	            	React.createElement("a", {href: "", className: "button add"}, " + Add Inspiration")
-	            )
-            );
-        });
+// 	handleClick: function(item){ 
+// 		console.log("you've clicked this item", item)
+// 		this.props.addInspiration(item)
+// 	},
 
-        return (
-            React.createElement(Masonry, {
-                className: 'my-gallery-class', 
-                elementType: 'div', 
-                disableImagesLoaded: false
-            }, 
-                childElements
-            )
-        );
-    }
-});
+// 	rawMarkup: function(e){ 
+// 		return {__html: e}
+// 	},
+
+//     render: function () {
+// 		var parent = this; 
+//         var childElements = this.props.images.map(function(element, i){
+//            return (
+//            		<div key={'div'+i} className="image-div-class">
+// 	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
+// 	            	<p>{element.title}</p>
+// 	            	<a href="" className="button add"> + Add Inspiration</a>
+// 	            </div>
+//             );
+//         });
+
+//         return (
+//             <Masonry
+//                 className={'my-gallery-class'}
+//                 elementType={'div'}
+//                 disableImagesLoaded={false}
+//             >
+//                 {childElements}
+//             </Masonry>
+//         );
+//     }
+// });
+
+// 	render: function (){ 
+// 		var parent = this;
+
+// 		var pinButton; 
+// 		if(this.state.pinned){ 
+// 			pinButton = <button> Already Pinned </button>
+// 		}
+// 		else{ 
+// 			pinButton = <button onClick = {this.handleClick.bind(null, this.props.item)}> Pin This Item </button>
+// 		}
+
+// 		return(
+// 			<div key = {this.props.item.title + "button"}> 
+// 				{pinButton}
+// 				<div key={this.props.item.title} dangerouslySetInnerHTML = {parent.rawMarkup(this.props.item.src)}/> 
+// 			</div> 	
+
+// 		); 
+// 	}
+// })
+
 
 module.exports = Feed; 
 },{"./masonry.jsx":185,"fs":3,"node-dir":39,"path":46,"react":177,"react-dom":48}],184:[function(require,module,exports){
@@ -24513,17 +24614,38 @@ var MyBoard = React.createClass({displayName: "MyBoard",
 
     render: function(){
         var parent = this; 
+        //rendering the uploads
+        // console.log("inspirations", this.props.inspirations)
+        
         var image_divs = (this.props.uploads).map(function(elem, i) {
-            return React.createElement("td", {key: 'td'+i}, React.createElement("div", {key: 'td'+i, dangerouslySetInnerHTML: parent.rawMarkup(elem.src)}))
+            return React.createElement("td", {key: 'uploads:td'+i}, React.createElement("div", {key: 'uploads:td'+i, dangerouslySetInnerHTML: parent.rawMarkup(elem.src)}))
         });
 
-        var rows = Array.apply(null, {length: 2}).map(function(elem, i) {
-            return React.createElement("tr", {key: 'tr'+i}, image_divs.slice(3*(i), 3*(i+1)))
+        var uploads_rows = Array.apply(null, {length: 2}).map(function(elem, i) {
+            return React.createElement("tr", {key: 'uploads:tr'+i}, image_divs.slice(3*(i), 3*(i+1)))
+        })
+
+        //rendering the inspirations
+        var inspiration_divs = (this.props.inspirations).map(function(elem, i) {
+            return React.createElement("td", {key: 'inspir:td'+i}, React.createElement("div", {key: 'inspir:td'+i, dangerouslySetInnerHTML: parent.rawMarkup(elem.src)}))
+        });
+
+        var inspiration_rows = Array.apply(null, {length: 2}).map(function(elem, i) {
+            return React.createElement("tr", {key: 'inspir:tr'+i}, inspiration_divs.slice(3*(i), 3*(i+1)))
         })
 
         return(
             React.createElement("div", {id: "feed"}, 
-                React.createElement(UploadsDasboard, {uploadslist: this.props.uploads})
+                React.createElement("div", {className: "centering-div"}, 
+                   React.createElement("h1", null, "Your Uploads")
+                ), 
+                React.createElement(UploadsDasboard, {uploadslist: this.props.uploads}), 
+                React.createElement("br", null), 
+                React.createElement("br", null), 
+                React.createElement("div", {className: "centering-div"}, 
+                   React.createElement("h1", null, "Your Inspirations")
+                ), 
+                React.createElement(UploadsDasboard, {uploadslist: this.props.inspirations})
             )
         ); 
     }
@@ -24569,9 +24691,6 @@ var DashboardHistory = React.createClass({displayName: "DashboardHistory",
     render: function () {
         return (
             React.createElement("div", {className: "carouselhistory"}, 
-                React.createElement("div", {className: "centering-div"}, 
-            	   React.createElement("h1", null, "Your Uploads")
-                ), 
                 React.createElement("div", null, 
                 React.createElement(Carousel, {all_info: this.props.uploadslist, 
                 		  width: this.state.width, 

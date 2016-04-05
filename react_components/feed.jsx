@@ -9,11 +9,6 @@ var Masonry = require('./masonry.jsx');
 var masonryOptions = {
     transitionDuration: 0
 };
-// var images = ['http://www.google.com/logos/2011/thanksgiving-2011-hp.jpg',
-// 'http://searchengineland.com/figz/wp-content/seloads/2014/11/Thanksgiving-2014-Google-logo.png', 
-// 'http://www.pawderosa.com/images/puppies.jpg', 
-// 'https://i.vimeocdn.com/portrait/10277584_300x300.jpg', 
-// 'http://www.tiptopcanning.com/images/big-tomatoes.png']; 
 
 
 var Feed = React.createClass({ 
@@ -24,58 +19,137 @@ var Feed = React.createClass({
 		};
 	}, 
 
+	checkIfInInspirations: function(object, inspirations){ 
+		var i; 
+		for(i = 0; i < inspirations.length; i++){ 
+			if(inspirations[i]._id === object._id){ 
+				return true;
+			}
+		}
+		return false; 
+	},
+
+	handleClick: function(item){ 
+		console.log("you've clicked this item", item)
+		this.props.addInspir(item)
+	},
+
 	rawMarkup: function(e){ 
 		return {__html: e}
 	},
 
 	render: function(){ 
 
-		// var parent = this; 
 		// var image_divs = this.state.images.map(function(elem, i) {
-		// 	return <td key={'td'+i}><div key={'td'+i} dangerouslySetInnerHTML = {parent.rawMarkup(elem.src)}/></td>
+		// 	console.log(elem);
+
+		// 	var inInspirations = parent.checkIfInInspirations(elem, parent.props.userInspirations)
+		// 	return <td key={'td'+i}><FeedItem item = {elem} pinned = {inInspirations} addInspiration = {parent.props.addInspir}/></td>	
 		// });
 
-		// var rows = Array.apply(null, {length: 2}).map(function(elem, i) {
-		// 	return <tr key={'tr'+i}>{image_divs.slice(3*(i), 3*(i+1))}</tr>
-		// })
+
+		var parent = this; 
+        var childElements = this.state.images.map(function(element, i){
+			var pinButton; 
+			if(parent.checkIfInInspirations(element, parent.props.userInspirations)){ 
+				pinButton = <button className="button add" disabled> Already Pinned </button>
+			}
+			else{ 
+				pinButton = <button className="button add" onClick = {parent.handleClick.bind(null, element)}> + Add Inspiration </button>
+			}
+           return (
+           		<div key={'div'+i} className="image-div-class">
+	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
+	            	<p>{element.title}</p>
+	            	{pinButton}
+	            </div>
+            );
+        });
+
+
+		// return(
+		// 	<div key = {this.props.item.title + "button"}> 
+		// 		{pinButton}
+		// 		<div key={this.props.item.title} dangerouslySetInnerHTML = {parent.rawMarkup(this.props.item.src)}/> 
+		// 	</div> 	
+
+		// ); 
 
 		return(
 			<div id="feed"> 
-				<Gallery images={this.state.images}/>
+				<Masonry
+	                className={'my-gallery-class'}
+	                elementType={'div'}
+	                disableImagesLoaded={false}
+	            >
+	                {childElements}
+	            </Masonry>
 			</div>
 		); 
 	}
 
 }); 
 
-var Gallery = React.createClass({
+// var Gallery = React.createClass({
 
-	rawMarkup: function(e){ 
-		return {__html: e}
-	},
+// 	getInitialState: function(){ 
+// 	// here i would get if it is already part of inspirations
+// 		return {pinned: this.props.pinned}
+// 	}, 
 
-    render: function () {
-		var parent = this; 
-        var childElements = this.props.images.map(function(element, i){
-           return (
-           		<div key={'div'+i} className="image-div-class">
-	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
-	            	<p>{element.title}</p>
-	            	<a href="" className="button add"> + Add Inspiration</a>
-	            </div>
-            );
-        });
+// 	handleClick: function(item){ 
+// 		console.log("you've clicked this item", item)
+// 		this.props.addInspiration(item)
+// 	},
 
-        return (
-            <Masonry
-                className={'my-gallery-class'}
-                elementType={'div'}
-                disableImagesLoaded={false}
-            >
-                {childElements}
-            </Masonry>
-        );
-    }
-});
+// 	rawMarkup: function(e){ 
+// 		return {__html: e}
+// 	},
+
+//     render: function () {
+// 		var parent = this; 
+//         var childElements = this.props.images.map(function(element, i){
+//            return (
+//            		<div key={'div'+i} className="image-div-class">
+// 	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
+// 	            	<p>{element.title}</p>
+// 	            	<a href="" className="button add"> + Add Inspiration</a>
+// 	            </div>
+//             );
+//         });
+
+//         return (
+//             <Masonry
+//                 className={'my-gallery-class'}
+//                 elementType={'div'}
+//                 disableImagesLoaded={false}
+//             >
+//                 {childElements}
+//             </Masonry>
+//         );
+//     }
+// });
+
+// 	render: function (){ 
+// 		var parent = this;
+
+// 		var pinButton; 
+// 		if(this.state.pinned){ 
+// 			pinButton = <button> Already Pinned </button>
+// 		}
+// 		else{ 
+// 			pinButton = <button onClick = {this.handleClick.bind(null, this.props.item)}> Pin This Item </button>
+// 		}
+
+// 		return(
+// 			<div key = {this.props.item.title + "button"}> 
+// 				{pinButton}
+// 				<div key={this.props.item.title} dangerouslySetInnerHTML = {parent.rawMarkup(this.props.item.src)}/> 
+// 			</div> 	
+
+// 		); 
+// 	}
+// })
+
 
 module.exports = Feed; 
