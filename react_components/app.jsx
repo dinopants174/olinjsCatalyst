@@ -27,7 +27,7 @@ var CatalystBox = React.createClass({
 
     handleUploadCode: function(uploadcode) {
         $.ajax({
-            url: '/api/user/postUpload2/',
+            url: '/api/user/postUpload/',
             dataType: 'json',
             cache: false,
             type: 'POST',
