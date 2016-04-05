@@ -39,24 +39,6 @@ router.post('/postInspiration', ensureAuthenticated, function(req, res){
 });
 
 router.post('/postUpload', ensureAuthenticated, function(req, res){
-	var newPiece = new Piece({author: req.user.id, src: req.body.src, date: new Date(), title: req.body.title});
-	newPiece.save(function(err, piece){
-		if (err){
-			console.log("Error: ", err);
-		} else {
-			console.log("A piece was created, here it is: ", piece);
-			User.findOneAndUpdate({fbId: req.user.id}, {$push: {uploads: piece.id}}, {new: true}).populate('inspirations uploads').exec(function (err, user){
-				if (err){
-					console.log("Error: ", err);
-				} else {
-					res.json(user);
-				}
-			});
-		}
-	});
-});
-
-router.post('/postUpload2', ensureAuthenticated, function(req, res){
 	User.findOne({fbId: req.user.id}, function(err, user){
 		console.log("Here is your current user: ", user);
 		var newPiece = new Piece({author: user.id, src: req.body.src, date: new Date(), title: req.body.title});
