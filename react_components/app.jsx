@@ -21,7 +21,8 @@ var CatalystBox = React.createClass({
             user: {},
             display: DisplayEnum.DISPLAY_LOGIN,
             displayName: '', 
-            feed: []
+            feed: [],
+            subpage: ''
         };
     },
 
@@ -74,9 +75,22 @@ var CatalystBox = React.createClass({
     },
 
     showMyBoard: function() {
-        console.log(this.state.user);
         this.setState({
             display: DisplayEnum.DISPLAY_MYBOARD,
+        });
+    },
+
+    showMyBoardInspirations: function() {
+        this.setState({
+            display: DisplayEnum.DISPLAY_MYBOARD,
+            subpage: 'inspirations',
+        });
+    },
+
+    showMyBoardUploads: function() {
+        this.setState({
+            display: DisplayEnum.DISPLAY_MYBOARD,
+            subpage: 'uploads',
         });
     },
 
@@ -134,7 +148,8 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_UPLOAD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
                         <Upload uploadCode = {this.handleUploadCode} />
                     </div>
                 );
@@ -143,8 +158,11 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_MYBOARD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
-                        <MyBoard uploads={this.state.user.uploads} inspirations={this.state.user.inspirations}/>
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
+                        <button onClick={this.showMyBoardUploads} className="button">My Uploads</button>
+                        <button onClick={this.showMyBoardInspirations} className="button">My Inspirations</button>
+                        <MyBoard subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
@@ -153,7 +171,8 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_HOME:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
                         <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>

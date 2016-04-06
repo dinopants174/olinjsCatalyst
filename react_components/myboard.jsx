@@ -10,38 +10,26 @@ var MyBoard = React.createClass({
 
     render: function(){
         var parent = this; 
-        //rendering the uploads
-        // console.log("inspirations", this.props.inspirations)
-        
-        var image_divs = (this.props.uploads).map(function(elem, i) {
-            return <td key={'uploads:td'+i}><div key={'uploads:td'+i} dangerouslySetInnerHTML = {parent.rawMarkup(elem.src)}/></td>
-        });
 
-        var uploads_rows = Array.apply(null, {length: 2}).map(function(elem, i) {
-            return <tr key={'uploads:tr'+i}>{image_divs.slice(3*(i), 3*(i+1))}</tr>
-        })
-
-        //rendering the inspirations
-        var inspiration_divs = (this.props.inspirations).map(function(elem, i) {
-            return <td key={'inspir:td'+i}><div key={'inspir:td'+i} dangerouslySetInnerHTML = {parent.rawMarkup(elem.src)}/></td>
-        });
-
-        var inspiration_rows = Array.apply(null, {length: 2}).map(function(elem, i) {
-            return <tr key={'inspir:tr'+i}>{inspiration_divs.slice(3*(i), 3*(i+1))}</tr>
-        })
+        if (this.props.subpage === "uploads") {
+            var subpage = <div><div className='centering-div'>
+                   <h1>My Uploads</h1>
+                </div>
+                <UploadsDasboard uploadslist={this.props.uploads}/></div>
+        } else if (this.props.subpage === "inspirations") {
+            var subpage = <div><div className='centering-div'>
+                   <h1>My Inspirations</h1>
+                </div>
+                <UploadsDasboard uploadslist={this.props.inspirations}/></div>
+        } else {
+            var subpage = <div className='centering-div'>
+                   <h1>Profile Page...</h1>
+                </div>
+        }
 
         return(
             <div id= "feed"> 
-                <div className='centering-div'>
-                   <h1>Your Uploads</h1>
-                </div>
-                <UploadsDasboard uploadslist={this.props.uploads}/>
-                <br/>
-                <br/>
-                <div className='centering-div'>
-                   <h1>Your Inspirations</h1>
-                </div>
-                <UploadsDasboard uploadslist={this.props.inspirations}/>
+                {subpage}
             </div>
         ); 
     }
