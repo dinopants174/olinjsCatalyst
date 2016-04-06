@@ -1,17 +1,27 @@
 /*Navbar Stuff*/
-ul.navbar {
+
+.navbar  {
+    height: 50px;
     list-style-type: none;
-    margin: 0;
     padding: 0;
-    overflow: hidden;
+    margin: 0;
+    position: absolute; /* Ensures that the menu doesn’t affect other elements */
+    border-right: 1px solid #333; 
+}
+
+
+.navbar li  {
+    height: auto;
+    width: 150px;  /* Each menu item is 150px wide */
+    float: left;  /* This lines up the menu items horizontally */
+    text-align: center;  /* All text is placed in the center of the box */
+    list-style: none;  /* Removes the default styling (bullets) for the list */
+    padding: 0;
+    margin: 0;
     background-color: #333;
 }
 
-li.linav {
-    float: left;
-}
-
-li.linav a {
+.navbar li a   {  
     cursor: pointer;
     display: block;
     color: white;
@@ -20,10 +30,28 @@ li.linav a {
     text-decoration: none;
 }
 
-li.linav a:hover:not(.active) {
+.navbar li a:hover:not(.active) {
     background-color: #111;
 }
 
-.active {
-    background-color: #4CAF50;
-}
+.navbar li ul    {
+        z-index: 1;
+        display: none;  /* Hides the drop-down menu */
+        height: auto;                                   
+        margin: 0; /* Aligns drop-down box underneath the menu item */
+        padding: 0; /* Aligns drop-down box underneath the menu item */         
+        }               
+
+.navbar li:hover ul     {
+                        display: block; /* Displays the drop-down box when the menu item is hovered over */
+                        }
+
+
+.Navbar   {
+    width: 100%; /* Spans the width of the page */
+    height: 50px; 
+    margin: 0; /* Ensures there is no space between sides of the screen and the menu */
+    z-index: 99; /* Makes sure that your menu remains on top of other page elements */
+    position: relative; 
+    background-color: #333;
+    }

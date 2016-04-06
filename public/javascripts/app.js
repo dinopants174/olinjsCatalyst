@@ -23689,7 +23689,8 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             user: {},
             display: DisplayEnum.DISPLAY_LOGIN,
             displayName: '', 
-            feed: []
+            feed: [],
+            subpage: ''
         };
     },
 
@@ -23742,9 +23743,22 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
     },
 
     showMyBoard: function() {
-        console.log(this.state.user);
         this.setState({
             display: DisplayEnum.DISPLAY_MYBOARD,
+        });
+    },
+
+    showMyBoardInspirations: function() {
+        this.setState({
+            display: DisplayEnum.DISPLAY_MYBOARD,
+            subpage: 'inspirations',
+        });
+    },
+
+    showMyBoardUploads: function() {
+        this.setState({
+            display: DisplayEnum.DISPLAY_MYBOARD,
+            subpage: 'uploads',
         });
     },
 
@@ -23802,7 +23816,8 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             case DisplayEnum.DISPLAY_UPLOAD:
                 page = (
                     React.createElement("div", null, 
-                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, displayName: this.state.displayName || ''}), 
+                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchMyBoardInspirations: this.showMyBoardInspirations, 
+                        switchMyBoardUploads: this.showMyBoardUploads, displayName: this.state.displayName || ''}), 
                         React.createElement(Upload, {uploadCode: this.handleUploadCode})
                     )
                 );
@@ -23811,8 +23826,11 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             case DisplayEnum.DISPLAY_MYBOARD:
                 page = (
                     React.createElement("div", null, 
-                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, displayName: this.state.displayName || ''}), 
-                        React.createElement(MyBoard, {uploads: this.state.user.uploads, inspirations: this.state.user.inspirations}), 
+                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchMyBoardInspirations: this.showMyBoardInspirations, 
+                        switchMyBoardUploads: this.showMyBoardUploads, displayName: this.state.displayName || ''}), 
+                        React.createElement("button", {onClick: this.showMyBoardUploads, className: "button"}, "My Uploads"), 
+                        React.createElement("button", {onClick: this.showMyBoardInspirations, className: "button"}, "My Inspirations"), 
+                        React.createElement(MyBoard, {subpage: this.state.subpage, uploads: this.state.user.uploads, inspirations: this.state.user.inspirations}), 
                         React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )
                 );
@@ -23821,7 +23839,8 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             case DisplayEnum.DISPLAY_HOME:
                 page = (
                     React.createElement("div", null, 
-                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, displayName: this.state.displayName || ''}), 
+                        React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchMyBoardInspirations: this.showMyBoardInspirations, 
+                        switchMyBoardUploads: this.showMyBoardUploads, displayName: this.state.displayName || ''}), 
                         React.createElement(Feed, {addInspir: this.addInspiration, feedObjects: this.state.feed, userInspirations: this.state.user.inspirations}), 
                         React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )
@@ -24225,12 +24244,6 @@ var Feed = React.createClass({displayName: "Feed",
 
 	render: function(){ 
 
-		// var image_divs = this.state.images.map(function(elem, i) {
-		// 	console.log(elem);
-
-		// 	var inInspirations = parent.checkIfInInspirations(elem, parent.props.userInspirations)
-		// 	return <td key={'td'+i}><FeedItem item = {elem} pinned = {inInspirations} addInspiration = {parent.props.addInspir}/></td>	
-		// });
 
 
 		var parent = this; 
@@ -24252,14 +24265,6 @@ var Feed = React.createClass({displayName: "Feed",
         });
 
 
-		// return(
-		// 	<div key = {this.props.item.title + "button"}> 
-		// 		{pinButton}
-		// 		<div key={this.props.item.title} dangerouslySetInnerHTML = {parent.rawMarkup(this.props.item.src)}/> 
-		// 	</div> 	
-
-		// ); 
-
 		return(
 			React.createElement("div", {id: "feed"}, 
 				React.createElement(Masonry, {
@@ -24274,68 +24279,6 @@ var Feed = React.createClass({displayName: "Feed",
 	}
 
 }); 
-
-// var Gallery = React.createClass({
-
-// 	getInitialState: function(){ 
-// 	// here i would get if it is already part of inspirations
-// 		return {pinned: this.props.pinned}
-// 	}, 
-
-// 	handleClick: function(item){ 
-// 		console.log("you've clicked this item", item)
-// 		this.props.addInspiration(item)
-// 	},
-
-// 	rawMarkup: function(e){ 
-// 		return {__html: e}
-// 	},
-
-//     render: function () {
-// 		var parent = this; 
-//         var childElements = this.props.images.map(function(element, i){
-//            return (
-//            		<div key={'div'+i} className="image-div-class">
-// 	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
-// 	            	<p>{element.title}</p>
-// 	            	<a href="" className="button add"> + Add Inspiration</a>
-// 	            </div>
-//             );
-//         });
-
-//         return (
-//             <Masonry
-//                 className={'my-gallery-class'}
-//                 elementType={'div'}
-//                 disableImagesLoaded={false}
-//             >
-//                 {childElements}
-//             </Masonry>
-//         );
-//     }
-// });
-
-// 	render: function (){ 
-// 		var parent = this;
-
-// 		var pinButton; 
-// 		if(this.state.pinned){ 
-// 			pinButton = <button> Already Pinned </button>
-// 		}
-// 		else{ 
-// 			pinButton = <button onClick = {this.handleClick.bind(null, this.props.item)}> Pin This Item </button>
-// 		}
-
-// 		return(
-// 			<div key = {this.props.item.title + "button"}> 
-// 				{pinButton}
-// 				<div key={this.props.item.title} dangerouslySetInnerHTML = {parent.rawMarkup(this.props.item.src)}/> 
-// 			</div> 	
-
-// 		); 
-// 	}
-// })
-
 
 module.exports = Feed; 
 },{"./masonry.jsx":185,"fs":3,"node-dir":39,"path":46,"react":177,"react-dom":48}],184:[function(require,module,exports){
@@ -24614,38 +24557,26 @@ var MyBoard = React.createClass({displayName: "MyBoard",
 
     render: function(){
         var parent = this; 
-        //rendering the uploads
-        // console.log("inspirations", this.props.inspirations)
-        
-        var image_divs = (this.props.uploads).map(function(elem, i) {
-            return React.createElement("td", {key: 'uploads:td'+i}, React.createElement("div", {key: 'uploads:td'+i, dangerouslySetInnerHTML: parent.rawMarkup(elem.src)}))
-        });
 
-        var uploads_rows = Array.apply(null, {length: 2}).map(function(elem, i) {
-            return React.createElement("tr", {key: 'uploads:tr'+i}, image_divs.slice(3*(i), 3*(i+1)))
-        })
-
-        //rendering the inspirations
-        var inspiration_divs = (this.props.inspirations).map(function(elem, i) {
-            return React.createElement("td", {key: 'inspir:td'+i}, React.createElement("div", {key: 'inspir:td'+i, dangerouslySetInnerHTML: parent.rawMarkup(elem.src)}))
-        });
-
-        var inspiration_rows = Array.apply(null, {length: 2}).map(function(elem, i) {
-            return React.createElement("tr", {key: 'inspir:tr'+i}, inspiration_divs.slice(3*(i), 3*(i+1)))
-        })
+        if (this.props.subpage === "uploads") {
+            var subpage = React.createElement("div", null, React.createElement("div", {className: "centering-div"}, 
+                   React.createElement("h1", null, "My Uploads")
+                ), 
+                React.createElement(UploadsDasboard, {uploadslist: this.props.uploads}))
+        } else if (this.props.subpage === "inspirations") {
+            var subpage = React.createElement("div", null, React.createElement("div", {className: "centering-div"}, 
+                   React.createElement("h1", null, "My Inspirations")
+                ), 
+                React.createElement(UploadsDasboard, {uploadslist: this.props.inspirations}))
+        } else {
+            var subpage = React.createElement("div", {className: "centering-div"}, 
+                   React.createElement("h1", null, "Profile Page...")
+                )
+        }
 
         return(
             React.createElement("div", {id: "feed"}, 
-                React.createElement("div", {className: "centering-div"}, 
-                   React.createElement("h1", null, "Your Uploads")
-                ), 
-                React.createElement(UploadsDasboard, {uploadslist: this.props.uploads}), 
-                React.createElement("br", null), 
-                React.createElement("br", null), 
-                React.createElement("div", {className: "centering-div"}, 
-                   React.createElement("h1", null, "Your Inspirations")
-                ), 
-                React.createElement(UploadsDasboard, {uploadslist: this.props.inspirations})
+                subpage
             )
         ); 
     }
@@ -24721,7 +24652,14 @@ var Navbar = React.createClass({displayName: "Navbar",
             
             React.createElement("ul", {className: "navbar", style: {float:"right"}}, 
               React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchHome}, "Home")), 
-              React.createElement("li", {className: "linav"}, React.createElement("a", {onClick: this.props.switchMyBoard}, this.props.displayName)), 
+              React.createElement("li", {className: "linav dropdown"}, 
+                React.createElement("a", {className: "dropdown-toggle", onClick: this.props.switchMyBoard}, this.props.displayName, 
+                React.createElement("span", {className: "caret"})), 
+                React.createElement("ul", null, 
+                  React.createElement("li", null, React.createElement("a", {onClick: this.props.switchMyBoardUploads}, "My Uploads")), 
+                  React.createElement("li", null, React.createElement("a", {onClick: this.props.switchMyBoardInspirations}, "My Inspirations"))
+                )
+              ), 
               React.createElement("li", {className: "linav logout"}, React.createElement("a", {href: "/auth/facebook/logout"}, React.createElement("i", {className: "fa fa-facebook"}, "Logout")))
             )
           )
