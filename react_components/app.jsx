@@ -77,6 +77,7 @@ var CatalystBox = React.createClass({
     showMyBoard: function() {
         this.setState({
             display: DisplayEnum.DISPLAY_MYBOARD,
+            subpage: 'home',
         });
     },
 
