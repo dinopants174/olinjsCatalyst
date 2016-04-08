@@ -11,6 +11,10 @@ div.image-div-class iframe {
 	width: 300px;
 }
 
+div.image-div-class a {
+  width: 300px;
+}
+
 /*table#feedItems td {
 	width: 25vw !important;
 	height: 15vw !important;

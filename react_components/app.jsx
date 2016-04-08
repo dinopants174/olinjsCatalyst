@@ -32,7 +32,7 @@ var CatalystBox = React.createClass({
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {src: uploadcode.embedcode, title: uploadcode.title},
+            data: {src: uploadcode.embedcode, title: uploadcode.title, inspirations: uploadcode.checkedInspirations},
             success: function(user) {
                 this.setState({
                     display: DisplayEnum.DISPLAY_MYBOARD, 
@@ -47,7 +47,7 @@ var CatalystBox = React.createClass({
 
     handleFeed: function(object){ 
         $.ajax({ 
-            url: '/api/user/feed',
+            url: '/api/pieces/feed',
             dataType: 'json', 
             type: 'GET', 
             success: function(feedItems){ 
@@ -58,7 +58,7 @@ var CatalystBox = React.createClass({
 
             }.bind(this), 
             error: function(xhr, status, err){ 
-                console.log("cannot get feed, '/api/user/feed'", status, err.toString()); 
+                console.log("cannot get feed, '/api/pieces/feed'", status, err.toString()); 
             }.bind(this)
         })
     },
