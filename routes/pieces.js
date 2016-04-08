@@ -21,7 +21,7 @@ router.get('/getPiece', ensureAuthenticated, function(req, res){
 		} else {
 			res.json(piece);
 		}
-	}
+	});
 });
 
 function ensureAuthenticated(req, res, next) {
