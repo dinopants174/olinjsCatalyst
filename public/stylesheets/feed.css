@@ -140,11 +140,6 @@ button::-moz-focus-inner
 }
 
 /* css for carousel of images */ 
-html, body {
-  margin: 0;
-  height: 100%;
-  overflow: hidden;
-}
  
 .react-lightbox {
   

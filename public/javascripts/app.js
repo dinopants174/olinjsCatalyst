@@ -15812,6 +15812,10 @@ var ReactEmptyComponentInjection = {
   }
 };
 
+function registerNullComponentID() {
+  ReactEmptyComponentRegistry.registerNullComponentID(this._rootNodeID);
+}
+
 var ReactEmptyComponent = function (instantiate) {
   this._currentElement = null;
   this._rootNodeID = null;
@@ -15820,7 +15824,7 @@ var ReactEmptyComponent = function (instantiate) {
 assign(ReactEmptyComponent.prototype, {
   construct: function (element) {},
   mountComponent: function (rootID, transaction, context) {
-    ReactEmptyComponentRegistry.registerNullComponentID(rootID);
+    transaction.getReactMountReady().enqueue(registerNullComponentID, this);
     this._rootNodeID = rootID;
     return ReactReconciler.mountComponent(this._renderedComponent, rootID, transaction, context);
   },
@@ -20126,7 +20130,7 @@ module.exports = ReactUpdates;
 
 'use strict';
 
-module.exports = '0.14.7';
+module.exports = '0.14.8';
 },{}],134:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -24921,19 +24925,83 @@ var Upload = React.createClass({displayName: "Upload",
 	getInitialState: function() {
 	    return {
 	    	title: '',
-	     	embedcode: ''
+	     	embedcode: '',
+	     	checkedInspirations: [],
 	    };
 	},
 
+    convertMedia: function(html){
+        var pattern1 = /(?:http?s?:\/\/)?(?:www\.)?(?:vimeo\.com)\/?(.+)/g;
+        var pattern2 = /(?:http?s?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/g;
+        var pattern3 = /([-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?(?:jpg|jpeg|gif|png))/gi;
+        
+        if(pattern1.test(html)){
+           	var replacement = '<iframe width="560" height="315" src="//player.vimeo.com/video/$1" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>';
+			var html = html.replace(pattern1, replacement);
+        }
+
+
+        if(pattern2.test(html)){
+			var replacement = '<iframe width="560" height="315" src="http://www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe>';
+			var html = html.replace(pattern2, replacement);
+        } 
+
+
+        if(pattern3.test(html)){
+            var replacement = '<a href="$1" target="_blank"><img class="sml" src="$1" /></a><br />';
+            var html = html.replace(pattern3, replacement);
+        }
+
+        return html;
+    },
+
+	// makeIframe: function(link) {
+	// 	if (link !== "") {
+	// 		function getId(url) {
+	// 		    var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+	// 		    var match = url.match(regExp);
+
+	// 		    if (match && match[2].length == 11) {
+	// 		        return match[2];
+	// 		    } else {
+	// 		        return 'error';
+	// 		    }
+	// 		}
+
+	// 		var myId = getId(link);
+
+	// 		var myCode = '<iframe width="560" height="315" src="//www.youtube.com/embed/' 
+	// 		    + myId + '" frameborder="0" allowfullscreen></iframe>';
+	// 	} else {
+	// 		var myCode = "";
+	// 	}
+
+	// 	return myCode
+	// },
+
 	handleEmbedChange: function(ev) {
+		console.log(ev.target.value);
+		console.log(this.convertMedia(ev.target.value));
 		this.setState({
-			embedcode: ev.target.value,
+			embedcode: this.convertMedia(ev.target.value),
 		});
 	},
 
 	handleTitleChange: function(ev) {
 		this.setState({
 			title: ev.target.value,
+		});
+	},
+
+	handleCheckedInspir: function(elem_id) {
+		if ((this.state.checkedInspirations).indexOf(elem_id) === -1){
+			var updatedinspirations = this.state.checkedInspirations.concat([elem_id]);
+		} else {
+			var updatedinspirations = this.state.checkedInspirations.filter(function(id) { return id != elem_id });
+		}
+		console.log(updatedinspirations);
+		this.setState({
+			checkedInspirations: updatedinspirations,
 		});
 	},
 
@@ -24947,19 +25015,12 @@ var Upload = React.createClass({displayName: "Upload",
 
     render: function(){
     	var parent = this;
-    	console.log(this.props.inspirations);
         var childElements = this.props.inspirations.map(function(element, i){
-			// var pinButton; 
-			// if(parent.checkIfInInspirations(element, parent.props.userInspirations)){ 
-			// 	pinButton = <button className="button add" disabled> Already Pinned </button>
-			// }
-			// else{ 
-			// 	pinButton = <button className="button add" onClick = {parent.handleClickToAddToInspiration.bind(null, element)}> + Add Inspiration </button>
-			// }
            return (
-           		React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
+           		React.createElement("div", {key: 'div'+i, className: "inspirations-div-class"}, 
 	                React.createElement("div", {dangerouslySetInnerHTML: parent.embedCodeRawMarkup(element.src)}), 
-	            	React.createElement("p", null, element.title)
+	            	React.createElement("p", null, element.title), 
+	            	React.createElement("input", {type: "checkbox", onChange: parent.handleCheckedInspir.bind(null, element._id), value: "inpiration"}), React.createElement("br", null)
 	            )
             );
         });
@@ -24967,7 +25028,7 @@ var Upload = React.createClass({displayName: "Upload",
         return (
         	React.createElement("div", null, 
 	        	React.createElement("h1", null, "Upload"), 
-				React.createElement("div", null, 
+				React.createElement("div", {id: "embed-form"}, 
 					React.createElement("br", null), 
 					React.createElement("input", {className: "embed-code", 
 								type: "text", 
@@ -24984,7 +25045,7 @@ var Upload = React.createClass({displayName: "Upload",
 					React.createElement("br", null), 
 					React.createElement("div", null, 
 						React.createElement("h2", null, " Choose Inspirations "), 
-						React.createElement("div", {id: "feed"}, 
+						React.createElement("div", {id: "inspirationslist"}, 
 							React.createElement(Masonry, {
 				                className: 'my-gallery-class', 
 				                elementType: 'div', 
@@ -24994,6 +25055,7 @@ var Upload = React.createClass({displayName: "Upload",
 				            )
 				        )
 					), 
+					React.createElement("br", null), 
 					React.createElement("div", {className: "embed-button"}, 
 						React.createElement("button", {id: "embed-upload", onClick: this.props.uploadCode.bind(null,this.state)}, "Upload")
 					)

@@ -7,19 +7,83 @@ var Upload = React.createClass({
 	getInitialState: function() {
 	    return {
 	    	title: '',
-	     	embedcode: ''
+	     	embedcode: '',
+	     	checkedInspirations: [],
 	    };
 	},
 
+    convertMedia: function(html){
+        var pattern1 = /(?:http?s?:\/\/)?(?:www\.)?(?:vimeo\.com)\/?(.+)/g;
+        var pattern2 = /(?:http?s?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/g;
+        var pattern3 = /([-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?(?:jpg|jpeg|gif|png))/gi;
+        
+        if(pattern1.test(html)){
+           	var replacement = '<iframe width="560" height="315" src="//player.vimeo.com/video/$1" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>';
+			var html = html.replace(pattern1, replacement);
+        }
+
+
+        if(pattern2.test(html)){
+			var replacement = '<iframe width="560" height="315" src="http://www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe>';
+			var html = html.replace(pattern2, replacement);
+        } 
+
+
+        if(pattern3.test(html)){
+            var replacement = '<a href="$1" target="_blank"><img class="sml" src="$1" /></a><br />';
+            var html = html.replace(pattern3, replacement);
+        }
+
+        return html;
+    },
+
+	// makeIframe: function(link) {
+	// 	if (link !== "") {
+	// 		function getId(url) {
+	// 		    var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+	// 		    var match = url.match(regExp);
+
+	// 		    if (match && match[2].length == 11) {
+	// 		        return match[2];
+	// 		    } else {
+	// 		        return 'error';
+	// 		    }
+	// 		}
+
+	// 		var myId = getId(link);
+
+	// 		var myCode = '<iframe width="560" height="315" src="//www.youtube.com/embed/' 
+	// 		    + myId + '" frameborder="0" allowfullscreen></iframe>';
+	// 	} else {
+	// 		var myCode = "";
+	// 	}
+
+	// 	return myCode
+	// },
+
 	handleEmbedChange: function(ev) {
+		console.log(ev.target.value);
+		console.log(this.convertMedia(ev.target.value));
 		this.setState({
-			embedcode: ev.target.value,
+			embedcode: this.convertMedia(ev.target.value),
 		});
 	},
 
 	handleTitleChange: function(ev) {
 		this.setState({
 			title: ev.target.value,
+		});
+	},
+
+	handleCheckedInspir: function(elem_id) {
+		if ((this.state.checkedInspirations).indexOf(elem_id) === -1){
+			var updatedinspirations = this.state.checkedInspirations.concat([elem_id]);
+		} else {
+			var updatedinspirations = this.state.checkedInspirations.filter(function(id) { return id != elem_id });
+		}
+		console.log(updatedinspirations);
+		this.setState({
+			checkedInspirations: updatedinspirations,
 		});
 	},
 
@@ -33,19 +97,12 @@ var Upload = React.createClass({
 
     render: function(){
     	var parent = this;
-    	console.log(this.props.inspirations);
         var childElements = this.props.inspirations.map(function(element, i){
-			// var pinButton; 
-			// if(parent.checkIfInInspirations(element, parent.props.userInspirations)){ 
-			// 	pinButton = <button className="button add" disabled> Already Pinned </button>
-			// }
-			// else{ 
-			// 	pinButton = <button className="button add" onClick = {parent.handleClickToAddToInspiration.bind(null, element)}> + Add Inspiration </button>
-			// }
            return (
-           		<div key={'div'+i} className="image-div-class">
+           		<div key={'div'+i} className="inspirations-div-class">
 	                <div dangerouslySetInnerHTML={parent.embedCodeRawMarkup(element.src)}/>
 	            	<p>{element.title}</p>
+	            	<input type="checkbox" onChange={parent.handleCheckedInspir.bind(null, element._id)}value="inpiration"/><br/>
 	            </div>
             );
         });
@@ -70,7 +127,7 @@ var Upload = React.createClass({
 					<br/>
 					<div>
 						<h2> Choose Inspirations </h2>
-						<div id="feed">
+						<div id="inspirationslist">
 							<Masonry
 				                className={'my-gallery-class'}
 				                elementType={'div'}
@@ -80,6 +137,7 @@ var Upload = React.createClass({
 				            </Masonry>
 				        </div>
 					</div>
+					<br/>
 					<div className='embed-button'>
 						<button id='embed-upload' onClick={this.props.uploadCode.bind(null,this.state)}>Upload</button>
 					</div>
