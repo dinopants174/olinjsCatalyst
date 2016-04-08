@@ -49,9 +49,10 @@ router.post('/deleteInspiration', ensureAuthenticated, function(req, res){
 });
 
 router.post('/postUpload', ensureAuthenticated, function(req, res){
+	console.log("req.body stuff", req.body);
 	User.findOne({fbId: req.user.id}, function(err, user){
 		console.log("Here is your current user: ", user);
-		var newPiece = new Piece({author: user.id, src: req.body.src, date: new Date(), title: req.body.title, inspirations: req.body.inspirations});
+		var newPiece = new Piece({author: user.id, src: req.body.src, date: new Date(), title: req.body.title, inspirations: req.body['inspirations[]']});
 		newPiece.save(function(err, piece){
 			if (err){
 				console.log("Error: ", err);
