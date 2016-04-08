@@ -13,6 +13,7 @@ var index = require('./routes/index');
 var login = require('./routes/auth');
 var auth = require('./secrets');
 var user = require('./routes/user');
+var pieces = require('./routes/pieces');
 
 passport.use(new FacebookStrategy({
     clientID: auth.facebook.clientID,
@@ -67,6 +68,7 @@ app.use(passport.session());
 app.use('/', index);
 app.use('/auth/facebook', login);
 app.use('/api/user', user);
+app.use('/api/pieces', pieces);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
