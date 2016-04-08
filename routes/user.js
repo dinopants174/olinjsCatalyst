@@ -51,12 +51,21 @@ router.post('/deleteInspiration', ensureAuthenticated, function(req, res){
 router.post('/postUpload', ensureAuthenticated, function(req, res){
 	User.findOne({fbId: req.user.id}, function(err, user){
 		console.log("Here is your current user: ", user);
-		var newPiece = new Piece({author: user.id, src: req.body.src, date: new Date(), title: req.body.title});
+		var newPiece = new Piece({author: user.id, src: req.body.src, date: new Date(), title: req.body.title, inspirations: req.body.inspirations});
 		newPiece.save(function(err, piece){
 			if (err){
 				console.log("Error: ", err);
 			} else {
 				console.log("A piece was created, here it is: ", piece);
+				piece.inspirations.forEach(function(item, index){
+					Piece.findByIdAndUpdate(item, {$push: {inspired: piece.id}}, {new: true}, function(err, piece){
+						if (err){
+							console.log("Error: ", err)
+						} else {
+							console.log("Here is the updated parent: ", piece)
+						}
+					});
+				});
 				user.uploads.push(piece.id);
 				console.log("Here is your updated user: ", user);
 				user.save(function(err, user){
@@ -75,17 +84,6 @@ router.post('/postUpload', ensureAuthenticated, function(req, res){
 				});
 			}
 		});
-	});
-});
-
-router.get('/feed', ensureAuthenticated, function(req, res){
-	Piece.find({}, null, {sort: {date: -1}}).populate('author').exec(function (err, pieces){
-		if (err){
-			console.log("Error: ", err);
-		} else {
-			console.log("Here is your feed", pieces);
-			res.json(pieces);
-		}
 	});
 });
 
