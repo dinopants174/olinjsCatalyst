@@ -151,7 +151,7 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
-                        <Upload uploadCode = {this.handleUploadCode} />
+                        <Upload uploadCode = {this.handleUploadCode} inspirations={this.state.user.inspirations}/>
                     </div>
                 );
                 break;
