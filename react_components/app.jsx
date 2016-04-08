@@ -21,17 +21,18 @@ var CatalystBox = React.createClass({
             user: {},
             display: DisplayEnum.DISPLAY_LOGIN,
             displayName: '', 
-            feed: []
+            feed: [],
+            subpage: ''
         };
     },
 
     handleUploadCode: function(uploadcode) {
         $.ajax({
-            url: '/api/user/postUpload2/',
+            url: '/api/user/postUpload/',
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {src: uploadcode.embedcode, title: uploadcode.title},
+            data: {src: uploadcode.embedcode, title: uploadcode.title, inspirations: uploadcode.checkedInspirations},
             success: function(user) {
                 this.setState({
                     display: DisplayEnum.DISPLAY_MYBOARD, 
@@ -46,7 +47,7 @@ var CatalystBox = React.createClass({
 
     handleFeed: function(object){ 
         $.ajax({ 
-            url: '/api/user/feed',
+            url: '/api/pieces/feed',
             dataType: 'json', 
             type: 'GET', 
             success: function(feedItems){ 
@@ -57,7 +58,7 @@ var CatalystBox = React.createClass({
 
             }.bind(this), 
             error: function(xhr, status, err){ 
-                console.log("cannot get feed, '/api/user/feed'", status, err.toString()); 
+                console.log("cannot get feed, '/api/pieces/feed'", status, err.toString()); 
             }.bind(this)
         })
     },
@@ -74,9 +75,23 @@ var CatalystBox = React.createClass({
     },
 
     showMyBoard: function() {
-        console.log(this.state.user);
         this.setState({
             display: DisplayEnum.DISPLAY_MYBOARD,
+            subpage: 'home',
+        });
+    },
+
+    showMyBoardInspirations: function() {
+        this.setState({
+            display: DisplayEnum.DISPLAY_MYBOARD,
+            subpage: 'inspirations',
+        });
+    },
+
+    showMyBoardUploads: function() {
+        this.setState({
+            display: DisplayEnum.DISPLAY_MYBOARD,
+            subpage: 'uploads',
         });
     },
 
@@ -99,6 +114,33 @@ var CatalystBox = React.createClass({
         });
     },
 
+    addInspiration: function(item){ 
+        console.log("you're about to add this inspiration", item)
+
+        $.ajax({ 
+            url: '/api/user/postInspiration',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {srcId: item._id}, 
+            success: function(userObject){ 
+                console.log("alleged user object", userObject)
+
+                userObject.inspirations.forEach(function(i){ 
+                    console.log(i)
+                })
+                
+                this.setState({user: userObject}); 
+            }.bind(this), 
+            error: function(xhr, status, err){ 
+                console.log("there has been an error")
+                console.error('/api/user/postInspiration', status, err.toString())
+
+            }.bind(this)
+        })
+
+    }, 
+
     render: function() {
         var page;
 
@@ -107,8 +149,9 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_UPLOAD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
-                        <Upload uploadCode = {this.handleUploadCode} />
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
+                        <Upload uploadCode = {this.handleUploadCode} inspirations={this.state.user.inspirations}/>
                     </div>
                 );
                 break;
@@ -116,8 +159,11 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_MYBOARD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
-                        <MyBoard uploads={this.state.user.uploads} inspirations={this.state.user.inspirations}/>
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
+                        <button onClick={this.showMyBoardUploads} className="button">My Uploads</button>
+                        <button onClick={this.showMyBoardInspirations} className="button">My Inspirations</button>
+                        <MyBoard subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
@@ -126,8 +172,9 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_HOME:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} displayName={this.state.displayName || ''} />
-                        <Feed feedObjects = {this.state.feed}/>
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
+                        <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
