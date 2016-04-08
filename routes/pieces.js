@@ -15,7 +15,7 @@ router.get('/feed', ensureAuthenticated, function(req, res){
 });
 
 router.get('/getPiece', ensureAuthenticated, function(req, res){
-	Piece.findById(req.body.srcId).populate('inspirations inspired').exec(function (err, piece)){
+	Piece.findById(req.body.srcId).populate('inspirations inspired').exec(function (err, piece){
 		if (err){
 			console.log("Error: ", err);
 		} else {
