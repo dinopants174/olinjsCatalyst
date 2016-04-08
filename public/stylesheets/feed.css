@@ -39,7 +39,7 @@ div.image-div-class a img{
 
 /* ADD INSPIRATION BUTTON */
 
-.button {
+.button.add, .button.expand {
       float:right;
       background-color: #fff;
       outline: none;
@@ -49,7 +49,7 @@ div.image-div-class a img{
       padding: 0 20px; 
 }
 
-.add {
+.button.add {
   cursor: pointer;
   color: black;
 }

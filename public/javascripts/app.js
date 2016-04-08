@@ -24033,8 +24033,8 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                     React.createElement("div", null, 
                         React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchMyBoardInspirations: this.showMyBoardInspirations, 
                         switchMyBoardUploads: this.showMyBoardUploads, displayName: this.state.displayName || ''}), 
-                        React.createElement("button", {onClick: this.showMyBoardUploads, className: "button"}, "My Uploads"), 
-                        React.createElement("button", {onClick: this.showMyBoardInspirations, className: "button"}, "My Inspirations"), 
+                        React.createElement("button", {onClick: this.showMyBoardUploads, className: "button board"}, "My Uploads"), 
+                        React.createElement("button", {onClick: this.showMyBoardInspirations, className: "button board"}, "My Inspirations"), 
                         React.createElement(MyBoard, {subpage: this.state.subpage, uploads: this.state.user.uploads, inspirations: this.state.user.inspirations}), 
                         React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )

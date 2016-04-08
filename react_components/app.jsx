@@ -161,8 +161,8 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
-                        <button onClick={this.showMyBoardUploads} className="button">My Uploads</button>
-                        <button onClick={this.showMyBoardInspirations} className="button">My Inspirations</button>
+                        <button onClick={this.showMyBoardUploads} className="button board">My Uploads</button>
+                        <button onClick={this.showMyBoardInspirations} className="button board">My Inspirations</button>
                         <MyBoard subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
