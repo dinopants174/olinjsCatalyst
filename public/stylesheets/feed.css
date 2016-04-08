@@ -11,15 +11,9 @@ div.image-div-class iframe {
 	width: 300px;
 }
 
-div.image-div-class a {
+div.image-div-class a img{
   width: 300px;
 }
-
-/*table#feedItems td {
-	width: 25vw !important;
-	height: 15vw !important;
-	border: none;
-}*/
 
 .my-gallery-class {
 	position: relative;
@@ -29,14 +23,55 @@ div.image-div-class a {
 	width: 100%;
 }
 
+
 .image-div-class {
-    border: 2px solid black;
-    padding-top: 5px;
-    margin-left: 10px;
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  background-color: #fff;
+  box-shadow: 0 12px 15px 0 rgba(0, 0, 0, 0.24);
+  box-sizing: border-box;
+  padding: 16px;
+  margin-bottom: 10px;
+  margin-left: 10px;
 }
 
+
 /* ADD INSPIRATION BUTTON */
-.button
+
+.button {
+      float:right;
+      background-color: #fff;
+      outline: none;
+      position: relative;
+      display: inline-block;
+      line-height: 52px;
+      padding: 0 20px; 
+      z-index: 0;
+}
+
+.button.add {
+  cursor: pointer;
+  color: black;
+}
+
+.cardactionbar {
+      z-index: 1;
+      user-select: none;
+      position: absolute;
+      bottom: 0;
+      top: auto;
+      left: 0; 
+      right: 0;
+      padding: 0 8px;
+      border-top: 1px solid #E0E0E0;
+      margin-bottom: 3px;
+      box-sizing: border-box;
+      height: 65px;
+      transition: left 200ms cubic-bezier(0.075, 0.820, 0.165, 1.000); 
+}
+
+/*.button
 {        
     display: inline-block;
     white-space: nowrap;
@@ -106,7 +141,7 @@ div.image-div-class a {
     -webkit-border-radius: .15em 0 0 .15em;
     border-radius: .15em 0 0 .15em;     
     pointer-events: none;		
-}
+}*/
 
 /* Buttons and inputs */
 
@@ -132,9 +167,7 @@ button::-moz-focus-inner
 /* The disabled styles */
 .button[disabled], .button[disabled]:hover, .button.disabled, .button.disabled:hover 
 {
-	background: #eee;
 	color: #aaa;
-	border-color: #aaa;
 	cursor: default;
 	text-shadow: none;
 	position: static;

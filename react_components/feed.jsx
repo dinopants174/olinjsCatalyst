@@ -75,12 +75,13 @@ var Feed = React.createClass({
 					pinButton = <button className="button add" disabled> Already Pinned </button>
 				}
 				else{ 
-					pinButton = <button className="button add" onClick = {parent.handleClickToAddToInspiration.bind(null, element)}> + Add Inspiration </button>
+					pinButton = <button className="button add" onClick = {parent.handleClickToAddToInspiration.bind(null, element)}> Add</button>
 				}
 	           return (
 	           		<div key={'div'+i} className="image-div-class">
 		                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
 		            	<p>{element.title}</p>
+		            	<div className="cardactionbar"></div>
 		            	<button className = "button expand" onClick = {parent.handleClickToViewPiece.bind(null, element)}> View </button>
 		            	{pinButton}
 		            </div>

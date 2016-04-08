@@ -23904,7 +23904,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {src: uploadcode.embedcode, title: uploadcode.title},
+            data: {src: uploadcode.embedcode, title: uploadcode.title, inspirations: uploadcode.checkedInspirations},
             success: function(user) {
                 this.setState({
                     display: DisplayEnum.DISPLAY_MYBOARD, 
@@ -23919,7 +23919,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
 
     handleFeed: function(object){ 
         $.ajax({ 
-            url: '/api/user/feed',
+            url: '/api/pieces/feed',
             dataType: 'json', 
             type: 'GET', 
             success: function(feedItems){ 
@@ -23930,7 +23930,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
 
             }.bind(this), 
             error: function(xhr, status, err){ 
-                console.log("cannot get feed, '/api/user/feed'", status, err.toString()); 
+                console.log("cannot get feed, '/api/pieces/feed'", status, err.toString()); 
             }.bind(this)
         })
     },
@@ -24484,12 +24484,13 @@ var Feed = React.createClass({displayName: "Feed",
 					pinButton = React.createElement("button", {className: "button add", disabled: true}, " Already Pinned ")
 				}
 				else{ 
-					pinButton = React.createElement("button", {className: "button add", onClick: parent.handleClickToAddToInspiration.bind(null, element)}, " + Add Inspiration ")
+					pinButton = React.createElement("button", {className: "button add", onClick: parent.handleClickToAddToInspiration.bind(null, element)}, " Add")
 				}
 	           return (
 	           		React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
 		                React.createElement("div", {dangerouslySetInnerHTML: parent.rawMarkup(element.src)}), 
 		            	React.createElement("p", null, element.title), 
+		            	React.createElement("div", {className: "cardactionbar"}), 
 		            	React.createElement("button", {className: "button expand", onClick: parent.handleClickToViewPiece.bind(null, element)}, " View "), 
 		            	pinButton
 		            )
