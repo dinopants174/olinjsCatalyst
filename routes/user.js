@@ -58,11 +58,12 @@ router.post('/postUpload', ensureAuthenticated, function(req, res){
 			} else {
 				console.log("A piece was created, here it is: ", piece);
 				piece.inspirations.forEach(function(item, index){
+					console.log("Here is the id of the parent: ", item);
 					Piece.findByIdAndUpdate(item, {$push: {inspired: piece.id}}, {new: true}, function(err, piece){
 						if (err){
-							console.log("Error: ", err)
+							console.log("Error: ", err);
 						} else {
-							console.log("Here is the updated parent: ", piece)
+							console.log("Here is the updated parent: ", piece);
 						}
 					});
 				});
