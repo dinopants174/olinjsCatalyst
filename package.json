@@ -30,7 +30,6 @@
     "grunt-react": "^0.12.3",
     "hbs": "^4.0.0",
     "imagesloaded": "^4.1.0",
-    "link-id": "^1.1.0",
     "masonry-layout": "^4.0.0",
     "mongoose": "^4.4.10",
     "morgan": "^1.7.0",
@@ -43,8 +42,6 @@
     "react-dom": "^0.14.7",
     "react-lightbox": "^0.4.0",
     "react-motion": "^0.4.2",
-    "react-player": "^0.5.6",
-    "serve-favicon": "~2.3.0",
-    "soundcloud-lookup": "0.0.2"
+    "serve-favicon": "~2.3.0"
   }
 }
