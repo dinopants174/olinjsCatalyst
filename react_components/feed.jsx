@@ -1,33 +1,15 @@
 var React = require('react');
-var ReactDOM = require('react-dom');
 var dir = require('node-dir'); 
 var path = require('path'); 
 var fs = require('fs');
 
-var Lightbox = require('react-lightbox');
+// var Lightbox = require('./lightbox.jsx');
 
 var Masonry = require('./masonry.jsx');
 
 var masonryOptions = {
     transitionDuration: 0
 };
-
-var Controls = React.createClass({
-  render: function () {
-    return DOM.div({
-      className: 'my-controls'
-    }, 
-      DOM.div({
-        className: 'my-button my-button-left',
-        onClick: this.props.backward
-      }, '<'),
-      DOM.div({
-        className: 'my-button my-button-right',
-        onClick: this.props.forward
-      }, '>')
-    );
-  }
-});
 
 var Feed = React.createClass({ 
 
@@ -54,10 +36,11 @@ var Feed = React.createClass({
 	},
 
 	handleClickToViewPiece: function(item){ 
-		console.log(item)
+		console.log("item", item)
 		alert("You clicked me")
 		this.setState({lightboxMode: true})
-
+		// this.setState({clickedItem: item})
+		console.log("images", this.state.images); 
 	}, 
 
 	rawMarkup: function(e){ 
@@ -96,16 +79,17 @@ var Feed = React.createClass({
 	                {childElements}
 	            </Masonry>
     	}
-    	else if(this,state.lightboxMode){ 
-    		var something = <Lightbox
-			    pictures={[
-			      'https://pbs.twimg.com/profile_images/269279233/llama270977_smiling_llama_400x400.jpg',
-			      'https://pbs.twimg.com/profile_images/1905729715/llamas_1_.jpg',
-			      'http://static.comicvine.com/uploads/original/12/129924/3502918-llama.jpg',
-			      'http://fordlog.com/wp-content/uploads/2010/11/llama-smile.jpg'
-			    ]}
-		    keyboard
-		    controls={Controls}/>
+    	else if(this.state.lightboxMode){ 
+    		// <Lightbox pictures = {this.state.images} index = {1} />
+    		// var something = <Lightbox
+			   //  pictures={[
+			   //    'https://pbs.twimg.com/profile_images/269279233/llama270977_smiling_llama_400x400.jpg',
+			   //    'https://pbs.twimg.com/profile_images/1905729715/llamas_1_.jpg',
+			   //    'http://static.comicvine.com/uploads/original/12/129924/3502918-llama.jpg',
+			   //    'http://fordlog.com/wp-content/uploads/2010/11/llama-smile.jpg'
+			   //  ]}
+		    // keyboard
+		    // controls={Controls}/>
     	}
 
     	return(
@@ -116,6 +100,5 @@ var Feed = React.createClass({
 	}
 
 }); 
-
 
 module.exports = Feed; 
