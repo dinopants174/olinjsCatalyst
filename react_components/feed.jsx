@@ -3,7 +3,7 @@ var dir = require('node-dir');
 var path = require('path'); 
 var fs = require('fs');
 
-// var Lightbox = require('./lightbox.jsx');
+var Lightbox = require('./lightbox.jsx');
 
 var Masonry = require('./masonry.jsx');
 
@@ -80,7 +80,7 @@ var Feed = React.createClass({
 	            </Masonry>
     	}
     	else if(this.state.lightboxMode){ 
-    		// <Lightbox pictures = {this.state.images} index = {1} />
+    		<Lightbox pictures = {this.state.images} index = {1} />
     		// var something = <Lightbox
 			   //  pictures={[
 			   //    'https://pbs.twimg.com/profile_images/269279233/llama270977_smiling_llama_400x400.jpg',
