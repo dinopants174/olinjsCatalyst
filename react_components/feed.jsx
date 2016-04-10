@@ -80,7 +80,7 @@ var Feed = React.createClass({
 	            </Masonry>
     	}
     	else if(this.state.lightboxMode){ 
-    		<Lightbox pictures = {this.state.images} index = {1} />
+    		var something = <Lightbox pictures = {this.state.images} index = {1} />
     		// var something = <Lightbox
 			   //  pictures={[
 			   //    'https://pbs.twimg.com/profile_images/269279233/llama270977_smiling_llama_400x400.jpg',
