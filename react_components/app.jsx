@@ -2,7 +2,7 @@ var React = require('react');
 var ReactDOM = require('react-dom');
 var Upload = require('./upload.jsx');
 var Navbar = require('./navbar.jsx');
-var Feed = require('./feed.jsx'); 
+// var Feed = require('./feed.jsx'); 
 var LoginPage = require('./login.jsx');
 
 var MyBoard = require('./myboard.jsx');

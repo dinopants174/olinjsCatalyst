@@ -40,6 +40,7 @@
     "path": "^0.12.7",
     "react": "^0.14",
     "react-dom": "^0.14.7",
+    "react-lightbox": "^0.4.0",
     "react-motion": "^0.4.2",
     "react-player": "^0.5.6",
     "serve-favicon": "~2.3.0"
