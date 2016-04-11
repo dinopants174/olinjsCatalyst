@@ -14,11 +14,21 @@ router.get('/feed', ensureAuthenticated, function(req, res){
 	});
 });
 
-router.get('/getPiece', ensureAuthenticated, function(req, res){
-	Piece.findById(req.body.srcId).populate('inspirations inspired').exec(function (err, piece){
+router.post('/getPiece', ensureAuthenticated, function(req, res){
+	console.log("req.body contains: ", req.body);
+	Piece.findById(req.body.srcId).populate({path: 'inspirations inspired', populate: {path: 'inspirations inspired', populate: {path: 'inspirations inspired'}}}).exec(function (err, piece){
 		if (err){
 			console.log("Error: ", err);
 		} else {
+			console.log("Here is your fully populated piece for the tree: ", piece);
+			piece.inspirations.forEach(function(item, index){
+				console.log("Index: ", index);
+				console.log("Inspiration: ", item);
+			});
+			piece.inspired.forEach(function(item, index){
+				console.log("Index: ", index);
+				console.log("Inspired: ", item);
+			});
 			res.json(piece);
 		}
 	});
