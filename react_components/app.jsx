@@ -28,16 +28,15 @@ var CatalystBox = React.createClass({
 
     testGetPiece: function(){
         $.ajax({
-            url: '/api/pieces/getPiece',
+            url: '/api/pieces/getPiece/570ac1c99816a4771a95a866',
             dataType: 'json',
             cache: false,
-            type: 'POST',
-            data: {srcId: '570ac82c9816a4771a95a868'},
+            type: 'GET',
             success: function(res){
                 console.log("Here is the data I will need for the tree: ", res);
             }.bind(this),
             error: function(xhr, status, err) {
-                console.error('/api/user/postUpload', status, err.toString());
+                console.error('/api/pieces/getPiece', status, err.toString());
             }.bind(this)
         });
     },
