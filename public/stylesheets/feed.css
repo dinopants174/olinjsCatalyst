@@ -264,3 +264,10 @@ button::-moz-focus-inner
 .my-button-right {
   float: right;
 }
+
+/*css for the enhanced view of a view*/
+#upclose{ 
+  left: 20%;
+  right: 50%;
+  
+}

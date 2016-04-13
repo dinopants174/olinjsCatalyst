@@ -22,7 +22,8 @@ var CatalystBox = React.createClass({
             display: DisplayEnum.DISPLAY_LOGIN,
             displayName: '', 
             feed: [],
-            subpage: ''
+            subpage: '', 
+            piece: {}
         };
     },
 
@@ -131,18 +132,18 @@ var CatalystBox = React.createClass({
 
     addInspiration: function(item){ 
         console.log("you're about to add this inspiration", item)
-
+        console.log("what is this id", item._id)
         $.ajax({ 
             url: '/api/user/postInspiration',
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {srcId: item._id}, 
+            data: {srcId: item}, 
             success: function(userObject){ 
                 console.log("alleged user object", userObject)
 
                 userObject.inspirations.forEach(function(i){ 
-                    console.log(i)
+                    console.log("inspiraaation", i)
                 })
                 
                 this.setState({user: userObject}); 
@@ -153,8 +154,23 @@ var CatalystBox = React.createClass({
 
             }.bind(this)
         })
-
     }, 
+
+    getPieceAndTree: function(item, callback){ 
+        console.log("You're about to get this item", item)
+        $.ajax({ 
+            url: '/api/pieces/getPiece/'+ item._id, 
+            dataType: 'json', 
+            type: 'GET', 
+            success: function(piece){ 
+                console.log("This is the tree", piece)
+                return callback(piece)
+            }.bind(this), 
+            error: function(xhr, status, err) {
+                console.log("error displaying piece")
+            }.bind(this)
+        })
+    },
 
     render: function() {
         var page;
@@ -189,9 +205,8 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
-                        <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations}/>
+                        <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations} getPiece = {this.getPieceAndTree}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
-                        <input type="button" onClick={this.testGetPiece} value="Bleh"/>
                     </div>
                 );
                 break;
