@@ -266,8 +266,11 @@ button::-moz-focus-inner
 }
 
 /*css for the enhanced view of a view*/
-#upclose{ 
-  left: 20%;
-  right: 50%;
-  
+.upclose{ 
+  position: relative;
+  width:100%;
+}
+
+.upclose iframe {
+  width: 55vw;
 }

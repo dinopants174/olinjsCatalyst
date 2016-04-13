@@ -24462,6 +24462,7 @@ var Feed = React.createClass({displayName: "Feed",
         top: '25%',
         left: '20%',
         right: '50%',
+        width: '60vw',
         backgroundColor: '#fff',
         color: '#7F7F7F',
         padding: '20px',
@@ -24473,7 +24474,7 @@ var Feed = React.createClass({displayName: "Feed",
 
     blackOverlayStyles: {
         background: 'gray',
-        opacity: '.5',
+        opacity: '.8',
         position: 'fixed',
         top: '0px',
         bottom: '0px',
@@ -24578,14 +24579,25 @@ var Feed = React.createClass({displayName: "Feed",
 
         if (this.state.display){
             return (
+            	React.createElement("div", null, 
+            	React.createElement("div", {id: "feed"}, 
+					React.createElement(Masonry, {
+		                className: 'my-gallery-class', 
+		                elementType: 'div', 
+		                disableImagesLoaded: false
+		            }, 
+		            childElements
+		            )
+				), 
                 React.createElement("div", null, 
                     React.createElement("div", {style: this.blackOverlayStyles, onClick: this.closeLightbox}), 
                     React.createElement("div", {style: this.whiteContentStyles}, 
                         React.createElement("a", {style: this.closeTagStyles, onClick: this.closeLightbox}, "×"), 
-                        React.createElement("div", {id: "upclose", dangerouslySetInnerHTML: this.rawMarkup(this.state.tree.src)})
+                        React.createElement("div", {className: "upclose", dangerouslySetInnerHTML: this.rawMarkup(this.state.tree.src)})
                     )
             	)
-            );
+            	)
+            );React.createElement("div", {dangerouslySetInnerHTML: this.rawMarkup(this.state.tree.src)})
         } else {
             return(
 				React.createElement("div", {id: "feed"}, 

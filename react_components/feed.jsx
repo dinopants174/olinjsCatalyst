@@ -20,6 +20,7 @@ var Feed = React.createClass({
         top: '25%',
         left: '20%',
         right: '50%',
+        width: '60vw',
         backgroundColor: '#fff',
         color: '#7F7F7F',
         padding: '20px',
@@ -31,7 +32,7 @@ var Feed = React.createClass({
 
     blackOverlayStyles: {
         background: 'gray',
-        opacity: '.5',
+        opacity: '.8',
         position: 'fixed',
         top: '0px',
         bottom: '0px',
@@ -136,14 +137,25 @@ var Feed = React.createClass({
 
         if (this.state.display){
             return (
+            	<div> 
+            	<div id="feed"> 
+					<Masonry
+		                className={'my-gallery-class'}
+		                elementType={'div'}
+		                disableImagesLoaded={false}
+		            >  
+		            {childElements}
+		            </Masonry>
+				</div>
                 <div>
                     <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
                     <div style={this.whiteContentStyles}>
                         <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
-                        <div id = "upclose" dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
-                    </div>
+                        <div className = 'upclose' dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
+                    </div> 
             	</div>
-            );
+            	</div>
+            );<div dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
         } else {
             return(
 				<div id="feed"> 
