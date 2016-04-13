@@ -138,7 +138,7 @@ var CatalystBox = React.createClass({
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {srcId: item}, 
+            data: {srcId: item._id}, 
             success: function(userObject){ 
                 console.log("alleged user object", userObject)
 
