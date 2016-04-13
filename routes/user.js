@@ -89,6 +89,37 @@ router.post('/postUpload', ensureAuthenticated, function(req, res){
 	});
 });
 
+router.post('/deleteUpload', ensureAuthenticated, function(req, res){
+	User.findOneAndUpdate({fbId: req.user.id}, {$pull: {uploads: req.body.srcId}}, {new: true}).populate('inspirations uploads').exec(function(err, user){
+		if (err){
+			console.log("Error: ", err);
+		} else {
+			Piece.findById(req.body.srcId, function(err, piece){
+				piece.inspirations.forEach(function(item, index){
+					Piece.findByIdAndUpdate(item, {$pull: {inspired: piece.id}}, {new: true}, function(err, inspiration){
+						if (err){
+							console.log("Error: ", err)
+						} else {
+							console.log("Here is the updated parent: ", inspiration);
+						}
+					});
+				});
+				piece.inspired.forEach(function(item, index){
+					Piece.findByIdAndUpdate(item, {$pull: {inspirations: piece.id}}, {new: true}, function(err, inspired){
+						if (err){
+							console.log("Error: ", err)
+						} else {
+							console.log("Here is the updated child: ", inspired);
+						}
+					});
+				});
+				piece.remove()
+				res.json(user);
+			});
+		}
+	});
+});
+
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { 
   	return next(); 
