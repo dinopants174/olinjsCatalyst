@@ -23,11 +23,6 @@ var Carousel = React.createClass({
         return {__html: e}
     },
 
-    openImage: function (imagehref) {
-        //open imagehref
-        window.open(imagehref);
-    },
-
     componentWillMount: function () {
         this.depot = Depot(this.getInitialState(), this.props, this.setState.bind(this));
         this.onRotate = this.depot.onRotate.bind(this);
@@ -51,6 +46,7 @@ var Carousel = React.createClass({
 
             return (<figure key={i} style={Util.figureStyle(d)}>
                 <div className="imagedashdiv">
+                    <a className="boxclose" id="boxclose" onClick={root.props.deleteInspir.bind(null,d.all_info,root.props.boardtype)}></a>
                     <div className="imagedash" dangerouslySetInnerHTML={root.rawMarkup(d.all_info.src)}/>
                 </div>
             </figure>);

@@ -23813,6 +23813,36 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
 
     }, 
 
+    deleteInspiration: function(item, boardtype) {
+        console.log(boardtype, item);
+
+        if (boardtype==="uploads"){
+            console.log(boardtype, item);
+        } else {
+            $.ajax({ 
+                url: '/api/user/deleteInspiration',
+                dataType: 'json',
+                cache: false,
+                type: 'POST',
+                data: {srcId: item._id}, 
+                success: function(userObject){ 
+                    console.log("alleged user object", userObject)
+
+                    userObject.inspirations.forEach(function(i){ 
+                        console.log(i)
+                    })
+                    
+                    this.setState({user: userObject}); 
+                }.bind(this), 
+                error: function(xhr, status, err){ 
+                    console.log("there has been an error")
+                    console.error('/api/user/postInspiration', status, err.toString())
+
+                }.bind(this)
+            }) 
+        }
+    },
+
     render: function() {
         var page;
 
@@ -23835,7 +23865,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                         switchMyBoardUploads: this.showMyBoardUploads, displayName: this.state.displayName || ''}), 
                         React.createElement("button", {onClick: this.showMyBoardUploads, className: "button board"}, "My Uploads"), 
                         React.createElement("button", {onClick: this.showMyBoardInspirations, className: "button board"}, "My Inspirations"), 
-                        React.createElement(MyBoard, {subpage: this.state.subpage, uploads: this.state.user.uploads, inspirations: this.state.user.inspirations}), 
+                        React.createElement(MyBoard, {subpage: this.state.subpage, uploads: this.state.user.uploads, inspirations: this.state.user.inspirations, deleteInspir: this.deleteInspiration}), 
                         React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )
                 );
@@ -23873,7 +23903,7 @@ ReactDOM.render(
   React.createElement(CatalystBox, null),
   document.getElementById('content')
 );
-},{"./feed.jsx":184,"./login.jsx":186,"./myboard.jsx":188,"./navbar.jsx":190,"./upload.jsx":191,"react":177,"react-dom":48}],179:[function(require,module,exports){
+},{"./feed.jsx":185,"./login.jsx":187,"./myboard.jsx":189,"./navbar.jsx":190,"./upload.jsx":191,"react":177,"react-dom":48}],179:[function(require,module,exports){
 var React = require('react');
 
 var Carousel = React.createClass({displayName: "Carousel",
@@ -24058,11 +24088,6 @@ var Carousel = React.createClass({displayName: "Carousel",
         return {__html: e}
     },
 
-    openImage: function (imagehref) {
-        //open imagehref
-        window.open(imagehref);
-    },
-
     componentWillMount: function () {
         this.depot = Depot(this.getInitialState(), this.props, this.setState.bind(this));
         this.onRotate = this.depot.onRotate.bind(this);
@@ -24086,6 +24111,7 @@ var Carousel = React.createClass({displayName: "Carousel",
 
             return (React.createElement("figure", {key: i, style: Util.figureStyle(d)}, 
                 React.createElement("div", {className: "imagedashdiv"}, 
+                    React.createElement("a", {className: "boxclose", id: "boxclose", onClick: root.props.deleteInspir.bind(null,d.all_info,root.props.boardtype)}), 
                     React.createElement("div", {className: "imagedash", dangerouslySetInnerHTML: root.rawMarkup(d.all_info.src)})
                 )
             ));
@@ -24366,6 +24392,60 @@ exports.mapObj = function mapObj(fn,obj){
     return res;
 };
 },{}],184:[function(require,module,exports){
+/* DashboardHistory Component that holds the Carousel*/
+
+var React = require('react');
+var Carousel = require('./carouselstuff/carousel.jsx');
+var Ease = require('ease-functions');
+
+var DashboardHistory = React.createClass({displayName: "DashboardHistory",
+    propTypes: {
+
+    },
+
+    getInitialState: function () {
+        return {
+            width: 400,
+            layout: 'classic',
+            ease: 'linear',
+            duration: 400
+        };
+    },
+
+    componentWillMount: function () {
+        this.onSides = function (event) {
+            this.setState( {images: this.state.all_info.slice(0, event.target.value) });
+        }.bind(this);
+        this.onLayout = function (event) {
+            this.setState({layout: event.target.value});
+        }.bind(this);
+        this.onDuration = function (event) {
+            this.setState({duration: parseInt(event.target.value) });
+        }.bind(this);
+        this.onEase = function (event) {
+            this.setState({ease:  event.target.value});
+        }.bind(this);
+    },
+
+    render: function () {
+        return (
+            React.createElement("div", {className: "carouselhistory"}, 
+                React.createElement("div", null, 
+                React.createElement(Carousel, {all_info: this.props.uploadslist, 
+                		  width: this.state.width, 
+                          ease: this.state.ease, 
+                          duration: this.state.duration, 
+                          layout: this.state.layout, 
+                          deleteInspir: this.props.deleteInspir, 
+                          boardtype: this.props.boardtype})
+                )
+            )
+        );
+    }
+});
+
+module.exports = DashboardHistory; 
+},{"./carouselstuff/carousel.jsx":180,"ease-functions":6,"react":177}],185:[function(require,module,exports){
 var React = require('react');
 var dir = require('node-dir'); 
 var path = require('path'); 
@@ -24470,7 +24550,7 @@ var Feed = React.createClass({displayName: "Feed",
 }); 
 
 module.exports = Feed; 
-},{"./lightbox.jsx":185,"./masonry.jsx":187,"fs":3,"node-dir":39,"path":46,"react":177}],185:[function(require,module,exports){
+},{"./lightbox.jsx":186,"./masonry.jsx":188,"fs":3,"node-dir":39,"path":46,"react":177}],186:[function(require,module,exports){
 var React = require('react');
 var Carousel = require('./carousel_overlay.jsx')
 
@@ -24578,7 +24658,7 @@ var Lightbox = React.createClass({displayName: "Lightbox",
     // }.bind(this));
 
 module.exports = Lightbox;
-},{"./carousel_overlay.jsx":179,"react":177}],186:[function(require,module,exports){
+},{"./carousel_overlay.jsx":179,"react":177}],187:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
 
@@ -24645,7 +24725,7 @@ var loginPage = React.createClass({displayName: "loginPage",
 });
 
 module.exports = loginPage;
-},{"react":177,"react-dom":48}],187:[function(require,module,exports){
+},{"react":177,"react-dom":48}],188:[function(require,module,exports){
 var isBrowser = (typeof window !== 'undefined');
 var Masonry = isBrowser ? window.Masonry || require('masonry-layout') : null;
 var imagesloaded = isBrowser ? require('imagesloaded') : null;
@@ -24841,10 +24921,10 @@ var MasonryComponent = React.createClass({
 });
 
 module.exports = MasonryComponent;
-},{"imagesloaded":37,"masonry-layout":38,"react":177}],188:[function(require,module,exports){
+},{"imagesloaded":37,"masonry-layout":38,"react":177}],189:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
-var UploadsDasboard = require('./myuploads.jsx');
+var Dashboard = require('./dashboard.jsx');
 
 var MyBoard = React.createClass({displayName: "MyBoard",
 
@@ -24859,12 +24939,12 @@ var MyBoard = React.createClass({displayName: "MyBoard",
             var subpage = React.createElement("div", null, React.createElement("div", {className: "centering-div"}, 
                    React.createElement("h1", null, "My Uploads")
                 ), 
-                React.createElement(UploadsDasboard, {uploadslist: this.props.uploads}))
+                React.createElement(Dashboard, {boardtype: this.props.subpage, uploadslist: this.props.uploads, deleteInspir: this.props.deleteInspir}))
         } else if (this.props.subpage === "inspirations") {
             var subpage = React.createElement("div", null, React.createElement("div", {className: "centering-div"}, 
                    React.createElement("h1", null, "My Inspirations")
                 ), 
-                React.createElement(UploadsDasboard, {uploadslist: this.props.inspirations}))
+                React.createElement(Dashboard, {boardtype: this.props.subpage, uploadslist: this.props.inspirations, deleteInspir: this.props.deleteInspir}))
         } else {
             var subpage = React.createElement("div", {className: "centering-div"}, 
                    React.createElement("h1", null, "Profile Page...")
@@ -24880,59 +24960,7 @@ var MyBoard = React.createClass({displayName: "MyBoard",
 });
 
 module.exports = MyBoard;
-},{"./myuploads.jsx":189,"react":177,"react-dom":48}],189:[function(require,module,exports){
-/* DashboardHistory Component that holds the Carousel*/
-
-var React = require('react');
-var Carousel = require('./carouselstuff/carousel.jsx');
-var Ease = require('ease-functions');
-
-var DashboardHistory = React.createClass({displayName: "DashboardHistory",
-    propTypes: {
-
-    },
-
-    getInitialState: function () {
-        return {
-            width: 400,
-            layout: 'classic',
-            ease: 'linear',
-            duration: 400
-        };
-    },
-
-    componentWillMount: function () {
-        this.onSides = function (event) {
-            this.setState( {images: this.state.all_info.slice(0, event.target.value) });
-        }.bind(this);
-        this.onLayout = function (event) {
-            this.setState({layout: event.target.value});
-        }.bind(this);
-        this.onDuration = function (event) {
-            this.setState({duration: parseInt(event.target.value) });
-        }.bind(this);
-        this.onEase = function (event) {
-            this.setState({ease:  event.target.value});
-        }.bind(this);
-    },
-
-    render: function () {
-        return (
-            React.createElement("div", {className: "carouselhistory"}, 
-                React.createElement("div", null, 
-                React.createElement(Carousel, {all_info: this.props.uploadslist, 
-                		  width: this.state.width, 
-                          ease: this.state.ease, 
-                          duration: this.state.duration, 
-                          layout: this.state.layout})
-                )
-            )
-        );
-    }
-});
-
-module.exports = DashboardHistory; 
-},{"./carouselstuff/carousel.jsx":180,"ease-functions":6,"react":177}],190:[function(require,module,exports){
+},{"./dashboard.jsx":184,"react":177,"react-dom":48}],190:[function(require,module,exports){
 // Navigation/header bar on the top of the page. Holds login and search bar
 var React = require('react');
 var ReactDOM = require('react-dom');
@@ -25117,4 +25145,4 @@ var Upload = React.createClass({displayName: "Upload",
 });
 
 module.exports = Upload;
-},{"./masonry.jsx":187,"react":177,"react-dom":48}]},{},[178]);
+},{"./masonry.jsx":188,"react":177,"react-dom":48}]},{},[178]);

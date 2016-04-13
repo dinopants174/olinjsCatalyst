@@ -154,38 +154,26 @@
   transition: all 0.3s ease-in-out;
 }
 
-.carousel-button {
-  position: relative;
-  z-index: 2;
-  text-align: center;
+a.boxclose{
+    float:right;
+    margin-top:-10px;
+    margin-right:-10px;
+    cursor:pointer;
+    color: #fff;
+    border: 1px solid #AEAEAE;
+    border-radius: 30px;
+    background: #605F61;
+    font-size: 31px;
+    font-weight: bold;
+    display: inline-block;
+    line-height: 0px;
+    padding: 11px 3px;       
 }
 
-.carousel-button button {
-  /*display: block;*/
-  width: 3vw;
-  height: 3vw;
-  border: 2px solid white;
-  border-radius: 40px;
-  margin: 0 1%;
-  background-color: #999;
-  -moz-transition: all 0.3s ease-in-out;
-  -o-transition: all 0.3s ease-in-out;
-  -ms-transition: all 0.3s ease-in-out;
-  transition: all 0.3s ease-in-out;
-  position: relative;
+.boxclose:before {
+    content: "×";
 }
 
-.carousel-button button:hover {
-  background-color: #eee;
-}
-
-.carousel-button button:focus {
-  outline: none;
-}
-
-.carousel-button button img {
-  margin-top: 1px;
-}
 
 .imageheadline, .imageauthor {
   margin-left: 0;

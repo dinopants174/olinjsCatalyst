@@ -1,6 +1,6 @@
 var React = require('react');
 var ReactDOM = require('react-dom');
-var UploadsDasboard = require('./myuploads.jsx');
+var Dashboard = require('./dashboard.jsx');
 
 var MyBoard = React.createClass({
 
@@ -15,12 +15,12 @@ var MyBoard = React.createClass({
             var subpage = <div><div className='centering-div'>
                    <h1>My Uploads</h1>
                 </div>
-                <UploadsDasboard uploadslist={this.props.uploads}/></div>
+                <Dashboard boardtype={this.props.subpage} uploadslist={this.props.uploads} deleteInspir={this.props.deleteInspir}/></div>
         } else if (this.props.subpage === "inspirations") {
             var subpage = <div><div className='centering-div'>
                    <h1>My Inspirations</h1>
                 </div>
-                <UploadsDasboard uploadslist={this.props.inspirations}/></div>
+                <Dashboard boardtype={this.props.subpage} uploadslist={this.props.inspirations} deleteInspir={this.props.deleteInspir}/></div>
         } else {
             var subpage = <div className='centering-div'>
                    <h1>Profile Page...</h1>

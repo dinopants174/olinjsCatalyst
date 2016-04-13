@@ -141,6 +141,36 @@ var CatalystBox = React.createClass({
 
     }, 
 
+    deleteInspiration: function(item, boardtype) {
+        console.log(boardtype, item);
+
+        if (boardtype==="uploads"){
+            console.log(boardtype, item);
+        } else {
+            $.ajax({ 
+                url: '/api/user/deleteInspiration',
+                dataType: 'json',
+                cache: false,
+                type: 'POST',
+                data: {srcId: item._id}, 
+                success: function(userObject){ 
+                    console.log("alleged user object", userObject)
+
+                    userObject.inspirations.forEach(function(i){ 
+                        console.log(i)
+                    })
+                    
+                    this.setState({user: userObject}); 
+                }.bind(this), 
+                error: function(xhr, status, err){ 
+                    console.log("there has been an error")
+                    console.error('/api/user/postInspiration', status, err.toString())
+
+                }.bind(this)
+            }) 
+        }
+    },
+
     render: function() {
         var page;
 
@@ -163,7 +193,7 @@ var CatalystBox = React.createClass({
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
                         <button onClick={this.showMyBoardUploads} className="button board">My Uploads</button>
                         <button onClick={this.showMyBoardInspirations} className="button board">My Inspirations</button>
-                        <MyBoard subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations}/>
+                        <MyBoard subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations} deleteInspir={this.deleteInspiration}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
