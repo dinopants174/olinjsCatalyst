@@ -141,8 +141,6 @@ var CatalystBox = React.createClass({
             type: 'POST',
             data: {srcId: item._id}, 
             success: function(userObject){ 
-                console.log("alleged user object", userObject)
-
                 userObject.inspirations.forEach(function(i){ 
                     console.log("inspiraaation", i)
                 })
@@ -164,7 +162,6 @@ var CatalystBox = React.createClass({
             dataType: 'json', 
             type: 'GET', 
             success: function(piece){ 
-                console.log("This is the tree", piece)
                 return callback(piece)
             }.bind(this), 
             error: function(xhr, status, err) {

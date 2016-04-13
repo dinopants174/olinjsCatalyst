@@ -24552,8 +24552,6 @@ var Feed = React.createClass({displayName: "Feed",
 	}, 
 
 	checkIfInInspirations: function(object, inspirations){ 
-		console.log("these are object and inspirations", object)
-		console.log("inspirations now user", inspirations)
 		var i; 
 		for(i = 0; i < inspirations.length; i++){ 
 			if(inspirations[i]._id === object._id){ 
@@ -24593,16 +24591,22 @@ var Feed = React.createClass({displayName: "Feed",
         }.bind(this));
     }, 
 
-	render: function(){ 
-		var parent = this; 
-        var childElements = this.state.images.map(function(element, i){
-			var pinButton; 
-			if(parent.checkIfInInspirations(element, parent.props.userInspirations)){ 
+    pinnedButton: function(item){ 
+    	var pinButton; 
+			if(this.checkIfInInspirations(item, this.props.userInspirations)){ 
 				pinButton = React.createElement("button", {className: "button add", disabled: true}, " Already Pinned ")
 			}
 			else{ 
-				pinButton = React.createElement("button", {className: "button add", onClick: parent.handleClickToAddInspiration.bind(null, element)}, " + Add Inspiration ")
+				pinButton = React.createElement("button", {className: "button add", onClick: this.handleClickToAddInspiration.bind(null, item)}, " + Add Inspiration ")
 			}
+			return pinButton
+    },
+
+	render: function(){ 
+		var parent = this; 
+        var childElements = this.state.images.map(function(element, i){
+			var pinButton = parent.pinnedButton(element)
+
            return (
            		React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
 	                React.createElement("div", {dangerouslySetInnerHTML: parent.rawMarkup(element.src)}), 
@@ -24614,6 +24618,7 @@ var Feed = React.createClass({displayName: "Feed",
         });
 
         if (this.state.display){
+
             return (
             	React.createElement("div", null, 
             	React.createElement("div", {id: "feed"}, 
@@ -24629,7 +24634,8 @@ var Feed = React.createClass({displayName: "Feed",
                     React.createElement("div", {style: this.blackOverlayStyles, onClick: this.closeLightbox}), 
                     React.createElement("div", {style: this.whiteContentStyles}, 
                         React.createElement("a", {style: this.closeTagStyles, onClick: this.closeLightbox}, "×"), 
-                        React.createElement("div", {className: "upclose", dangerouslySetInnerHTML: this.rawMarkup(this.state.tree.src)})
+                        React.createElement("div", {className: "upclose", dangerouslySetInnerHTML: this.rawMarkup(this.state.tree.src)}), 
+                        React.createElement("div", null, " ", this.pinnedButton(this.state.tree))
                     )
             	)
             	)

@@ -69,8 +69,6 @@ var Feed = React.createClass({
 	}, 
 
 	checkIfInInspirations: function(object, inspirations){ 
-		console.log("these are object and inspirations", object)
-		console.log("inspirations now user", inspirations)
 		var i; 
 		for(i = 0; i < inspirations.length; i++){ 
 			if(inspirations[i]._id === object._id){ 
@@ -81,7 +79,6 @@ var Feed = React.createClass({
 	},
 
 	handleClickToAddInspiration: function(item){ 
-		console.log("you've clicked this item", item)
 		this.props.addInspir(item)
 	},
 
@@ -110,16 +107,22 @@ var Feed = React.createClass({
         }.bind(this));
     }, 
 
-	render: function(){ 
-		var parent = this; 
-        var childElements = this.state.images.map(function(element, i){
-			var pinButton; 
-			if(parent.checkIfInInspirations(element, parent.props.userInspirations)){ 
+    pinnedButton: function(item){ 
+    	var pinButton; 
+			if(this.checkIfInInspirations(item, this.props.userInspirations)){ 
 				pinButton = <button className="button add" disabled> Already Pinned </button>
 			}
 			else{ 
-				pinButton = <button className="button add" onClick = {parent.handleClickToAddInspiration.bind(null, element)}> + Add Inspiration </button>
+				pinButton = <button className="button add" onClick = {this.handleClickToAddInspiration.bind(null, item)}> + Add Inspiration </button>
 			}
+			return pinButton
+    },
+
+	render: function(){ 
+		var parent = this; 
+        var childElements = this.state.images.map(function(element, i){
+			var pinButton = parent.pinnedButton(element)
+
            return (
            		<div key={'div'+i} className="image-div-class">
 	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
@@ -131,6 +134,7 @@ var Feed = React.createClass({
         });
 
         if (this.state.display){
+
             return (
             	<div> 
             	<div id="feed"> 
@@ -147,6 +151,7 @@ var Feed = React.createClass({
                     <div style={this.whiteContentStyles}>
                         <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
                         <div className = 'upclose' dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
+                        <div> {this.pinnedButton(this.state.tree)}</div>
                     </div> 
             	</div>
             	</div>
