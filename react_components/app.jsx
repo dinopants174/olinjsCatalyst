@@ -50,10 +50,11 @@ var CatalystBox = React.createClass({
             type: 'POST',
             data: {src: uploadcode.embedcode, title: uploadcode.title, inspirations: uploadcode.checkedInspirations},
             success: function(user) {
-                this.setState({
-                    display: DisplayEnum.DISPLAY_MYBOARD, 
-                    user: user,
-                });
+                // this.setState({
+                //     display: DisplayEnum.DISPLAY_HOME, 
+                //     user: user,
+                // });
+                this.handleFeed({user : user}); 
             }.bind(this),
             error: function(xhr, status, err) {
                 console.error('/api/user/postUpload', status, err.toString());
@@ -170,6 +171,36 @@ var CatalystBox = React.createClass({
                 console.log("error displaying piece")
             }.bind(this)
         })
+    }, 
+
+    deleteInspiration: function(item, boardtype) {
+        console.log(boardtype, item);
+
+        if (boardtype==="uploads"){
+            console.log(boardtype, item);
+        } else {
+            $.ajax({ 
+                url: '/api/user/deleteInspiration',
+                dataType: 'json',
+                cache: false,
+                type: 'POST',
+                data: {srcId: item._id}, 
+                success: function(userObject){ 
+                    console.log("alleged user object", userObject)
+
+                    userObject.inspirations.forEach(function(i){ 
+                        console.log(i)
+                    })
+                    
+                    this.setState({user: userObject}); 
+                }.bind(this), 
+                error: function(xhr, status, err){ 
+                    console.log("there has been an error")
+                    console.error('/api/user/postInspiration', status, err.toString())
+
+                }.bind(this)
+            }) 
+        }
     },
 
     render: function() {
@@ -194,7 +225,8 @@ var CatalystBox = React.createClass({
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
                         <button onClick={this.showMyBoardUploads} className="button board">My Uploads</button>
                         <button onClick={this.showMyBoardInspirations} className="button board">My Inspirations</button>
-                        <MyBoard subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations}/>
+                        <br/>
+                        <MyBoard subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations} deleteInspir={this.deleteInspiration}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );

@@ -1,10 +1,11 @@
 var React = require('react');
 // var ReactDOM = require('react-dom');
+
 var dir = require('node-dir'); 
 var path = require('path'); 
 var fs = require('fs');
 
-var Lightbox = require('react-lightbox');
+var Lightbox = require('./lightbox.jsx');
 
 var Masonry = require('./masonry.jsx');
 
@@ -70,12 +71,12 @@ var Feed = React.createClass({
 	checkIfInInspirations: function(object, inspirations){ 
 		console.log("these are object and inspirations", object)
 		console.log("inspirations now user", inspirations)
-		// var i; 
-		// for(i = 0; i < inspirations.length; i++){ 
-		// 	if(inspirations[i]._id === object._id){ 
-		// 		return true;
-		// 	}
-		// }
+		var i; 
+		for(i = 0; i < inspirations.length; i++){ 
+			if(inspirations[i]._id === object._id){ 
+				return true;
+			}
+		}
 		return false; 
 	},
 
@@ -83,12 +84,6 @@ var Feed = React.createClass({
 		console.log("you've clicked this item", item)
 		this.props.addInspir(item)
 	},
-
-	handleClickToViewPiece: function(item){ 
-		console.log(item)
-		alert("You clicked me")
-		this.setState({lightboxMode: true})
-	}, 
 
 	openLightbox: function(item){ 
 		var parent = this; 
@@ -172,6 +167,5 @@ var Feed = React.createClass({
 	}
 
 }); 
-
 
 module.exports = Feed; 
