@@ -23707,7 +23707,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             data: {src: uploadcode.embedcode, title: uploadcode.title, inspirations: uploadcode.checkedInspirations},
             success: function(user) {
                 this.setState({
-                    display: DisplayEnum.DISPLAY_MYBOARD, 
+                    display: DisplayEnum.DISPLAY_HOME, 
                     user: user,
                 });
             }.bind(this),
@@ -23865,6 +23865,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                         switchMyBoardUploads: this.showMyBoardUploads, displayName: this.state.displayName || ''}), 
                         React.createElement("button", {onClick: this.showMyBoardUploads, className: "button board"}, "My Uploads"), 
                         React.createElement("button", {onClick: this.showMyBoardInspirations, className: "button board"}, "My Inspirations"), 
+                        React.createElement("br", null), 
                         React.createElement(MyBoard, {subpage: this.state.subpage, uploads: this.state.user.uploads, inspirations: this.state.user.inspirations, deleteInspir: this.deleteInspiration}), 
                         React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )

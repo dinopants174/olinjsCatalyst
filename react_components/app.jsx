@@ -35,7 +35,7 @@ var CatalystBox = React.createClass({
             data: {src: uploadcode.embedcode, title: uploadcode.title, inspirations: uploadcode.checkedInspirations},
             success: function(user) {
                 this.setState({
-                    display: DisplayEnum.DISPLAY_MYBOARD, 
+                    display: DisplayEnum.DISPLAY_HOME, 
                     user: user,
                 });
             }.bind(this),
@@ -193,6 +193,7 @@ var CatalystBox = React.createClass({
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
                         <button onClick={this.showMyBoardUploads} className="button board">My Uploads</button>
                         <button onClick={this.showMyBoardInspirations} className="button board">My Inspirations</button>
+                        <br/>
                         <MyBoard subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations} deleteInspir={this.deleteInspiration}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
