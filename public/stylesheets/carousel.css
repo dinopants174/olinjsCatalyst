@@ -1,4 +1,25 @@
 /*Dashboard History Carousel*/
+.button.board {
+    border: 1px solid #ccc;
+    color: #333;
+    float: right;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 3px; /* ensures room for the outer glow */
+    padding: 4px 20px;
+    
+    -khtml-border-radius: 25px;
+    -moz-border-radius: 25px;
+    -o-border-radius: 25px;
+    -webkit-border-radius: 25px;
+    border-radius: 25px;
+    
+    -khtml-text-shadow: -1px -1px 1px #ccc;
+    -moz-text-shadow: -1px -1px 1px #ccc;
+    -o-text-shadow: -1px -1px 1px #ccc;
+    -webkit-text-shadow: -1px -1px 1px #ccc;
+    text-shadow: -1px -1px 1px #ccc;
+}
 
 .carouselhistory {
   width: 80vw;
@@ -90,6 +111,7 @@
    position: relative; 
    height: 100%;
    width: 100%;
+   z-index: 0;
 }
 
 .imagedash {
@@ -133,38 +155,35 @@
   transition: all 0.3s ease-in-out;
 }
 
-.carousel-button {
-  position: relative;
-  z-index: 2;
-  text-align: center;
+a.boxclose{
+    text-decoration: none;
+    float:right;
+    margin-top:-15px;
+    margin-right:-15px;
+    cursor:pointer;
+    color: #fff;
+    border: 1px solid #AEAEAE;
+    border-radius: 30px;
+    background: #605F61;
+    font-size: 31px;
+    font-weight: bold;
+    display: inline-block;
+    line-height: 0px;
+    padding: 11px 3px;
+    z-index:1;
 }
 
-.carousel-button button {
-  /*display: block;*/
-  width: 3vw;
-  height: 3vw;
-  border: 2px solid white;
-  border-radius: 40px;
-  margin: 0 1%;
-  background-color: #999;
-  -moz-transition: all 0.3s ease-in-out;
-  -o-transition: all 0.3s ease-in-out;
-  -ms-transition: all 0.3s ease-in-out;
-  transition: all 0.3s ease-in-out;
-  position: relative;
+.boxclose:before {
+    text-decoration: none;
+    content: "×";
+    cursor:pointer;
 }
 
-.carousel-button button:hover {
-  background-color: #eee;
+a.boxclose:hover {
+    color: #999;
+    text-decoration: none;
 }
 
-.carousel-button button:focus {
-  outline: none;
-}
-
-.carousel-button button img {
-  margin-top: 1px;
-}
 
 .imageheadline, .imageauthor {
   margin-left: 0;
@@ -182,6 +201,14 @@
 }
 
 div.imagedash iframe {
+  padding-top: 3vw;
+  padding-left: 3vw;
+  padding-right: 3vw;
+  width: 80vw;
+  height: 35vw;
+}
+
+div.imagedash a img {
   padding-top: 3vw;
   padding-left: 3vw;
   padding-right: 3vw;

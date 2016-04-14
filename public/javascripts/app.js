@@ -1,321 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-module.exports = balanced;
-function balanced(a, b, str) {
-  var r = range(a, b, str);
-
-  return r && {
-    start: r[0],
-    end: r[1],
-    pre: str.slice(0, r[0]),
-    body: str.slice(r[0] + a.length, r[1]),
-    post: str.slice(r[1] + b.length)
-  };
-}
-
-balanced.range = range;
-function range(a, b, str) {
-  var begs, beg, left, right, result;
-  var ai = str.indexOf(a);
-  var bi = str.indexOf(b, ai + 1);
-  var i = ai;
-
-  if (ai >= 0 && bi > 0) {
-    begs = [];
-    left = str.length;
-
-    while (i < str.length && i >= 0 && ! result) {
-      if (i == ai) {
-        begs.push(i);
-        ai = str.indexOf(a, i + 1);
-      } else if (begs.length == 1) {
-        result = [ begs.pop(), bi ];
-      } else {
-        beg = begs.pop();
-        if (beg < left) {
-          left = beg;
-          right = bi;
-        }
-
-        bi = str.indexOf(b, i + 1);
-      }
-
-      i = ai < bi && ai >= 0 ? ai : bi;
-    }
-
-    if (begs.length) {
-      result = [ left, right ];
-    }
-  }
-
-  return result;
-}
-
-},{}],2:[function(require,module,exports){
-var concatMap = require('concat-map');
-var balanced = require('balanced-match');
-
-module.exports = expandTop;
-
-var escSlash = '\0SLASH'+Math.random()+'\0';
-var escOpen = '\0OPEN'+Math.random()+'\0';
-var escClose = '\0CLOSE'+Math.random()+'\0';
-var escComma = '\0COMMA'+Math.random()+'\0';
-var escPeriod = '\0PERIOD'+Math.random()+'\0';
-
-function numeric(str) {
-  return parseInt(str, 10) == str
-    ? parseInt(str, 10)
-    : str.charCodeAt(0);
-}
-
-function escapeBraces(str) {
-  return str.split('\\\\').join(escSlash)
-            .split('\\{').join(escOpen)
-            .split('\\}').join(escClose)
-            .split('\\,').join(escComma)
-            .split('\\.').join(escPeriod);
-}
-
-function unescapeBraces(str) {
-  return str.split(escSlash).join('\\')
-            .split(escOpen).join('{')
-            .split(escClose).join('}')
-            .split(escComma).join(',')
-            .split(escPeriod).join('.');
-}
-
-
-// Basically just str.split(","), but handling cases
-// where we have nested braced sections, which should be
-// treated as individual members, like {a,{b,c},d}
-function parseCommaParts(str) {
-  if (!str)
-    return [''];
-
-  var parts = [];
-  var m = balanced('{', '}', str);
-
-  if (!m)
-    return str.split(',');
-
-  var pre = m.pre;
-  var body = m.body;
-  var post = m.post;
-  var p = pre.split(',');
-
-  p[p.length-1] += '{' + body + '}';
-  var postParts = parseCommaParts(post);
-  if (post.length) {
-    p[p.length-1] += postParts.shift();
-    p.push.apply(p, postParts);
-  }
-
-  parts.push.apply(parts, p);
-
-  return parts;
-}
-
-function expandTop(str) {
-  if (!str)
-    return [];
-
-  return expand(escapeBraces(str), true).map(unescapeBraces);
-}
-
-function identity(e) {
-  return e;
-}
-
-function embrace(str) {
-  return '{' + str + '}';
-}
-function isPadded(el) {
-  return /^-?0\d/.test(el);
-}
-
-function lte(i, y) {
-  return i <= y;
-}
-function gte(i, y) {
-  return i >= y;
-}
-
-function expand(str, isTop) {
-  var expansions = [];
-
-  var m = balanced('{', '}', str);
-  if (!m || /\$$/.test(m.pre)) return [str];
-
-  var isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
-  var isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
-  var isSequence = isNumericSequence || isAlphaSequence;
-  var isOptions = /^(.*,)+(.+)?$/.test(m.body);
-  if (!isSequence && !isOptions) {
-    // {a},b}
-    if (m.post.match(/,.*\}/)) {
-      str = m.pre + '{' + m.body + escClose + m.post;
-      return expand(str);
-    }
-    return [str];
-  }
-
-  var n;
-  if (isSequence) {
-    n = m.body.split(/\.\./);
-  } else {
-    n = parseCommaParts(m.body);
-    if (n.length === 1) {
-      // x{{a,b}}y ==> x{a}y x{b}y
-      n = expand(n[0], false).map(embrace);
-      if (n.length === 1) {
-        var post = m.post.length
-          ? expand(m.post, false)
-          : [''];
-        return post.map(function(p) {
-          return m.pre + n[0] + p;
-        });
-      }
-    }
-  }
-
-  // at this point, n is the parts, and we know it's not a comma set
-  // with a single entry.
-
-  // no need to expand pre, since it is guaranteed to be free of brace-sets
-  var pre = m.pre;
-  var post = m.post.length
-    ? expand(m.post, false)
-    : [''];
-
-  var N;
-
-  if (isSequence) {
-    var x = numeric(n[0]);
-    var y = numeric(n[1]);
-    var width = Math.max(n[0].length, n[1].length)
-    var incr = n.length == 3
-      ? Math.abs(numeric(n[2]))
-      : 1;
-    var test = lte;
-    var reverse = y < x;
-    if (reverse) {
-      incr *= -1;
-      test = gte;
-    }
-    var pad = n.some(isPadded);
-
-    N = [];
-
-    for (var i = x; test(i, y); i += incr) {
-      var c;
-      if (isAlphaSequence) {
-        c = String.fromCharCode(i);
-        if (c === '\\')
-          c = '';
-      } else {
-        c = String(i);
-        if (pad) {
-          var need = width - c.length;
-          if (need > 0) {
-            var z = new Array(need + 1).join('0');
-            if (i < 0)
-              c = '-' + z + c.slice(1);
-            else
-              c = z + c;
-          }
-        }
-      }
-      N.push(c);
-    }
-  } else {
-    N = concatMap(n, function(el) { return expand(el, false) });
-  }
-
-  for (var j = 0; j < N.length; j++) {
-    for (var k = 0; k < post.length; k++) {
-      var expansion = pre + N[j] + post[k];
-      if (!isTop || isSequence || expansion)
-        expansions.push(expansion);
-    }
-  }
-
-  return expansions;
-}
-
-
-},{"balanced-match":1,"concat-map":4}],3:[function(require,module,exports){
-
-},{}],4:[function(require,module,exports){
-module.exports = function (xs, fn) {
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        var x = fn(xs[i], i);
-        if (isArray(x)) res.push.apply(res, x);
-        else res.push(x);
-    }
-    return res;
-};
-
-var isArray = Array.isArray || function (xs) {
-    return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-},{}],5:[function(require,module,exports){
-/**
- * matchesSelector v2.0.1
- * matchesSelector( element, '.selector' )
- * MIT license
- */
-
-/*jshint browser: true, strict: true, undef: true, unused: true */
-
-( function( window, factory ) {
-  /*global define: false, module: false */
-  'use strict';
-  // universal module definition
-  if ( typeof define == 'function' && define.amd ) {
-    // AMD
-    define( factory );
-  } else if ( typeof module == 'object' && module.exports ) {
-    // CommonJS
-    module.exports = factory();
-  } else {
-    // browser global
-    window.matchesSelector = factory();
-  }
-
-}( window, function factory() {
-  'use strict';
-
-  var matchesMethod = ( function() {
-    var ElemProto = Element.prototype;
-    // check for the standard method name first
-    if ( ElemProto.matches ) {
-      return 'matches';
-    }
-    // check un-prefixed
-    if ( ElemProto.matchesSelector ) {
-      return 'matchesSelector';
-    }
-    // check vendor prefixes
-    var prefixes = [ 'webkit', 'moz', 'ms', 'o' ];
-
-    for ( var i=0; i < prefixes.length; i++ ) {
-      var prefix = prefixes[i];
-      var method = prefix + 'MatchesSelector';
-      if ( ElemProto[ method ] ) {
-        return method;
-      }
-    }
-  })();
-
-  return function matchesSelector( elem, selector ) {
-    return elem[ matchesMethod ]( selector );
-  };
-
-}));
-
-},{}],6:[function(require,module,exports){
 (function () {
 
     'use strict';
@@ -507,118 +190,7 @@ var isArray = Array.isArray || function (xs) {
     }
 
 }.call(this));
-},{}],7:[function(require,module,exports){
-/**
- * EvEmitter v1.0.2
- * Lil' event emitter
- * MIT License
- */
-
-/* jshint unused: true, undef: true, strict: true */
-
-( function( global, factory ) {
-  // universal module definition
-  /* jshint strict: false */ /* globals define, module */
-  if ( typeof define == 'function' && define.amd ) {
-    // AMD - RequireJS
-    define( factory );
-  } else if ( typeof module == 'object' && module.exports ) {
-    // CommonJS - Browserify, Webpack
-    module.exports = factory();
-  } else {
-    // Browser globals
-    global.EvEmitter = factory();
-  }
-
-}( this, function() {
-
-"use strict";
-
-function EvEmitter() {}
-
-var proto = EvEmitter.prototype;
-
-proto.on = function( eventName, listener ) {
-  if ( !eventName || !listener ) {
-    return;
-  }
-  // set events hash
-  var events = this._events = this._events || {};
-  // set listeners array
-  var listeners = events[ eventName ] = events[ eventName ] || [];
-  // only add once
-  if ( listeners.indexOf( listener ) == -1 ) {
-    listeners.push( listener );
-  }
-
-  return this;
-};
-
-proto.once = function( eventName, listener ) {
-  if ( !eventName || !listener ) {
-    return;
-  }
-  // add event
-  this.on( eventName, listener );
-  // set once flag
-  // set onceEvents hash
-  var onceEvents = this._onceEvents = this._onceEvents || {};
-  // set onceListeners object
-  var onceListeners = onceEvents[ eventName ] = onceEvents[ eventName ] || {};
-  // set flag
-  onceListeners[ listener ] = true;
-
-  return this;
-};
-
-proto.off = function( eventName, listener ) {
-  var listeners = this._events && this._events[ eventName ];
-  if ( !listeners || !listeners.length ) {
-    return;
-  }
-  var index = listeners.indexOf( listener );
-  if ( index != -1 ) {
-    listeners.splice( index, 1 );
-  }
-
-  return this;
-};
-
-proto.emitEvent = function( eventName, args ) {
-  var listeners = this._events && this._events[ eventName ];
-  if ( !listeners || !listeners.length ) {
-    return;
-  }
-  var i = 0;
-  var listener = listeners[i];
-  args = args || [];
-  // once stuff
-  var onceListeners = this._onceEvents && this._onceEvents[ eventName ];
-
-  while ( listener ) {
-    var isOnce = onceListeners && onceListeners[ listener ];
-    if ( isOnce ) {
-      // remove listener
-      // remove before trigger to prevent recursion
-      this.off( eventName, listener );
-      // unset once flag
-      delete onceListeners[ listener ];
-    }
-    // trigger listener
-    listener.apply( this, args );
-    // get next listener
-    i += isOnce ? 0 : 1;
-    listener = listeners[i];
-  }
-
-  return this;
-};
-
-return EvEmitter;
-
-}));
-
-},{}],8:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -705,7 +277,7 @@ var EventListener = {
 
 module.exports = EventListener;
 }).call(this,require('_process'))
-},{"./emptyFunction":15,"_process":47}],9:[function(require,module,exports){
+},{"./emptyFunction":9,"_process":31}],3:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -742,7 +314,7 @@ var ExecutionEnvironment = {
 };
 
 module.exports = ExecutionEnvironment;
-},{}],10:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -775,7 +347,7 @@ function camelize(string) {
 }
 
 module.exports = camelize;
-},{}],11:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -816,7 +388,7 @@ function camelizeStyleName(string) {
 }
 
 module.exports = camelizeStyleName;
-},{"./camelize":10}],12:[function(require,module,exports){
+},{"./camelize":4}],6:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -872,7 +444,7 @@ function containsNode(_x, _x2) {
 }
 
 module.exports = containsNode;
-},{"./isTextNode":25}],13:[function(require,module,exports){
+},{"./isTextNode":19}],7:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -958,7 +530,7 @@ function createArrayFromMixed(obj) {
 }
 
 module.exports = createArrayFromMixed;
-},{"./toArray":33}],14:[function(require,module,exports){
+},{"./toArray":27}],8:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -1045,7 +617,7 @@ function createNodesFromMarkup(markup, handleScript) {
 
 module.exports = createNodesFromMarkup;
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":9,"./createArrayFromMixed":13,"./getMarkupWrap":19,"./invariant":23,"_process":47}],15:[function(require,module,exports){
+},{"./ExecutionEnvironment":3,"./createArrayFromMixed":7,"./getMarkupWrap":13,"./invariant":17,"_process":31}],9:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1084,7 +656,7 @@ emptyFunction.thatReturnsArgument = function (arg) {
 };
 
 module.exports = emptyFunction;
-},{}],16:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -1107,7 +679,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = emptyObject;
 }).call(this,require('_process'))
-},{"_process":47}],17:[function(require,module,exports){
+},{"_process":31}],11:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1134,7 +706,7 @@ function focusNode(node) {
 }
 
 module.exports = focusNode;
-},{}],18:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1170,7 +742,7 @@ function getActiveElement() /*?DOMElement*/{
 }
 
 module.exports = getActiveElement;
-},{}],19:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -1268,7 +840,7 @@ function getMarkupWrap(nodeName) {
 
 module.exports = getMarkupWrap;
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":9,"./invariant":23,"_process":47}],20:[function(require,module,exports){
+},{"./ExecutionEnvironment":3,"./invariant":17,"_process":31}],14:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1307,7 +879,7 @@ function getUnboundedScrollPosition(scrollable) {
 }
 
 module.exports = getUnboundedScrollPosition;
-},{}],21:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1341,7 +913,7 @@ function hyphenate(string) {
 }
 
 module.exports = hyphenate;
-},{}],22:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1381,7 +953,7 @@ function hyphenateStyleName(string) {
 }
 
 module.exports = hyphenateStyleName;
-},{"./hyphenate":21}],23:[function(require,module,exports){
+},{"./hyphenate":15}],17:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -1434,7 +1006,7 @@ function invariant(condition, format, a, b, c, d, e, f) {
 
 module.exports = invariant;
 }).call(this,require('_process'))
-},{"_process":47}],24:[function(require,module,exports){
+},{"_process":31}],18:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1458,7 +1030,7 @@ function isNode(object) {
 }
 
 module.exports = isNode;
-},{}],25:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1484,7 +1056,7 @@ function isTextNode(object) {
 }
 
 module.exports = isTextNode;
-},{"./isNode":24}],26:[function(require,module,exports){
+},{"./isNode":18}],20:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -1535,7 +1107,7 @@ var keyMirror = function (obj) {
 
 module.exports = keyMirror;
 }).call(this,require('_process'))
-},{"./invariant":23,"_process":47}],27:[function(require,module,exports){
+},{"./invariant":17,"_process":31}],21:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1571,7 +1143,7 @@ var keyOf = function (oneKeyObj) {
 };
 
 module.exports = keyOf;
-},{}],28:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1623,7 +1195,7 @@ function mapObject(object, callback, context) {
 }
 
 module.exports = mapObject;
-},{}],29:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1655,7 +1227,7 @@ function memoizeStringOnly(callback) {
 }
 
 module.exports = memoizeStringOnly;
-},{}],30:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1679,7 +1251,7 @@ if (ExecutionEnvironment.canUseDOM) {
 }
 
 module.exports = performance || {};
-},{"./ExecutionEnvironment":9}],31:[function(require,module,exports){
+},{"./ExecutionEnvironment":3}],25:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1714,7 +1286,7 @@ if (performance.now) {
 }
 
 module.exports = performanceNow;
-},{"./performance":30}],32:[function(require,module,exports){
+},{"./performance":24}],26:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1765,7 +1337,7 @@ function shallowEqual(objA, objB) {
 }
 
 module.exports = shallowEqual;
-},{}],33:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -1825,7 +1397,7 @@ function toArray(obj) {
 
 module.exports = toArray;
 }).call(this,require('_process'))
-},{"./invariant":23,"_process":47}],34:[function(require,module,exports){
+},{"./invariant":17,"_process":31}],28:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -1885,455 +1457,330 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = warning;
 }).call(this,require('_process'))
-},{"./emptyFunction":15,"_process":47}],35:[function(require,module,exports){
-/**
- * Fizzy UI utils v2.0.1
- * MIT license
- */
+},{"./emptyFunction":9,"_process":31}],29:[function(require,module,exports){
 
-/*jshint browser: true, undef: true, unused: true, strict: true */
+},{}],30:[function(require,module,exports){
+(function (process){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-( function( window, factory ) {
-  // universal module definition
-  /*jshint strict: false */ /*globals define, module, require */
-
-  if ( typeof define == 'function' && define.amd ) {
-    // AMD
-    define( [
-      'desandro-matches-selector/matches-selector'
-    ], function( matchesSelector ) {
-      return factory( window, matchesSelector );
-    });
-  } else if ( typeof module == 'object' && module.exports ) {
-    // CommonJS
-    module.exports = factory(
-      window,
-      require('desandro-matches-selector')
-    );
-  } else {
-    // browser global
-    window.fizzyUIUtils = factory(
-      window,
-      window.matchesSelector
-    );
-  }
-
-}( window, function factory( window, matchesSelector ) {
-
-'use strict';
-
-var utils = {};
-
-// ----- extend ----- //
-
-// extends objects
-utils.extend = function( a, b ) {
-  for ( var prop in b ) {
-    a[ prop ] = b[ prop ];
-  }
-  return a;
-};
-
-// ----- modulo ----- //
-
-utils.modulo = function( num, div ) {
-  return ( ( num % div ) + div ) % div;
-};
-
-// ----- makeArray ----- //
-
-// turn element or nodeList into an array
-utils.makeArray = function( obj ) {
-  var ary = [];
-  if ( Array.isArray( obj ) ) {
-    // use object if already an array
-    ary = obj;
-  } else if ( obj && typeof obj.length == 'number' ) {
-    // convert nodeList to array
-    for ( var i=0; i < obj.length; i++ ) {
-      ary.push( obj[i] );
-    }
-  } else {
-    // array of single index
-    ary.push( obj );
-  }
-  return ary;
-};
-
-// ----- removeFrom ----- //
-
-utils.removeFrom = function( ary, obj ) {
-  var index = ary.indexOf( obj );
-  if ( index != -1 ) {
-    ary.splice( index, 1 );
-  }
-};
-
-// ----- getParent ----- //
-
-utils.getParent = function( elem, selector ) {
-  while ( elem != document.body ) {
-    elem = elem.parentNode;
-    if ( matchesSelector( elem, selector ) ) {
-      return elem;
+// resolves . and .. elements in a path array with directory names there
+// must be no slashes, empty elements, or device names (c:\) in the array
+// (so also no leading and trailing slashes - it does not distinguish
+// relative and absolute paths)
+function normalizeArray(parts, allowAboveRoot) {
+  // if the path tries to go above the root, `up` ends up > 0
+  var up = 0;
+  for (var i = parts.length - 1; i >= 0; i--) {
+    var last = parts[i];
+    if (last === '.') {
+      parts.splice(i, 1);
+    } else if (last === '..') {
+      parts.splice(i, 1);
+      up++;
+    } else if (up) {
+      parts.splice(i, 1);
+      up--;
     }
   }
-};
 
-// ----- getQueryElement ----- //
-
-// use element as selector string
-utils.getQueryElement = function( elem ) {
-  if ( typeof elem == 'string' ) {
-    return document.querySelector( elem );
-  }
-  return elem;
-};
-
-// ----- handleEvent ----- //
-
-// enable .ontype to trigger from .addEventListener( elem, 'type' )
-utils.handleEvent = function( event ) {
-  var method = 'on' + event.type;
-  if ( this[ method ] ) {
-    this[ method ]( event );
-  }
-};
-
-// ----- filterFindElements ----- //
-
-utils.filterFindElements = function( elems, selector ) {
-  // make array of elems
-  elems = utils.makeArray( elems );
-  var ffElems = [];
-
-  elems.forEach( function( elem ) {
-    // check that elem is an actual element
-    if ( !( elem instanceof HTMLElement ) ) {
-      return;
+  // if the path is allowed to go above the root, restore leading ..s
+  if (allowAboveRoot) {
+    for (; up--; up) {
+      parts.unshift('..');
     }
-    // add elem if no selector
-    if ( !selector ) {
-      ffElems.push( elem );
-      return;
-    }
-    // filter & find items if we have a selector
-    // filter
-    if ( matchesSelector( elem, selector ) ) {
-      ffElems.push( elem );
-    }
-    // find children
-    var childElems = elem.querySelectorAll( selector );
-    // concat childElems to filterFound array
-    for ( var i=0; i < childElems.length; i++ ) {
-      ffElems.push( childElems[i] );
-    }
-  });
-
-  return ffElems;
-};
-
-// ----- debounceMethod ----- //
-
-utils.debounceMethod = function( _class, methodName, threshold ) {
-  // original method
-  var method = _class.prototype[ methodName ];
-  var timeoutName = methodName + 'Timeout';
-
-  _class.prototype[ methodName ] = function() {
-    var timeout = this[ timeoutName ];
-    if ( timeout ) {
-      clearTimeout( timeout );
-    }
-    var args = arguments;
-
-    var _this = this;
-    this[ timeoutName ] = setTimeout( function() {
-      method.apply( _this, args );
-      delete _this[ timeoutName ];
-    }, threshold || 100 );
-  };
-};
-
-// ----- docReady ----- //
-
-utils.docReady = function( callback ) {
-  if ( document.readyState == 'complete' ) {
-    callback();
-  } else {
-    document.addEventListener( 'DOMContentLoaded', callback );
-  }
-};
-
-// ----- htmlInit ----- //
-
-// http://jamesroberts.name/blog/2010/02/22/string-functions-for-javascript-trim-to-camel-case-to-dashed-and-to-underscore/
-utils.toDashed = function( str ) {
-  return str.replace( /(.)([A-Z])/g, function( match, $1, $2 ) {
-    return $1 + '-' + $2;
-  }).toLowerCase();
-};
-
-var console = window.console;
-/**
- * allow user to initialize classes via [data-namespace] or .js-namespace class
- * htmlInit( Widget, 'widgetName' )
- * options are parsed from data-namespace-options
- */
-utils.htmlInit = function( WidgetClass, namespace ) {
-  utils.docReady( function() {
-    var dashedNamespace = utils.toDashed( namespace );
-    var dataAttr = 'data-' + dashedNamespace;
-    var dataAttrElems = document.querySelectorAll( '[' + dataAttr + ']' );
-    var jsDashElems = document.querySelectorAll( '.js-' + dashedNamespace );
-    var elems = utils.makeArray( dataAttrElems )
-      .concat( utils.makeArray( jsDashElems ) );
-    var dataOptionsAttr = dataAttr + '-options';
-    var jQuery = window.jQuery;
-
-    elems.forEach( function( elem ) {
-      var attr = elem.getAttribute( dataAttr ) ||
-        elem.getAttribute( dataOptionsAttr );
-      var options;
-      try {
-        options = attr && JSON.parse( attr );
-      } catch ( error ) {
-        // log error, do not initialize
-        if ( console ) {
-          console.error( 'Error parsing ' + dataAttr + ' on ' + elem.className +
-          ': ' + error );
-        }
-        return;
-      }
-      // initialize
-      var instance = new WidgetClass( elem, options );
-      // make available via $().data('layoutname')
-      if ( jQuery ) {
-        jQuery.data( elem, namespace, instance );
-      }
-    });
-
-  });
-};
-
-// -----  ----- //
-
-return utils;
-
-}));
-
-},{"desandro-matches-selector":5}],36:[function(require,module,exports){
-/*!
- * getSize v2.0.2
- * measure size of elements
- * MIT license
- */
-
-/*jshint browser: true, strict: true, undef: true, unused: true */
-/*global define: false, module: false, console: false */
-
-( function( window, factory ) {
-  'use strict';
-
-  if ( typeof define == 'function' && define.amd ) {
-    // AMD
-    define( function() {
-      return factory();
-    });
-  } else if ( typeof module == 'object' && module.exports ) {
-    // CommonJS
-    module.exports = factory();
-  } else {
-    // browser global
-    window.getSize = factory();
   }
 
-})( window, function factory() {
-'use strict';
-
-// -------------------------- helpers -------------------------- //
-
-// get a number from a string, not a percentage
-function getStyleSize( value ) {
-  var num = parseFloat( value );
-  // not a percent like '100%', and a number
-  var isValid = value.indexOf('%') == -1 && !isNaN( num );
-  return isValid && num;
+  return parts;
 }
+
+// Split a filename into [root, dir, basename, ext], unix version
+// 'root' is just a slash, or nothing.
+var splitPathRe =
+    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
+var splitPath = function(filename) {
+  return splitPathRe.exec(filename).slice(1);
+};
+
+// path.resolve([from ...], to)
+// posix version
+exports.resolve = function() {
+  var resolvedPath = '',
+      resolvedAbsolute = false;
+
+  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
+    var path = (i >= 0) ? arguments[i] : process.cwd();
+
+    // Skip empty and invalid entries
+    if (typeof path !== 'string') {
+      throw new TypeError('Arguments to path.resolve must be strings');
+    } else if (!path) {
+      continue;
+    }
+
+    resolvedPath = path + '/' + resolvedPath;
+    resolvedAbsolute = path.charAt(0) === '/';
+  }
+
+  // At this point the path should be resolved to a full absolute path, but
+  // handle relative paths to be safe (might happen when process.cwd() fails)
+
+  // Normalize the path
+  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
+    return !!p;
+  }), !resolvedAbsolute).join('/');
+
+  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
+};
+
+// path.normalize(path)
+// posix version
+exports.normalize = function(path) {
+  var isAbsolute = exports.isAbsolute(path),
+      trailingSlash = substr(path, -1) === '/';
+
+  // Normalize the path
+  path = normalizeArray(filter(path.split('/'), function(p) {
+    return !!p;
+  }), !isAbsolute).join('/');
+
+  if (!path && !isAbsolute) {
+    path = '.';
+  }
+  if (path && trailingSlash) {
+    path += '/';
+  }
+
+  return (isAbsolute ? '/' : '') + path;
+};
+
+// posix version
+exports.isAbsolute = function(path) {
+  return path.charAt(0) === '/';
+};
+
+// posix version
+exports.join = function() {
+  var paths = Array.prototype.slice.call(arguments, 0);
+  return exports.normalize(filter(paths, function(p, index) {
+    if (typeof p !== 'string') {
+      throw new TypeError('Arguments to path.join must be strings');
+    }
+    return p;
+  }).join('/'));
+};
+
+
+// path.relative(from, to)
+// posix version
+exports.relative = function(from, to) {
+  from = exports.resolve(from).substr(1);
+  to = exports.resolve(to).substr(1);
+
+  function trim(arr) {
+    var start = 0;
+    for (; start < arr.length; start++) {
+      if (arr[start] !== '') break;
+    }
+
+    var end = arr.length - 1;
+    for (; end >= 0; end--) {
+      if (arr[end] !== '') break;
+    }
+
+    if (start > end) return [];
+    return arr.slice(start, end - start + 1);
+  }
+
+  var fromParts = trim(from.split('/'));
+  var toParts = trim(to.split('/'));
+
+  var length = Math.min(fromParts.length, toParts.length);
+  var samePartsLength = length;
+  for (var i = 0; i < length; i++) {
+    if (fromParts[i] !== toParts[i]) {
+      samePartsLength = i;
+      break;
+    }
+  }
+
+  var outputParts = [];
+  for (var i = samePartsLength; i < fromParts.length; i++) {
+    outputParts.push('..');
+  }
+
+  outputParts = outputParts.concat(toParts.slice(samePartsLength));
+
+  return outputParts.join('/');
+};
+
+exports.sep = '/';
+exports.delimiter = ':';
+
+exports.dirname = function(path) {
+  var result = splitPath(path),
+      root = result[0],
+      dir = result[1];
+
+  if (!root && !dir) {
+    // No dirname whatsoever
+    return '.';
+  }
+
+  if (dir) {
+    // It has a dirname, strip trailing slash
+    dir = dir.substr(0, dir.length - 1);
+  }
+
+  return root + dir;
+};
+
+
+exports.basename = function(path, ext) {
+  var f = splitPath(path)[2];
+  // TODO: make this comparison case-insensitive on windows?
+  if (ext && f.substr(-1 * ext.length) === ext) {
+    f = f.substr(0, f.length - ext.length);
+  }
+  return f;
+};
+
+
+exports.extname = function(path) {
+  return splitPath(path)[3];
+};
+
+function filter (xs, f) {
+    if (xs.filter) return xs.filter(f);
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        if (f(xs[i], i, xs)) res.push(xs[i]);
+    }
+    return res;
+}
+
+// String.prototype.substr - negative index don't work in IE8
+var substr = 'ab'.substr(-1) === 'b'
+    ? function (str, start, len) { return str.substr(start, len) }
+    : function (str, start, len) {
+        if (start < 0) start = str.length + start;
+        return str.substr(start, len);
+    }
+;
+
+}).call(this,require('_process'))
+},{"_process":31}],31:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = setTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    clearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        setTimeout(drainQueue, 0);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
 
 function noop() {}
 
-var logError = typeof console == 'undefined' ? noop :
-  function( message ) {
-    console.error( message );
-  };
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
 
-// -------------------------- measurements -------------------------- //
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
 
-var measurements = [
-  'paddingLeft',
-  'paddingRight',
-  'paddingTop',
-  'paddingBottom',
-  'marginLeft',
-  'marginRight',
-  'marginTop',
-  'marginBottom',
-  'borderLeftWidth',
-  'borderRightWidth',
-  'borderTopWidth',
-  'borderBottomWidth'
-];
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
 
-var measurementsLength = measurements.length;
-
-function getZeroSize() {
-  var size = {
-    width: 0,
-    height: 0,
-    innerWidth: 0,
-    innerHeight: 0,
-    outerWidth: 0,
-    outerHeight: 0
-  };
-  for ( var i=0; i < measurementsLength; i++ ) {
-    var measurement = measurements[i];
-    size[ measurement ] = 0;
-  }
-  return size;
-}
-
-// -------------------------- getStyle -------------------------- //
-
-/**
- * getStyle, get style of element, check for Firefox bug
- * https://bugzilla.mozilla.org/show_bug.cgi?id=548397
- */
-function getStyle( elem ) {
-  var style = getComputedStyle( elem );
-  if ( !style ) {
-    logError( 'Style returned ' + style +
-      '. Are you running this code in a hidden iframe on Firefox? ' +
-      'See http://bit.ly/getsizebug1' );
-  }
-  return style;
-}
-
-// -------------------------- setup -------------------------- //
-
-var isSetup = false;
-
-var isBoxSizeOuter;
-
-/**
- * setup
- * check isBoxSizerOuter
- * do on first getSize() rather than on page load for Firefox bug
- */
-function setup() {
-  // setup once
-  if ( isSetup ) {
-    return;
-  }
-  isSetup = true;
-
-  // -------------------------- box sizing -------------------------- //
-
-  /**
-   * WebKit measures the outer-width on style.width on border-box elems
-   * IE & Firefox<29 measures the inner-width
-   */
-  var div = document.createElement('div');
-  div.style.width = '200px';
-  div.style.padding = '1px 2px 3px 4px';
-  div.style.borderStyle = 'solid';
-  div.style.borderWidth = '1px 2px 3px 4px';
-  div.style.boxSizing = 'border-box';
-
-  var body = document.body || document.documentElement;
-  body.appendChild( div );
-  var style = getStyle( div );
-
-  getSize.isBoxSizeOuter = isBoxSizeOuter = getStyleSize( style.width ) == 200;
-  body.removeChild( div );
-
-}
-
-// -------------------------- getSize -------------------------- //
-
-function getSize( elem ) {
-  setup();
-
-  // use querySeletor if elem is string
-  if ( typeof elem == 'string' ) {
-    elem = document.querySelector( elem );
-  }
-
-  // do not proceed on non-objects
-  if ( !elem || typeof elem != 'object' || !elem.nodeType ) {
-    return;
-  }
-
-  var style = getStyle( elem );
-
-  // if hidden, everything is 0
-  if ( style.display == 'none' ) {
-    return getZeroSize();
-  }
-
-  var size = {};
-  size.width = elem.offsetWidth;
-  size.height = elem.offsetHeight;
-
-  var isBorderBox = size.isBorderBox = style.boxSizing == 'border-box';
-
-  // get all measurements
-  for ( var i=0; i < measurementsLength; i++ ) {
-    var measurement = measurements[i];
-    var value = style[ measurement ];
-    var num = parseFloat( value );
-    // any 'auto', 'medium' value will be 0
-    size[ measurement ] = !isNaN( num ) ? num : 0;
-  }
-
-  var paddingWidth = size.paddingLeft + size.paddingRight;
-  var paddingHeight = size.paddingTop + size.paddingBottom;
-  var marginWidth = size.marginLeft + size.marginRight;
-  var marginHeight = size.marginTop + size.marginBottom;
-  var borderWidth = size.borderLeftWidth + size.borderRightWidth;
-  var borderHeight = size.borderTopWidth + size.borderBottomWidth;
-
-  var isBorderBoxSizeOuter = isBorderBox && isBoxSizeOuter;
-
-  // overwrite width and height if we can get it from style
-  var styleWidth = getStyleSize( style.width );
-  if ( styleWidth !== false ) {
-    size.width = styleWidth +
-      // add padding and border unless it's already including it
-      ( isBorderBoxSizeOuter ? 0 : paddingWidth + borderWidth );
-  }
-
-  var styleHeight = getStyleSize( style.height );
-  if ( styleHeight !== false ) {
-    size.height = styleHeight +
-      // add padding and border unless it's already including it
-      ( isBorderBoxSizeOuter ? 0 : paddingHeight + borderHeight );
-  }
-
-  size.innerWidth = size.width - ( paddingWidth + borderWidth );
-  size.innerHeight = size.height - ( paddingHeight + borderHeight );
-
-  size.outerWidth = size.width + marginWidth;
-  size.outerHeight = size.height + marginHeight;
-
-  return size;
-}
-
-return getSize;
-
-});
-
-},{}],37:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 /*!
  * imagesLoaded v4.1.0
  * JavaScript is all like "You images are done yet or what?"
@@ -2705,7 +2152,118 @@ return ImagesLoaded;
 
 });
 
-},{"ev-emitter":7}],38:[function(require,module,exports){
+},{"ev-emitter":33}],33:[function(require,module,exports){
+/**
+ * EvEmitter v1.0.2
+ * Lil' event emitter
+ * MIT License
+ */
+
+/* jshint unused: true, undef: true, strict: true */
+
+( function( global, factory ) {
+  // universal module definition
+  /* jshint strict: false */ /* globals define, module */
+  if ( typeof define == 'function' && define.amd ) {
+    // AMD - RequireJS
+    define( factory );
+  } else if ( typeof module == 'object' && module.exports ) {
+    // CommonJS - Browserify, Webpack
+    module.exports = factory();
+  } else {
+    // Browser globals
+    global.EvEmitter = factory();
+  }
+
+}( this, function() {
+
+"use strict";
+
+function EvEmitter() {}
+
+var proto = EvEmitter.prototype;
+
+proto.on = function( eventName, listener ) {
+  if ( !eventName || !listener ) {
+    return;
+  }
+  // set events hash
+  var events = this._events = this._events || {};
+  // set listeners array
+  var listeners = events[ eventName ] = events[ eventName ] || [];
+  // only add once
+  if ( listeners.indexOf( listener ) == -1 ) {
+    listeners.push( listener );
+  }
+
+  return this;
+};
+
+proto.once = function( eventName, listener ) {
+  if ( !eventName || !listener ) {
+    return;
+  }
+  // add event
+  this.on( eventName, listener );
+  // set once flag
+  // set onceEvents hash
+  var onceEvents = this._onceEvents = this._onceEvents || {};
+  // set onceListeners object
+  var onceListeners = onceEvents[ eventName ] = onceEvents[ eventName ] || {};
+  // set flag
+  onceListeners[ listener ] = true;
+
+  return this;
+};
+
+proto.off = function( eventName, listener ) {
+  var listeners = this._events && this._events[ eventName ];
+  if ( !listeners || !listeners.length ) {
+    return;
+  }
+  var index = listeners.indexOf( listener );
+  if ( index != -1 ) {
+    listeners.splice( index, 1 );
+  }
+
+  return this;
+};
+
+proto.emitEvent = function( eventName, args ) {
+  var listeners = this._events && this._events[ eventName ];
+  if ( !listeners || !listeners.length ) {
+    return;
+  }
+  var i = 0;
+  var listener = listeners[i];
+  args = args || [];
+  // once stuff
+  var onceListeners = this._onceEvents && this._onceEvents[ eventName ];
+
+  while ( listener ) {
+    var isOnce = onceListeners && onceListeners[ listener ];
+    if ( isOnce ) {
+      // remove listener
+      // remove before trigger to prevent recursion
+      this.off( eventName, listener );
+      // unset once flag
+      delete onceListeners[ listener ];
+    }
+    // trigger listener
+    listener.apply( this, args );
+    // get next listener
+    i += isOnce ? 0 : 1;
+    listener = listeners[i];
+  }
+
+  return this;
+};
+
+return EvEmitter;
+
+}));
+
+},{}],34:[function(require,module,exports){
 /*!
  * Masonry v4.0.0
  * Cascading grid layout library
@@ -2912,7 +2470,1953 @@ return ImagesLoaded;
 
 }));
 
-},{"get-size":36,"outlayer":45}],39:[function(require,module,exports){
+},{"get-size":35,"outlayer":40}],35:[function(require,module,exports){
+/*!
+ * getSize v2.0.2
+ * measure size of elements
+ * MIT license
+ */
+
+/*jshint browser: true, strict: true, undef: true, unused: true */
+/*global define: false, module: false, console: false */
+
+( function( window, factory ) {
+  'use strict';
+
+  if ( typeof define == 'function' && define.amd ) {
+    // AMD
+    define( function() {
+      return factory();
+    });
+  } else if ( typeof module == 'object' && module.exports ) {
+    // CommonJS
+    module.exports = factory();
+  } else {
+    // browser global
+    window.getSize = factory();
+  }
+
+})( window, function factory() {
+'use strict';
+
+// -------------------------- helpers -------------------------- //
+
+// get a number from a string, not a percentage
+function getStyleSize( value ) {
+  var num = parseFloat( value );
+  // not a percent like '100%', and a number
+  var isValid = value.indexOf('%') == -1 && !isNaN( num );
+  return isValid && num;
+}
+
+function noop() {}
+
+var logError = typeof console == 'undefined' ? noop :
+  function( message ) {
+    console.error( message );
+  };
+
+// -------------------------- measurements -------------------------- //
+
+var measurements = [
+  'paddingLeft',
+  'paddingRight',
+  'paddingTop',
+  'paddingBottom',
+  'marginLeft',
+  'marginRight',
+  'marginTop',
+  'marginBottom',
+  'borderLeftWidth',
+  'borderRightWidth',
+  'borderTopWidth',
+  'borderBottomWidth'
+];
+
+var measurementsLength = measurements.length;
+
+function getZeroSize() {
+  var size = {
+    width: 0,
+    height: 0,
+    innerWidth: 0,
+    innerHeight: 0,
+    outerWidth: 0,
+    outerHeight: 0
+  };
+  for ( var i=0; i < measurementsLength; i++ ) {
+    var measurement = measurements[i];
+    size[ measurement ] = 0;
+  }
+  return size;
+}
+
+// -------------------------- getStyle -------------------------- //
+
+/**
+ * getStyle, get style of element, check for Firefox bug
+ * https://bugzilla.mozilla.org/show_bug.cgi?id=548397
+ */
+function getStyle( elem ) {
+  var style = getComputedStyle( elem );
+  if ( !style ) {
+    logError( 'Style returned ' + style +
+      '. Are you running this code in a hidden iframe on Firefox? ' +
+      'See http://bit.ly/getsizebug1' );
+  }
+  return style;
+}
+
+// -------------------------- setup -------------------------- //
+
+var isSetup = false;
+
+var isBoxSizeOuter;
+
+/**
+ * setup
+ * check isBoxSizerOuter
+ * do on first getSize() rather than on page load for Firefox bug
+ */
+function setup() {
+  // setup once
+  if ( isSetup ) {
+    return;
+  }
+  isSetup = true;
+
+  // -------------------------- box sizing -------------------------- //
+
+  /**
+   * WebKit measures the outer-width on style.width on border-box elems
+   * IE & Firefox<29 measures the inner-width
+   */
+  var div = document.createElement('div');
+  div.style.width = '200px';
+  div.style.padding = '1px 2px 3px 4px';
+  div.style.borderStyle = 'solid';
+  div.style.borderWidth = '1px 2px 3px 4px';
+  div.style.boxSizing = 'border-box';
+
+  var body = document.body || document.documentElement;
+  body.appendChild( div );
+  var style = getStyle( div );
+
+  getSize.isBoxSizeOuter = isBoxSizeOuter = getStyleSize( style.width ) == 200;
+  body.removeChild( div );
+
+}
+
+// -------------------------- getSize -------------------------- //
+
+function getSize( elem ) {
+  setup();
+
+  // use querySeletor if elem is string
+  if ( typeof elem == 'string' ) {
+    elem = document.querySelector( elem );
+  }
+
+  // do not proceed on non-objects
+  if ( !elem || typeof elem != 'object' || !elem.nodeType ) {
+    return;
+  }
+
+  var style = getStyle( elem );
+
+  // if hidden, everything is 0
+  if ( style.display == 'none' ) {
+    return getZeroSize();
+  }
+
+  var size = {};
+  size.width = elem.offsetWidth;
+  size.height = elem.offsetHeight;
+
+  var isBorderBox = size.isBorderBox = style.boxSizing == 'border-box';
+
+  // get all measurements
+  for ( var i=0; i < measurementsLength; i++ ) {
+    var measurement = measurements[i];
+    var value = style[ measurement ];
+    var num = parseFloat( value );
+    // any 'auto', 'medium' value will be 0
+    size[ measurement ] = !isNaN( num ) ? num : 0;
+  }
+
+  var paddingWidth = size.paddingLeft + size.paddingRight;
+  var paddingHeight = size.paddingTop + size.paddingBottom;
+  var marginWidth = size.marginLeft + size.marginRight;
+  var marginHeight = size.marginTop + size.marginBottom;
+  var borderWidth = size.borderLeftWidth + size.borderRightWidth;
+  var borderHeight = size.borderTopWidth + size.borderBottomWidth;
+
+  var isBorderBoxSizeOuter = isBorderBox && isBoxSizeOuter;
+
+  // overwrite width and height if we can get it from style
+  var styleWidth = getStyleSize( style.width );
+  if ( styleWidth !== false ) {
+    size.width = styleWidth +
+      // add padding and border unless it's already including it
+      ( isBorderBoxSizeOuter ? 0 : paddingWidth + borderWidth );
+  }
+
+  var styleHeight = getStyleSize( style.height );
+  if ( styleHeight !== false ) {
+    size.height = styleHeight +
+      // add padding and border unless it's already including it
+      ( isBorderBoxSizeOuter ? 0 : paddingHeight + borderHeight );
+  }
+
+  size.innerWidth = size.width - ( paddingWidth + borderWidth );
+  size.innerHeight = size.height - ( paddingHeight + borderHeight );
+
+  size.outerWidth = size.width + marginWidth;
+  size.outerHeight = size.height + marginHeight;
+
+  return size;
+}
+
+return getSize;
+
+});
+
+},{}],36:[function(require,module,exports){
+/**
+ * Outlayer Item
+ */
+
+( function( window, factory ) {
+  // universal module definition
+  /* jshint strict: false */ /* globals define, module, require */
+  if ( typeof define == 'function' && define.amd ) {
+    // AMD - RequireJS
+    define( [
+        'ev-emitter/ev-emitter',
+        'get-size/get-size'
+      ],
+      factory
+    );
+  } else if ( typeof module == 'object' && module.exports ) {
+    // CommonJS - Browserify, Webpack
+    module.exports = factory(
+      require('ev-emitter'),
+      require('get-size')
+    );
+  } else {
+    // browser global
+    window.Outlayer = {};
+    window.Outlayer.Item = factory(
+      window.EvEmitter,
+      window.getSize
+    );
+  }
+
+}( window, function factory( EvEmitter, getSize ) {
+'use strict';
+
+// ----- helpers ----- //
+
+function isEmptyObj( obj ) {
+  for ( var prop in obj ) {
+    return false;
+  }
+  prop = null;
+  return true;
+}
+
+// -------------------------- CSS3 support -------------------------- //
+
+
+var docElemStyle = document.documentElement.style;
+
+var transitionProperty = typeof docElemStyle.transition == 'string' ?
+  'transition' : 'WebkitTransition';
+var transformProperty = typeof docElemStyle.transform == 'string' ?
+  'transform' : 'WebkitTransform';
+
+var transitionEndEvent = {
+  WebkitTransition: 'webkitTransitionEnd',
+  transition: 'transitionend'
+}[ transitionProperty ];
+
+// cache all vendor properties that could have vendor prefix
+var vendorProperties = {
+  transform: transformProperty,
+  transition: transitionProperty,
+  transitionDuration: transitionProperty + 'Duration',
+  transitionProperty: transitionProperty + 'Property'
+};
+
+// -------------------------- Item -------------------------- //
+
+function Item( element, layout ) {
+  if ( !element ) {
+    return;
+  }
+
+  this.element = element;
+  // parent layout class, i.e. Masonry, Isotope, or Packery
+  this.layout = layout;
+  this.position = {
+    x: 0,
+    y: 0
+  };
+
+  this._create();
+}
+
+// inherit EvEmitter
+var proto = Item.prototype = Object.create( EvEmitter.prototype );
+proto.constructor = Item;
+
+proto._create = function() {
+  // transition objects
+  this._transn = {
+    ingProperties: {},
+    clean: {},
+    onEnd: {}
+  };
+
+  this.css({
+    position: 'absolute'
+  });
+};
+
+// trigger specified handler for event type
+proto.handleEvent = function( event ) {
+  var method = 'on' + event.type;
+  if ( this[ method ] ) {
+    this[ method ]( event );
+  }
+};
+
+proto.getSize = function() {
+  this.size = getSize( this.element );
+};
+
+/**
+ * apply CSS styles to element
+ * @param {Object} style
+ */
+proto.css = function( style ) {
+  var elemStyle = this.element.style;
+
+  for ( var prop in style ) {
+    // use vendor property if available
+    var supportedProp = vendorProperties[ prop ] || prop;
+    elemStyle[ supportedProp ] = style[ prop ];
+  }
+};
+
+ // measure position, and sets it
+proto.getPosition = function() {
+  var style = getComputedStyle( this.element );
+  var isOriginLeft = this.layout._getOption('originLeft');
+  var isOriginTop = this.layout._getOption('originTop');
+  var xValue = style[ isOriginLeft ? 'left' : 'right' ];
+  var yValue = style[ isOriginTop ? 'top' : 'bottom' ];
+  // convert percent to pixels
+  var layoutSize = this.layout.size;
+  var x = xValue.indexOf('%') != -1 ?
+    ( parseFloat( xValue ) / 100 ) * layoutSize.width : parseInt( xValue, 10 );
+  var y = yValue.indexOf('%') != -1 ?
+    ( parseFloat( yValue ) / 100 ) * layoutSize.height : parseInt( yValue, 10 );
+
+  // clean up 'auto' or other non-integer values
+  x = isNaN( x ) ? 0 : x;
+  y = isNaN( y ) ? 0 : y;
+  // remove padding from measurement
+  x -= isOriginLeft ? layoutSize.paddingLeft : layoutSize.paddingRight;
+  y -= isOriginTop ? layoutSize.paddingTop : layoutSize.paddingBottom;
+
+  this.position.x = x;
+  this.position.y = y;
+};
+
+// set settled position, apply padding
+proto.layoutPosition = function() {
+  var layoutSize = this.layout.size;
+  var style = {};
+  var isOriginLeft = this.layout._getOption('originLeft');
+  var isOriginTop = this.layout._getOption('originTop');
+
+  // x
+  var xPadding = isOriginLeft ? 'paddingLeft' : 'paddingRight';
+  var xProperty = isOriginLeft ? 'left' : 'right';
+  var xResetProperty = isOriginLeft ? 'right' : 'left';
+
+  var x = this.position.x + layoutSize[ xPadding ];
+  // set in percentage or pixels
+  style[ xProperty ] = this.getXValue( x );
+  // reset other property
+  style[ xResetProperty ] = '';
+
+  // y
+  var yPadding = isOriginTop ? 'paddingTop' : 'paddingBottom';
+  var yProperty = isOriginTop ? 'top' : 'bottom';
+  var yResetProperty = isOriginTop ? 'bottom' : 'top';
+
+  var y = this.position.y + layoutSize[ yPadding ];
+  // set in percentage or pixels
+  style[ yProperty ] = this.getYValue( y );
+  // reset other property
+  style[ yResetProperty ] = '';
+
+  this.css( style );
+  this.emitEvent( 'layout', [ this ] );
+};
+
+proto.getXValue = function( x ) {
+  var isHorizontal = this.layout._getOption('horizontal');
+  return this.layout.options.percentPosition && !isHorizontal ?
+    ( ( x / this.layout.size.width ) * 100 ) + '%' : x + 'px';
+};
+
+proto.getYValue = function( y ) {
+  var isHorizontal = this.layout._getOption('horizontal');
+  return this.layout.options.percentPosition && isHorizontal ?
+    ( ( y / this.layout.size.height ) * 100 ) + '%' : y + 'px';
+};
+
+proto._transitionTo = function( x, y ) {
+  this.getPosition();
+  // get current x & y from top/left
+  var curX = this.position.x;
+  var curY = this.position.y;
+
+  var compareX = parseInt( x, 10 );
+  var compareY = parseInt( y, 10 );
+  var didNotMove = compareX === this.position.x && compareY === this.position.y;
+
+  // save end position
+  this.setPosition( x, y );
+
+  // if did not move and not transitioning, just go to layout
+  if ( didNotMove && !this.isTransitioning ) {
+    this.layoutPosition();
+    return;
+  }
+
+  var transX = x - curX;
+  var transY = y - curY;
+  var transitionStyle = {};
+  transitionStyle.transform = this.getTranslate( transX, transY );
+
+  this.transition({
+    to: transitionStyle,
+    onTransitionEnd: {
+      transform: this.layoutPosition
+    },
+    isCleaning: true
+  });
+};
+
+proto.getTranslate = function( x, y ) {
+  // flip cooridinates if origin on right or bottom
+  var isOriginLeft = this.layout._getOption('originLeft');
+  var isOriginTop = this.layout._getOption('originTop');
+  x = isOriginLeft ? x : -x;
+  y = isOriginTop ? y : -y;
+  return 'translate3d(' + x + 'px, ' + y + 'px, 0)';
+};
+
+// non transition + transform support
+proto.goTo = function( x, y ) {
+  this.setPosition( x, y );
+  this.layoutPosition();
+};
+
+proto.moveTo = proto._transitionTo;
+
+proto.setPosition = function( x, y ) {
+  this.position.x = parseInt( x, 10 );
+  this.position.y = parseInt( y, 10 );
+};
+
+// ----- transition ----- //
+
+/**
+ * @param {Object} style - CSS
+ * @param {Function} onTransitionEnd
+ */
+
+// non transition, just trigger callback
+proto._nonTransition = function( args ) {
+  this.css( args.to );
+  if ( args.isCleaning ) {
+    this._removeStyles( args.to );
+  }
+  for ( var prop in args.onTransitionEnd ) {
+    args.onTransitionEnd[ prop ].call( this );
+  }
+};
+
+/**
+ * proper transition
+ * @param {Object} args - arguments
+ *   @param {Object} to - style to transition to
+ *   @param {Object} from - style to start transition from
+ *   @param {Boolean} isCleaning - removes transition styles after transition
+ *   @param {Function} onTransitionEnd - callback
+ */
+proto.transition = function( args ) {
+  // redirect to nonTransition if no transition duration
+  if ( !parseFloat( this.layout.options.transitionDuration ) ) {
+    this._nonTransition( args );
+    return;
+  }
+
+  var _transition = this._transn;
+  // keep track of onTransitionEnd callback by css property
+  for ( var prop in args.onTransitionEnd ) {
+    _transition.onEnd[ prop ] = args.onTransitionEnd[ prop ];
+  }
+  // keep track of properties that are transitioning
+  for ( prop in args.to ) {
+    _transition.ingProperties[ prop ] = true;
+    // keep track of properties to clean up when transition is done
+    if ( args.isCleaning ) {
+      _transition.clean[ prop ] = true;
+    }
+  }
+
+  // set from styles
+  if ( args.from ) {
+    this.css( args.from );
+    // force redraw. http://blog.alexmaccaw.com/css-transitions
+    var h = this.element.offsetHeight;
+    // hack for JSHint to hush about unused var
+    h = null;
+  }
+  // enable transition
+  this.enableTransition( args.to );
+  // set styles that are transitioning
+  this.css( args.to );
+
+  this.isTransitioning = true;
+
+};
+
+// dash before all cap letters, including first for
+// WebkitTransform => -webkit-transform
+function toDashedAll( str ) {
+  return str.replace( /([A-Z])/g, function( $1 ) {
+    return '-' + $1.toLowerCase();
+  });
+}
+
+var transitionProps = 'opacity,' + toDashedAll( transformProperty );
+
+proto.enableTransition = function(/* style */) {
+  // HACK changing transitionProperty during a transition
+  // will cause transition to jump
+  if ( this.isTransitioning ) {
+    return;
+  }
+
+  // make `transition: foo, bar, baz` from style object
+  // HACK un-comment this when enableTransition can work
+  // while a transition is happening
+  // var transitionValues = [];
+  // for ( var prop in style ) {
+  //   // dash-ify camelCased properties like WebkitTransition
+  //   prop = vendorProperties[ prop ] || prop;
+  //   transitionValues.push( toDashedAll( prop ) );
+  // }
+  // enable transition styles
+  this.css({
+    transitionProperty: transitionProps,
+    transitionDuration: this.layout.options.transitionDuration
+  });
+  // listen for transition end event
+  this.element.addEventListener( transitionEndEvent, this, false );
+};
+
+// ----- events ----- //
+
+proto.onwebkitTransitionEnd = function( event ) {
+  this.ontransitionend( event );
+};
+
+proto.onotransitionend = function( event ) {
+  this.ontransitionend( event );
+};
+
+// properties that I munge to make my life easier
+var dashedVendorProperties = {
+  '-webkit-transform': 'transform'
+};
+
+proto.ontransitionend = function( event ) {
+  // disregard bubbled events from children
+  if ( event.target !== this.element ) {
+    return;
+  }
+  var _transition = this._transn;
+  // get property name of transitioned property, convert to prefix-free
+  var propertyName = dashedVendorProperties[ event.propertyName ] || event.propertyName;
+
+  // remove property that has completed transitioning
+  delete _transition.ingProperties[ propertyName ];
+  // check if any properties are still transitioning
+  if ( isEmptyObj( _transition.ingProperties ) ) {
+    // all properties have completed transitioning
+    this.disableTransition();
+  }
+  // clean style
+  if ( propertyName in _transition.clean ) {
+    // clean up style
+    this.element.style[ event.propertyName ] = '';
+    delete _transition.clean[ propertyName ];
+  }
+  // trigger onTransitionEnd callback
+  if ( propertyName in _transition.onEnd ) {
+    var onTransitionEnd = _transition.onEnd[ propertyName ];
+    onTransitionEnd.call( this );
+    delete _transition.onEnd[ propertyName ];
+  }
+
+  this.emitEvent( 'transitionEnd', [ this ] );
+};
+
+proto.disableTransition = function() {
+  this.removeTransitionStyles();
+  this.element.removeEventListener( transitionEndEvent, this, false );
+  this.isTransitioning = false;
+};
+
+/**
+ * removes style property from element
+ * @param {Object} style
+**/
+proto._removeStyles = function( style ) {
+  // clean up transition styles
+  var cleanStyle = {};
+  for ( var prop in style ) {
+    cleanStyle[ prop ] = '';
+  }
+  this.css( cleanStyle );
+};
+
+var cleanTransitionStyle = {
+  transitionProperty: '',
+  transitionDuration: ''
+};
+
+proto.removeTransitionStyles = function() {
+  // remove transition
+  this.css( cleanTransitionStyle );
+};
+
+// ----- show/hide/remove ----- //
+
+// remove element from DOM
+proto.removeElem = function() {
+  this.element.parentNode.removeChild( this.element );
+  // remove display: none
+  this.css({ display: '' });
+  this.emitEvent( 'remove', [ this ] );
+};
+
+proto.remove = function() {
+  // just remove element if no transition support or no transition
+  if ( !transitionProperty || !parseFloat( this.layout.options.transitionDuration ) ) {
+    this.removeElem();
+    return;
+  }
+
+  // start transition
+  this.once( 'transitionEnd', function() {
+    this.removeElem();
+  });
+  this.hide();
+};
+
+proto.reveal = function() {
+  delete this.isHidden;
+  // remove display: none
+  this.css({ display: '' });
+
+  var options = this.layout.options;
+
+  var onTransitionEnd = {};
+  var transitionEndProperty = this.getHideRevealTransitionEndProperty('visibleStyle');
+  onTransitionEnd[ transitionEndProperty ] = this.onRevealTransitionEnd;
+
+  this.transition({
+    from: options.hiddenStyle,
+    to: options.visibleStyle,
+    isCleaning: true,
+    onTransitionEnd: onTransitionEnd
+  });
+};
+
+proto.onRevealTransitionEnd = function() {
+  // check if still visible
+  // during transition, item may have been hidden
+  if ( !this.isHidden ) {
+    this.emitEvent('reveal');
+  }
+};
+
+/**
+ * get style property use for hide/reveal transition end
+ * @param {String} styleProperty - hiddenStyle/visibleStyle
+ * @returns {String}
+ */
+proto.getHideRevealTransitionEndProperty = function( styleProperty ) {
+  var optionStyle = this.layout.options[ styleProperty ];
+  // use opacity
+  if ( optionStyle.opacity ) {
+    return 'opacity';
+  }
+  // get first property
+  for ( var prop in optionStyle ) {
+    return prop;
+  }
+};
+
+proto.hide = function() {
+  // set flag
+  this.isHidden = true;
+  // remove display: none
+  this.css({ display: '' });
+
+  var options = this.layout.options;
+
+  var onTransitionEnd = {};
+  var transitionEndProperty = this.getHideRevealTransitionEndProperty('hiddenStyle');
+  onTransitionEnd[ transitionEndProperty ] = this.onHideTransitionEnd;
+
+  this.transition({
+    from: options.visibleStyle,
+    to: options.hiddenStyle,
+    // keep hidden stuff hidden
+    isCleaning: true,
+    onTransitionEnd: onTransitionEnd
+  });
+};
+
+proto.onHideTransitionEnd = function() {
+  // check if still hidden
+  // during transition, item may have been un-hidden
+  if ( this.isHidden ) {
+    this.css({ display: 'none' });
+    this.emitEvent('hide');
+  }
+};
+
+proto.destroy = function() {
+  this.css({
+    position: '',
+    left: '',
+    right: '',
+    top: '',
+    bottom: '',
+    transition: '',
+    transform: ''
+  });
+};
+
+return Item;
+
+}));
+
+},{"ev-emitter":37,"get-size":35}],37:[function(require,module,exports){
+arguments[4][33][0].apply(exports,arguments)
+},{"dup":33}],38:[function(require,module,exports){
+/**
+ * matchesSelector v2.0.1
+ * matchesSelector( element, '.selector' )
+ * MIT license
+ */
+
+/*jshint browser: true, strict: true, undef: true, unused: true */
+
+( function( window, factory ) {
+  /*global define: false, module: false */
+  'use strict';
+  // universal module definition
+  if ( typeof define == 'function' && define.amd ) {
+    // AMD
+    define( factory );
+  } else if ( typeof module == 'object' && module.exports ) {
+    // CommonJS
+    module.exports = factory();
+  } else {
+    // browser global
+    window.matchesSelector = factory();
+  }
+
+}( window, function factory() {
+  'use strict';
+
+  var matchesMethod = ( function() {
+    var ElemProto = Element.prototype;
+    // check for the standard method name first
+    if ( ElemProto.matches ) {
+      return 'matches';
+    }
+    // check un-prefixed
+    if ( ElemProto.matchesSelector ) {
+      return 'matchesSelector';
+    }
+    // check vendor prefixes
+    var prefixes = [ 'webkit', 'moz', 'ms', 'o' ];
+
+    for ( var i=0; i < prefixes.length; i++ ) {
+      var prefix = prefixes[i];
+      var method = prefix + 'MatchesSelector';
+      if ( ElemProto[ method ] ) {
+        return method;
+      }
+    }
+  })();
+
+  return function matchesSelector( elem, selector ) {
+    return elem[ matchesMethod ]( selector );
+  };
+
+}));
+
+},{}],39:[function(require,module,exports){
+/**
+ * Fizzy UI utils v2.0.1
+ * MIT license
+ */
+
+/*jshint browser: true, undef: true, unused: true, strict: true */
+
+( function( window, factory ) {
+  // universal module definition
+  /*jshint strict: false */ /*globals define, module, require */
+
+  if ( typeof define == 'function' && define.amd ) {
+    // AMD
+    define( [
+      'desandro-matches-selector/matches-selector'
+    ], function( matchesSelector ) {
+      return factory( window, matchesSelector );
+    });
+  } else if ( typeof module == 'object' && module.exports ) {
+    // CommonJS
+    module.exports = factory(
+      window,
+      require('desandro-matches-selector')
+    );
+  } else {
+    // browser global
+    window.fizzyUIUtils = factory(
+      window,
+      window.matchesSelector
+    );
+  }
+
+}( window, function factory( window, matchesSelector ) {
+
+'use strict';
+
+var utils = {};
+
+// ----- extend ----- //
+
+// extends objects
+utils.extend = function( a, b ) {
+  for ( var prop in b ) {
+    a[ prop ] = b[ prop ];
+  }
+  return a;
+};
+
+// ----- modulo ----- //
+
+utils.modulo = function( num, div ) {
+  return ( ( num % div ) + div ) % div;
+};
+
+// ----- makeArray ----- //
+
+// turn element or nodeList into an array
+utils.makeArray = function( obj ) {
+  var ary = [];
+  if ( Array.isArray( obj ) ) {
+    // use object if already an array
+    ary = obj;
+  } else if ( obj && typeof obj.length == 'number' ) {
+    // convert nodeList to array
+    for ( var i=0; i < obj.length; i++ ) {
+      ary.push( obj[i] );
+    }
+  } else {
+    // array of single index
+    ary.push( obj );
+  }
+  return ary;
+};
+
+// ----- removeFrom ----- //
+
+utils.removeFrom = function( ary, obj ) {
+  var index = ary.indexOf( obj );
+  if ( index != -1 ) {
+    ary.splice( index, 1 );
+  }
+};
+
+// ----- getParent ----- //
+
+utils.getParent = function( elem, selector ) {
+  while ( elem != document.body ) {
+    elem = elem.parentNode;
+    if ( matchesSelector( elem, selector ) ) {
+      return elem;
+    }
+  }
+};
+
+// ----- getQueryElement ----- //
+
+// use element as selector string
+utils.getQueryElement = function( elem ) {
+  if ( typeof elem == 'string' ) {
+    return document.querySelector( elem );
+  }
+  return elem;
+};
+
+// ----- handleEvent ----- //
+
+// enable .ontype to trigger from .addEventListener( elem, 'type' )
+utils.handleEvent = function( event ) {
+  var method = 'on' + event.type;
+  if ( this[ method ] ) {
+    this[ method ]( event );
+  }
+};
+
+// ----- filterFindElements ----- //
+
+utils.filterFindElements = function( elems, selector ) {
+  // make array of elems
+  elems = utils.makeArray( elems );
+  var ffElems = [];
+
+  elems.forEach( function( elem ) {
+    // check that elem is an actual element
+    if ( !( elem instanceof HTMLElement ) ) {
+      return;
+    }
+    // add elem if no selector
+    if ( !selector ) {
+      ffElems.push( elem );
+      return;
+    }
+    // filter & find items if we have a selector
+    // filter
+    if ( matchesSelector( elem, selector ) ) {
+      ffElems.push( elem );
+    }
+    // find children
+    var childElems = elem.querySelectorAll( selector );
+    // concat childElems to filterFound array
+    for ( var i=0; i < childElems.length; i++ ) {
+      ffElems.push( childElems[i] );
+    }
+  });
+
+  return ffElems;
+};
+
+// ----- debounceMethod ----- //
+
+utils.debounceMethod = function( _class, methodName, threshold ) {
+  // original method
+  var method = _class.prototype[ methodName ];
+  var timeoutName = methodName + 'Timeout';
+
+  _class.prototype[ methodName ] = function() {
+    var timeout = this[ timeoutName ];
+    if ( timeout ) {
+      clearTimeout( timeout );
+    }
+    var args = arguments;
+
+    var _this = this;
+    this[ timeoutName ] = setTimeout( function() {
+      method.apply( _this, args );
+      delete _this[ timeoutName ];
+    }, threshold || 100 );
+  };
+};
+
+// ----- docReady ----- //
+
+utils.docReady = function( callback ) {
+  if ( document.readyState == 'complete' ) {
+    callback();
+  } else {
+    document.addEventListener( 'DOMContentLoaded', callback );
+  }
+};
+
+// ----- htmlInit ----- //
+
+// http://jamesroberts.name/blog/2010/02/22/string-functions-for-javascript-trim-to-camel-case-to-dashed-and-to-underscore/
+utils.toDashed = function( str ) {
+  return str.replace( /(.)([A-Z])/g, function( match, $1, $2 ) {
+    return $1 + '-' + $2;
+  }).toLowerCase();
+};
+
+var console = window.console;
+/**
+ * allow user to initialize classes via [data-namespace] or .js-namespace class
+ * htmlInit( Widget, 'widgetName' )
+ * options are parsed from data-namespace-options
+ */
+utils.htmlInit = function( WidgetClass, namespace ) {
+  utils.docReady( function() {
+    var dashedNamespace = utils.toDashed( namespace );
+    var dataAttr = 'data-' + dashedNamespace;
+    var dataAttrElems = document.querySelectorAll( '[' + dataAttr + ']' );
+    var jsDashElems = document.querySelectorAll( '.js-' + dashedNamespace );
+    var elems = utils.makeArray( dataAttrElems )
+      .concat( utils.makeArray( jsDashElems ) );
+    var dataOptionsAttr = dataAttr + '-options';
+    var jQuery = window.jQuery;
+
+    elems.forEach( function( elem ) {
+      var attr = elem.getAttribute( dataAttr ) ||
+        elem.getAttribute( dataOptionsAttr );
+      var options;
+      try {
+        options = attr && JSON.parse( attr );
+      } catch ( error ) {
+        // log error, do not initialize
+        if ( console ) {
+          console.error( 'Error parsing ' + dataAttr + ' on ' + elem.className +
+          ': ' + error );
+        }
+        return;
+      }
+      // initialize
+      var instance = new WidgetClass( elem, options );
+      // make available via $().data('layoutname')
+      if ( jQuery ) {
+        jQuery.data( elem, namespace, instance );
+      }
+    });
+
+  });
+};
+
+// -----  ----- //
+
+return utils;
+
+}));
+
+},{"desandro-matches-selector":38}],40:[function(require,module,exports){
+/*!
+ * Outlayer v2.0.1
+ * the brains and guts of a layout library
+ * MIT license
+ */
+
+( function( window, factory ) {
+  'use strict';
+  // universal module definition
+  /* jshint strict: false */ /* globals define, module, require */
+  if ( typeof define == 'function' && define.amd ) {
+    // AMD - RequireJS
+    define( [
+        'ev-emitter/ev-emitter',
+        'get-size/get-size',
+        'fizzy-ui-utils/utils',
+        './item'
+      ],
+      function( EvEmitter, getSize, utils, Item ) {
+        return factory( window, EvEmitter, getSize, utils, Item);
+      }
+    );
+  } else if ( typeof module == 'object' && module.exports ) {
+    // CommonJS - Browserify, Webpack
+    module.exports = factory(
+      window,
+      require('ev-emitter'),
+      require('get-size'),
+      require('fizzy-ui-utils'),
+      require('./item')
+    );
+  } else {
+    // browser global
+    window.Outlayer = factory(
+      window,
+      window.EvEmitter,
+      window.getSize,
+      window.fizzyUIUtils,
+      window.Outlayer.Item
+    );
+  }
+
+}( window, function factory( window, EvEmitter, getSize, utils, Item ) {
+'use strict';
+
+// ----- vars ----- //
+
+var console = window.console;
+var jQuery = window.jQuery;
+var noop = function() {};
+
+// -------------------------- Outlayer -------------------------- //
+
+// globally unique identifiers
+var GUID = 0;
+// internal store of all Outlayer intances
+var instances = {};
+
+
+/**
+ * @param {Element, String} element
+ * @param {Object} options
+ * @constructor
+ */
+function Outlayer( element, options ) {
+  var queryElement = utils.getQueryElement( element );
+  if ( !queryElement ) {
+    if ( console ) {
+      console.error( 'Bad element for ' + this.constructor.namespace +
+        ': ' + ( queryElement || element ) );
+    }
+    return;
+  }
+  this.element = queryElement;
+  // add jQuery
+  if ( jQuery ) {
+    this.$element = jQuery( this.element );
+  }
+
+  // options
+  this.options = utils.extend( {}, this.constructor.defaults );
+  this.option( options );
+
+  // add id for Outlayer.getFromElement
+  var id = ++GUID;
+  this.element.outlayerGUID = id; // expando
+  instances[ id ] = this; // associate via id
+
+  // kick it off
+  this._create();
+
+  var isInitLayout = this._getOption('initLayout');
+  if ( isInitLayout ) {
+    this.layout();
+  }
+}
+
+// settings are for internal use only
+Outlayer.namespace = 'outlayer';
+Outlayer.Item = Item;
+
+// default options
+Outlayer.defaults = {
+  containerStyle: {
+    position: 'relative'
+  },
+  initLayout: true,
+  originLeft: true,
+  originTop: true,
+  resize: true,
+  resizeContainer: true,
+  // item options
+  transitionDuration: '0.4s',
+  hiddenStyle: {
+    opacity: 0,
+    transform: 'scale(0.001)'
+  },
+  visibleStyle: {
+    opacity: 1,
+    transform: 'scale(1)'
+  }
+};
+
+var proto = Outlayer.prototype;
+// inherit EvEmitter
+utils.extend( proto, EvEmitter.prototype );
+
+/**
+ * set options
+ * @param {Object} opts
+ */
+proto.option = function( opts ) {
+  utils.extend( this.options, opts );
+};
+
+/**
+ * get backwards compatible option value, check old name
+ */
+proto._getOption = function( option ) {
+  var oldOption = this.constructor.compatOptions[ option ];
+  return oldOption && this.options[ oldOption ] !== undefined ?
+    this.options[ oldOption ] : this.options[ option ];
+};
+
+Outlayer.compatOptions = {
+  // currentName: oldName
+  initLayout: 'isInitLayout',
+  horizontal: 'isHorizontal',
+  layoutInstant: 'isLayoutInstant',
+  originLeft: 'isOriginLeft',
+  originTop: 'isOriginTop',
+  resize: 'isResizeBound',
+  resizeContainer: 'isResizingContainer'
+};
+
+proto._create = function() {
+  // get items from children
+  this.reloadItems();
+  // elements that affect layout, but are not laid out
+  this.stamps = [];
+  this.stamp( this.options.stamp );
+  // set container style
+  utils.extend( this.element.style, this.options.containerStyle );
+
+  // bind resize method
+  var canBindResize = this._getOption('resize');
+  if ( canBindResize ) {
+    this.bindResize();
+  }
+};
+
+// goes through all children again and gets bricks in proper order
+proto.reloadItems = function() {
+  // collection of item elements
+  this.items = this._itemize( this.element.children );
+};
+
+
+/**
+ * turn elements into Outlayer.Items to be used in layout
+ * @param {Array or NodeList or HTMLElement} elems
+ * @returns {Array} items - collection of new Outlayer Items
+ */
+proto._itemize = function( elems ) {
+
+  var itemElems = this._filterFindItemElements( elems );
+  var Item = this.constructor.Item;
+
+  // create new Outlayer Items for collection
+  var items = [];
+  for ( var i=0; i < itemElems.length; i++ ) {
+    var elem = itemElems[i];
+    var item = new Item( elem, this );
+    items.push( item );
+  }
+
+  return items;
+};
+
+/**
+ * get item elements to be used in layout
+ * @param {Array or NodeList or HTMLElement} elems
+ * @returns {Array} items - item elements
+ */
+proto._filterFindItemElements = function( elems ) {
+  return utils.filterFindElements( elems, this.options.itemSelector );
+};
+
+/**
+ * getter method for getting item elements
+ * @returns {Array} elems - collection of item elements
+ */
+proto.getItemElements = function() {
+  return this.items.map( function( item ) {
+    return item.element;
+  });
+};
+
+// ----- init & layout ----- //
+
+/**
+ * lays out all items
+ */
+proto.layout = function() {
+  this._resetLayout();
+  this._manageStamps();
+
+  // don't animate first layout
+  var layoutInstant = this._getOption('layoutInstant');
+  var isInstant = layoutInstant !== undefined ?
+    layoutInstant : !this._isLayoutInited;
+  this.layoutItems( this.items, isInstant );
+
+  // flag for initalized
+  this._isLayoutInited = true;
+};
+
+// _init is alias for layout
+proto._init = proto.layout;
+
+/**
+ * logic before any new layout
+ */
+proto._resetLayout = function() {
+  this.getSize();
+};
+
+
+proto.getSize = function() {
+  this.size = getSize( this.element );
+};
+
+/**
+ * get measurement from option, for columnWidth, rowHeight, gutter
+ * if option is String -> get element from selector string, & get size of element
+ * if option is Element -> get size of element
+ * else use option as a number
+ *
+ * @param {String} measurement
+ * @param {String} size - width or height
+ * @private
+ */
+proto._getMeasurement = function( measurement, size ) {
+  var option = this.options[ measurement ];
+  var elem;
+  if ( !option ) {
+    // default to 0
+    this[ measurement ] = 0;
+  } else {
+    // use option as an element
+    if ( typeof option == 'string' ) {
+      elem = this.element.querySelector( option );
+    } else if ( option instanceof HTMLElement ) {
+      elem = option;
+    }
+    // use size of element, if element
+    this[ measurement ] = elem ? getSize( elem )[ size ] : option;
+  }
+};
+
+/**
+ * layout a collection of item elements
+ * @api public
+ */
+proto.layoutItems = function( items, isInstant ) {
+  items = this._getItemsForLayout( items );
+
+  this._layoutItems( items, isInstant );
+
+  this._postLayout();
+};
+
+/**
+ * get the items to be laid out
+ * you may want to skip over some items
+ * @param {Array} items
+ * @returns {Array} items
+ */
+proto._getItemsForLayout = function( items ) {
+  return items.filter( function( item ) {
+    return !item.isIgnored;
+  });
+};
+
+/**
+ * layout items
+ * @param {Array} items
+ * @param {Boolean} isInstant
+ */
+proto._layoutItems = function( items, isInstant ) {
+  this._emitCompleteOnItems( 'layout', items );
+
+  if ( !items || !items.length ) {
+    // no items, emit event with empty array
+    return;
+  }
+
+  var queue = [];
+
+  items.forEach( function( item ) {
+    // get x/y object from method
+    var position = this._getItemLayoutPosition( item );
+    // enqueue
+    position.item = item;
+    position.isInstant = isInstant || item.isLayoutInstant;
+    queue.push( position );
+  }, this );
+
+  this._processLayoutQueue( queue );
+};
+
+/**
+ * get item layout position
+ * @param {Outlayer.Item} item
+ * @returns {Object} x and y position
+ */
+proto._getItemLayoutPosition = function( /* item */ ) {
+  return {
+    x: 0,
+    y: 0
+  };
+};
+
+/**
+ * iterate over array and position each item
+ * Reason being - separating this logic prevents 'layout invalidation'
+ * thx @paul_irish
+ * @param {Array} queue
+ */
+proto._processLayoutQueue = function( queue ) {
+  queue.forEach( function( obj ) {
+    this._positionItem( obj.item, obj.x, obj.y, obj.isInstant );
+  }, this );
+};
+
+/**
+ * Sets position of item in DOM
+ * @param {Outlayer.Item} item
+ * @param {Number} x - horizontal position
+ * @param {Number} y - vertical position
+ * @param {Boolean} isInstant - disables transitions
+ */
+proto._positionItem = function( item, x, y, isInstant ) {
+  if ( isInstant ) {
+    // if not transition, just set CSS
+    item.goTo( x, y );
+  } else {
+    item.moveTo( x, y );
+  }
+};
+
+/**
+ * Any logic you want to do after each layout,
+ * i.e. size the container
+ */
+proto._postLayout = function() {
+  this.resizeContainer();
+};
+
+proto.resizeContainer = function() {
+  var isResizingContainer = this._getOption('resizeContainer');
+  if ( !isResizingContainer ) {
+    return;
+  }
+  var size = this._getContainerSize();
+  if ( size ) {
+    this._setContainerMeasure( size.width, true );
+    this._setContainerMeasure( size.height, false );
+  }
+};
+
+/**
+ * Sets width or height of container if returned
+ * @returns {Object} size
+ *   @param {Number} width
+ *   @param {Number} height
+ */
+proto._getContainerSize = noop;
+
+/**
+ * @param {Number} measure - size of width or height
+ * @param {Boolean} isWidth
+ */
+proto._setContainerMeasure = function( measure, isWidth ) {
+  if ( measure === undefined ) {
+    return;
+  }
+
+  var elemSize = this.size;
+  // add padding and border width if border box
+  if ( elemSize.isBorderBox ) {
+    measure += isWidth ? elemSize.paddingLeft + elemSize.paddingRight +
+      elemSize.borderLeftWidth + elemSize.borderRightWidth :
+      elemSize.paddingBottom + elemSize.paddingTop +
+      elemSize.borderTopWidth + elemSize.borderBottomWidth;
+  }
+
+  measure = Math.max( measure, 0 );
+  this.element.style[ isWidth ? 'width' : 'height' ] = measure + 'px';
+};
+
+/**
+ * emit eventComplete on a collection of items events
+ * @param {String} eventName
+ * @param {Array} items - Outlayer.Items
+ */
+proto._emitCompleteOnItems = function( eventName, items ) {
+  var _this = this;
+  function onComplete() {
+    _this.dispatchEvent( eventName + 'Complete', null, [ items ] );
+  }
+
+  var count = items.length;
+  if ( !items || !count ) {
+    onComplete();
+    return;
+  }
+
+  var doneCount = 0;
+  function tick() {
+    doneCount++;
+    if ( doneCount == count ) {
+      onComplete();
+    }
+  }
+
+  // bind callback
+  items.forEach( function( item ) {
+    item.once( eventName, tick );
+  });
+};
+
+/**
+ * emits events via EvEmitter and jQuery events
+ * @param {String} type - name of event
+ * @param {Event} event - original event
+ * @param {Array} args - extra arguments
+ */
+proto.dispatchEvent = function( type, event, args ) {
+  // add original event to arguments
+  var emitArgs = event ? [ event ].concat( args ) : args;
+  this.emitEvent( type, emitArgs );
+
+  if ( jQuery ) {
+    // set this.$element
+    this.$element = this.$element || jQuery( this.element );
+    if ( event ) {
+      // create jQuery event
+      var $event = jQuery.Event( event );
+      $event.type = type;
+      this.$element.trigger( $event, args );
+    } else {
+      // just trigger with type if no event available
+      this.$element.trigger( type, args );
+    }
+  }
+};
+
+// -------------------------- ignore & stamps -------------------------- //
+
+
+/**
+ * keep item in collection, but do not lay it out
+ * ignored items do not get skipped in layout
+ * @param {Element} elem
+ */
+proto.ignore = function( elem ) {
+  var item = this.getItem( elem );
+  if ( item ) {
+    item.isIgnored = true;
+  }
+};
+
+/**
+ * return item to layout collection
+ * @param {Element} elem
+ */
+proto.unignore = function( elem ) {
+  var item = this.getItem( elem );
+  if ( item ) {
+    delete item.isIgnored;
+  }
+};
+
+/**
+ * adds elements to stamps
+ * @param {NodeList, Array, Element, or String} elems
+ */
+proto.stamp = function( elems ) {
+  elems = this._find( elems );
+  if ( !elems ) {
+    return;
+  }
+
+  this.stamps = this.stamps.concat( elems );
+  // ignore
+  elems.forEach( this.ignore, this );
+};
+
+/**
+ * removes elements to stamps
+ * @param {NodeList, Array, or Element} elems
+ */
+proto.unstamp = function( elems ) {
+  elems = this._find( elems );
+  if ( !elems ){
+    return;
+  }
+
+  elems.forEach( function( elem ) {
+    // filter out removed stamp elements
+    utils.removeFrom( this.stamps, elem );
+    this.unignore( elem );
+  }, this );
+};
+
+/**
+ * finds child elements
+ * @param {NodeList, Array, Element, or String} elems
+ * @returns {Array} elems
+ */
+proto._find = function( elems ) {
+  if ( !elems ) {
+    return;
+  }
+  // if string, use argument as selector string
+  if ( typeof elems == 'string' ) {
+    elems = this.element.querySelectorAll( elems );
+  }
+  elems = utils.makeArray( elems );
+  return elems;
+};
+
+proto._manageStamps = function() {
+  if ( !this.stamps || !this.stamps.length ) {
+    return;
+  }
+
+  this._getBoundingRect();
+
+  this.stamps.forEach( this._manageStamp, this );
+};
+
+// update boundingLeft / Top
+proto._getBoundingRect = function() {
+  // get bounding rect for container element
+  var boundingRect = this.element.getBoundingClientRect();
+  var size = this.size;
+  this._boundingRect = {
+    left: boundingRect.left + size.paddingLeft + size.borderLeftWidth,
+    top: boundingRect.top + size.paddingTop + size.borderTopWidth,
+    right: boundingRect.right - ( size.paddingRight + size.borderRightWidth ),
+    bottom: boundingRect.bottom - ( size.paddingBottom + size.borderBottomWidth )
+  };
+};
+
+/**
+ * @param {Element} stamp
+**/
+proto._manageStamp = noop;
+
+/**
+ * get x/y position of element relative to container element
+ * @param {Element} elem
+ * @returns {Object} offset - has left, top, right, bottom
+ */
+proto._getElementOffset = function( elem ) {
+  var boundingRect = elem.getBoundingClientRect();
+  var thisRect = this._boundingRect;
+  var size = getSize( elem );
+  var offset = {
+    left: boundingRect.left - thisRect.left - size.marginLeft,
+    top: boundingRect.top - thisRect.top - size.marginTop,
+    right: thisRect.right - boundingRect.right - size.marginRight,
+    bottom: thisRect.bottom - boundingRect.bottom - size.marginBottom
+  };
+  return offset;
+};
+
+// -------------------------- resize -------------------------- //
+
+// enable event handlers for listeners
+// i.e. resize -> onresize
+proto.handleEvent = utils.handleEvent;
+
+/**
+ * Bind layout to window resizing
+ */
+proto.bindResize = function() {
+  window.addEventListener( 'resize', this );
+  this.isResizeBound = true;
+};
+
+/**
+ * Unbind layout to window resizing
+ */
+proto.unbindResize = function() {
+  window.removeEventListener( 'resize', this );
+  this.isResizeBound = false;
+};
+
+proto.onresize = function() {
+  this.resize();
+};
+
+utils.debounceMethod( Outlayer, 'onresize', 100 );
+
+proto.resize = function() {
+  // don't trigger if size did not change
+  // or if resize was unbound. See #9
+  if ( !this.isResizeBound || !this.needsResizeLayout() ) {
+    return;
+  }
+
+  this.layout();
+};
+
+/**
+ * check if layout is needed post layout
+ * @returns Boolean
+ */
+proto.needsResizeLayout = function() {
+  var size = getSize( this.element );
+  // check that this.size and size are there
+  // IE8 triggers resize on body size change, so they might not be
+  var hasSizes = this.size && size;
+  return hasSizes && size.innerWidth !== this.size.innerWidth;
+};
+
+// -------------------------- methods -------------------------- //
+
+/**
+ * add items to Outlayer instance
+ * @param {Array or NodeList or Element} elems
+ * @returns {Array} items - Outlayer.Items
+**/
+proto.addItems = function( elems ) {
+  var items = this._itemize( elems );
+  // add items to collection
+  if ( items.length ) {
+    this.items = this.items.concat( items );
+  }
+  return items;
+};
+
+/**
+ * Layout newly-appended item elements
+ * @param {Array or NodeList or Element} elems
+ */
+proto.appended = function( elems ) {
+  var items = this.addItems( elems );
+  if ( !items.length ) {
+    return;
+  }
+  // layout and reveal just the new items
+  this.layoutItems( items, true );
+  this.reveal( items );
+};
+
+/**
+ * Layout prepended elements
+ * @param {Array or NodeList or Element} elems
+ */
+proto.prepended = function( elems ) {
+  var items = this._itemize( elems );
+  if ( !items.length ) {
+    return;
+  }
+  // add items to beginning of collection
+  var previousItems = this.items.slice(0);
+  this.items = items.concat( previousItems );
+  // start new layout
+  this._resetLayout();
+  this._manageStamps();
+  // layout new stuff without transition
+  this.layoutItems( items, true );
+  this.reveal( items );
+  // layout previous items
+  this.layoutItems( previousItems );
+};
+
+/**
+ * reveal a collection of items
+ * @param {Array of Outlayer.Items} items
+ */
+proto.reveal = function( items ) {
+  this._emitCompleteOnItems( 'reveal', items );
+  if ( !items || !items.length ) {
+    return;
+  }
+  items.forEach( function( item ) {
+    item.reveal();
+  });
+};
+
+/**
+ * hide a collection of items
+ * @param {Array of Outlayer.Items} items
+ */
+proto.hide = function( items ) {
+  this._emitCompleteOnItems( 'hide', items );
+  if ( !items || !items.length ) {
+    return;
+  }
+  items.forEach( function( item ) {
+    item.hide();
+  });
+};
+
+/**
+ * reveal item elements
+ * @param {Array}, {Element}, {NodeList} items
+ */
+proto.revealItemElements = function( elems ) {
+  var items = this.getItems( elems );
+  this.reveal( items );
+};
+
+/**
+ * hide item elements
+ * @param {Array}, {Element}, {NodeList} items
+ */
+proto.hideItemElements = function( elems ) {
+  var items = this.getItems( elems );
+  this.hide( items );
+};
+
+/**
+ * get Outlayer.Item, given an Element
+ * @param {Element} elem
+ * @param {Function} callback
+ * @returns {Outlayer.Item} item
+ */
+proto.getItem = function( elem ) {
+  // loop through items to get the one that matches
+  for ( var i=0; i < this.items.length; i++ ) {
+    var item = this.items[i];
+    if ( item.element == elem ) {
+      // return item
+      return item;
+    }
+  }
+};
+
+/**
+ * get collection of Outlayer.Items, given Elements
+ * @param {Array} elems
+ * @returns {Array} items - Outlayer.Items
+ */
+proto.getItems = function( elems ) {
+  elems = utils.makeArray( elems );
+  var items = [];
+  elems.forEach( function( elem ) {
+    var item = this.getItem( elem );
+    if ( item ) {
+      items.push( item );
+    }
+  }, this );
+
+  return items;
+};
+
+/**
+ * remove element(s) from instance and DOM
+ * @param {Array or NodeList or Element} elems
+ */
+proto.remove = function( elems ) {
+  var removeItems = this.getItems( elems );
+
+  this._emitCompleteOnItems( 'remove', removeItems );
+
+  // bail if no items to remove
+  if ( !removeItems || !removeItems.length ) {
+    return;
+  }
+
+  removeItems.forEach( function( item ) {
+    item.remove();
+    // remove item from collection
+    utils.removeFrom( this.items, item );
+  }, this );
+};
+
+// ----- destroy ----- //
+
+// remove and disable Outlayer instance
+proto.destroy = function() {
+  // clean up dynamic styles
+  var style = this.element.style;
+  style.height = '';
+  style.position = '';
+  style.width = '';
+  // destroy items
+  this.items.forEach( function( item ) {
+    item.destroy();
+  });
+
+  this.unbindResize();
+
+  var id = this.element.outlayerGUID;
+  delete instances[ id ]; // remove reference to instance by id
+  delete this.element.outlayerGUID;
+  // remove data for jQuery
+  if ( jQuery ) {
+    jQuery.removeData( this.element, this.constructor.namespace );
+  }
+
+};
+
+// -------------------------- data -------------------------- //
+
+/**
+ * get Outlayer instance from element
+ * @param {Element} elem
+ * @returns {Outlayer}
+ */
+Outlayer.data = function( elem ) {
+  elem = utils.getQueryElement( elem );
+  var id = elem && elem.outlayerGUID;
+  return id && instances[ id ];
+};
+
+
+// -------------------------- create Outlayer class -------------------------- //
+
+/**
+ * create a layout class
+ * @param {String} namespace
+ */
+Outlayer.create = function( namespace, options ) {
+  // sub-class Outlayer
+  var Layout = subclass( Outlayer );
+  // apply new options and compatOptions
+  Layout.defaults = utils.extend( {}, Outlayer.defaults );
+  utils.extend( Layout.defaults, options );
+  Layout.compatOptions = utils.extend( {}, Outlayer.compatOptions  );
+
+  Layout.namespace = namespace;
+
+  Layout.data = Outlayer.data;
+
+  // sub-class Item
+  Layout.Item = subclass( Item );
+
+  // -------------------------- declarative -------------------------- //
+
+  utils.htmlInit( Layout, namespace );
+
+  // -------------------------- jQuery bridge -------------------------- //
+
+  // make into jQuery plugin
+  if ( jQuery && jQuery.bridget ) {
+    jQuery.bridget( namespace, Layout );
+  }
+
+  return Layout;
+};
+
+function subclass( Parent ) {
+  function SubClass() {
+    Parent.apply( this, arguments );
+  }
+
+  SubClass.prototype = Object.create( Parent.prototype );
+  SubClass.prototype.constructor = SubClass;
+
+  return SubClass;
+}
+
+// ----- fin ----- //
+
+// back in global
+Outlayer.Item = Item;
+
+return Outlayer;
+
+}));
+
+},{"./item":36,"ev-emitter":37,"fizzy-ui-utils":39,"get-size":35}],41:[function(require,module,exports){
 var dirpaths = require('./lib/paths');
 
 exports.files = dirpaths.files;
@@ -2921,7 +4425,7 @@ exports.subdirs = dirpaths.subdirs;
 exports.readFiles = require('./lib/readfiles');
 exports.readFilesStream = require('./lib/readfilesstream');
 
-},{"./lib/paths":40,"./lib/readfiles":41,"./lib/readfilesstream":42}],40:[function(require,module,exports){
+},{"./lib/paths":42,"./lib/readfiles":43,"./lib/readfilesstream":44}],42:[function(require,module,exports){
 var fs = require('fs'),
     path = require('path');
 
@@ -3062,7 +4566,7 @@ exports.subdirs = function subdirs(dir, callback) {
     });
 };
 
-},{"fs":3,"path":46}],41:[function(require,module,exports){
+},{"fs":29,"path":30}],43:[function(require,module,exports){
 var fs = require('fs'),
     path = require('path');
 
@@ -3186,7 +4690,7 @@ function readFiles(dir, options, callback, complete) {
 }
 module.exports = readFiles;
 
-},{"fs":3,"path":46}],42:[function(require,module,exports){
+},{"fs":29,"path":30}],44:[function(require,module,exports){
 var fs = require('fs'),
     mm = require('minimatch'),
     path = require('path');
@@ -3317,7 +4821,7 @@ function readFilesStream(dir, options, callback, complete) {
 }
 module.exports = readFilesStream;
 
-},{"fs":3,"minimatch":43,"path":46}],43:[function(require,module,exports){
+},{"fs":29,"minimatch":45,"path":30}],45:[function(require,module,exports){
 module.exports = minimatch
 minimatch.Minimatch = Minimatch
 
@@ -4231,1774 +5735,272 @@ function regExpEscape (s) {
   return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
 }
 
-},{"brace-expansion":2,"path":46}],44:[function(require,module,exports){
-/**
- * Outlayer Item
- */
+},{"brace-expansion":46,"path":30}],46:[function(require,module,exports){
+var concatMap = require('concat-map');
+var balanced = require('balanced-match');
 
-( function( window, factory ) {
-  // universal module definition
-  /* jshint strict: false */ /* globals define, module, require */
-  if ( typeof define == 'function' && define.amd ) {
-    // AMD - RequireJS
-    define( [
-        'ev-emitter/ev-emitter',
-        'get-size/get-size'
-      ],
-      factory
-    );
-  } else if ( typeof module == 'object' && module.exports ) {
-    // CommonJS - Browserify, Webpack
-    module.exports = factory(
-      require('ev-emitter'),
-      require('get-size')
-    );
-  } else {
-    // browser global
-    window.Outlayer = {};
-    window.Outlayer.Item = factory(
-      window.EvEmitter,
-      window.getSize
-    );
-  }
+module.exports = expandTop;
 
-}( window, function factory( EvEmitter, getSize ) {
-'use strict';
+var escSlash = '\0SLASH'+Math.random()+'\0';
+var escOpen = '\0OPEN'+Math.random()+'\0';
+var escClose = '\0CLOSE'+Math.random()+'\0';
+var escComma = '\0COMMA'+Math.random()+'\0';
+var escPeriod = '\0PERIOD'+Math.random()+'\0';
 
-// ----- helpers ----- //
-
-function isEmptyObj( obj ) {
-  for ( var prop in obj ) {
-    return false;
-  }
-  prop = null;
-  return true;
+function numeric(str) {
+  return parseInt(str, 10) == str
+    ? parseInt(str, 10)
+    : str.charCodeAt(0);
 }
 
-// -------------------------- CSS3 support -------------------------- //
-
-
-var docElemStyle = document.documentElement.style;
-
-var transitionProperty = typeof docElemStyle.transition == 'string' ?
-  'transition' : 'WebkitTransition';
-var transformProperty = typeof docElemStyle.transform == 'string' ?
-  'transform' : 'WebkitTransform';
-
-var transitionEndEvent = {
-  WebkitTransition: 'webkitTransitionEnd',
-  transition: 'transitionend'
-}[ transitionProperty ];
-
-// cache all vendor properties that could have vendor prefix
-var vendorProperties = {
-  transform: transformProperty,
-  transition: transitionProperty,
-  transitionDuration: transitionProperty + 'Duration',
-  transitionProperty: transitionProperty + 'Property'
-};
-
-// -------------------------- Item -------------------------- //
-
-function Item( element, layout ) {
-  if ( !element ) {
-    return;
-  }
-
-  this.element = element;
-  // parent layout class, i.e. Masonry, Isotope, or Packery
-  this.layout = layout;
-  this.position = {
-    x: 0,
-    y: 0
-  };
-
-  this._create();
+function escapeBraces(str) {
+  return str.split('\\\\').join(escSlash)
+            .split('\\{').join(escOpen)
+            .split('\\}').join(escClose)
+            .split('\\,').join(escComma)
+            .split('\\.').join(escPeriod);
 }
 
-// inherit EvEmitter
-var proto = Item.prototype = Object.create( EvEmitter.prototype );
-proto.constructor = Item;
-
-proto._create = function() {
-  // transition objects
-  this._transn = {
-    ingProperties: {},
-    clean: {},
-    onEnd: {}
-  };
-
-  this.css({
-    position: 'absolute'
-  });
-};
-
-// trigger specified handler for event type
-proto.handleEvent = function( event ) {
-  var method = 'on' + event.type;
-  if ( this[ method ] ) {
-    this[ method ]( event );
-  }
-};
-
-proto.getSize = function() {
-  this.size = getSize( this.element );
-};
-
-/**
- * apply CSS styles to element
- * @param {Object} style
- */
-proto.css = function( style ) {
-  var elemStyle = this.element.style;
-
-  for ( var prop in style ) {
-    // use vendor property if available
-    var supportedProp = vendorProperties[ prop ] || prop;
-    elemStyle[ supportedProp ] = style[ prop ];
-  }
-};
-
- // measure position, and sets it
-proto.getPosition = function() {
-  var style = getComputedStyle( this.element );
-  var isOriginLeft = this.layout._getOption('originLeft');
-  var isOriginTop = this.layout._getOption('originTop');
-  var xValue = style[ isOriginLeft ? 'left' : 'right' ];
-  var yValue = style[ isOriginTop ? 'top' : 'bottom' ];
-  // convert percent to pixels
-  var layoutSize = this.layout.size;
-  var x = xValue.indexOf('%') != -1 ?
-    ( parseFloat( xValue ) / 100 ) * layoutSize.width : parseInt( xValue, 10 );
-  var y = yValue.indexOf('%') != -1 ?
-    ( parseFloat( yValue ) / 100 ) * layoutSize.height : parseInt( yValue, 10 );
-
-  // clean up 'auto' or other non-integer values
-  x = isNaN( x ) ? 0 : x;
-  y = isNaN( y ) ? 0 : y;
-  // remove padding from measurement
-  x -= isOriginLeft ? layoutSize.paddingLeft : layoutSize.paddingRight;
-  y -= isOriginTop ? layoutSize.paddingTop : layoutSize.paddingBottom;
-
-  this.position.x = x;
-  this.position.y = y;
-};
-
-// set settled position, apply padding
-proto.layoutPosition = function() {
-  var layoutSize = this.layout.size;
-  var style = {};
-  var isOriginLeft = this.layout._getOption('originLeft');
-  var isOriginTop = this.layout._getOption('originTop');
-
-  // x
-  var xPadding = isOriginLeft ? 'paddingLeft' : 'paddingRight';
-  var xProperty = isOriginLeft ? 'left' : 'right';
-  var xResetProperty = isOriginLeft ? 'right' : 'left';
-
-  var x = this.position.x + layoutSize[ xPadding ];
-  // set in percentage or pixels
-  style[ xProperty ] = this.getXValue( x );
-  // reset other property
-  style[ xResetProperty ] = '';
-
-  // y
-  var yPadding = isOriginTop ? 'paddingTop' : 'paddingBottom';
-  var yProperty = isOriginTop ? 'top' : 'bottom';
-  var yResetProperty = isOriginTop ? 'bottom' : 'top';
-
-  var y = this.position.y + layoutSize[ yPadding ];
-  // set in percentage or pixels
-  style[ yProperty ] = this.getYValue( y );
-  // reset other property
-  style[ yResetProperty ] = '';
-
-  this.css( style );
-  this.emitEvent( 'layout', [ this ] );
-};
-
-proto.getXValue = function( x ) {
-  var isHorizontal = this.layout._getOption('horizontal');
-  return this.layout.options.percentPosition && !isHorizontal ?
-    ( ( x / this.layout.size.width ) * 100 ) + '%' : x + 'px';
-};
-
-proto.getYValue = function( y ) {
-  var isHorizontal = this.layout._getOption('horizontal');
-  return this.layout.options.percentPosition && isHorizontal ?
-    ( ( y / this.layout.size.height ) * 100 ) + '%' : y + 'px';
-};
-
-proto._transitionTo = function( x, y ) {
-  this.getPosition();
-  // get current x & y from top/left
-  var curX = this.position.x;
-  var curY = this.position.y;
-
-  var compareX = parseInt( x, 10 );
-  var compareY = parseInt( y, 10 );
-  var didNotMove = compareX === this.position.x && compareY === this.position.y;
-
-  // save end position
-  this.setPosition( x, y );
-
-  // if did not move and not transitioning, just go to layout
-  if ( didNotMove && !this.isTransitioning ) {
-    this.layoutPosition();
-    return;
-  }
-
-  var transX = x - curX;
-  var transY = y - curY;
-  var transitionStyle = {};
-  transitionStyle.transform = this.getTranslate( transX, transY );
-
-  this.transition({
-    to: transitionStyle,
-    onTransitionEnd: {
-      transform: this.layoutPosition
-    },
-    isCleaning: true
-  });
-};
-
-proto.getTranslate = function( x, y ) {
-  // flip cooridinates if origin on right or bottom
-  var isOriginLeft = this.layout._getOption('originLeft');
-  var isOriginTop = this.layout._getOption('originTop');
-  x = isOriginLeft ? x : -x;
-  y = isOriginTop ? y : -y;
-  return 'translate3d(' + x + 'px, ' + y + 'px, 0)';
-};
-
-// non transition + transform support
-proto.goTo = function( x, y ) {
-  this.setPosition( x, y );
-  this.layoutPosition();
-};
-
-proto.moveTo = proto._transitionTo;
-
-proto.setPosition = function( x, y ) {
-  this.position.x = parseInt( x, 10 );
-  this.position.y = parseInt( y, 10 );
-};
-
-// ----- transition ----- //
-
-/**
- * @param {Object} style - CSS
- * @param {Function} onTransitionEnd
- */
-
-// non transition, just trigger callback
-proto._nonTransition = function( args ) {
-  this.css( args.to );
-  if ( args.isCleaning ) {
-    this._removeStyles( args.to );
-  }
-  for ( var prop in args.onTransitionEnd ) {
-    args.onTransitionEnd[ prop ].call( this );
-  }
-};
-
-/**
- * proper transition
- * @param {Object} args - arguments
- *   @param {Object} to - style to transition to
- *   @param {Object} from - style to start transition from
- *   @param {Boolean} isCleaning - removes transition styles after transition
- *   @param {Function} onTransitionEnd - callback
- */
-proto.transition = function( args ) {
-  // redirect to nonTransition if no transition duration
-  if ( !parseFloat( this.layout.options.transitionDuration ) ) {
-    this._nonTransition( args );
-    return;
-  }
-
-  var _transition = this._transn;
-  // keep track of onTransitionEnd callback by css property
-  for ( var prop in args.onTransitionEnd ) {
-    _transition.onEnd[ prop ] = args.onTransitionEnd[ prop ];
-  }
-  // keep track of properties that are transitioning
-  for ( prop in args.to ) {
-    _transition.ingProperties[ prop ] = true;
-    // keep track of properties to clean up when transition is done
-    if ( args.isCleaning ) {
-      _transition.clean[ prop ] = true;
-    }
-  }
-
-  // set from styles
-  if ( args.from ) {
-    this.css( args.from );
-    // force redraw. http://blog.alexmaccaw.com/css-transitions
-    var h = this.element.offsetHeight;
-    // hack for JSHint to hush about unused var
-    h = null;
-  }
-  // enable transition
-  this.enableTransition( args.to );
-  // set styles that are transitioning
-  this.css( args.to );
-
-  this.isTransitioning = true;
-
-};
-
-// dash before all cap letters, including first for
-// WebkitTransform => -webkit-transform
-function toDashedAll( str ) {
-  return str.replace( /([A-Z])/g, function( $1 ) {
-    return '-' + $1.toLowerCase();
-  });
+function unescapeBraces(str) {
+  return str.split(escSlash).join('\\')
+            .split(escOpen).join('{')
+            .split(escClose).join('}')
+            .split(escComma).join(',')
+            .split(escPeriod).join('.');
 }
 
-var transitionProps = 'opacity,' + toDashedAll( transformProperty );
 
-proto.enableTransition = function(/* style */) {
-  // HACK changing transitionProperty during a transition
-  // will cause transition to jump
-  if ( this.isTransitioning ) {
-    return;
+// Basically just str.split(","), but handling cases
+// where we have nested braced sections, which should be
+// treated as individual members, like {a,{b,c},d}
+function parseCommaParts(str) {
+  if (!str)
+    return [''];
+
+  var parts = [];
+  var m = balanced('{', '}', str);
+
+  if (!m)
+    return str.split(',');
+
+  var pre = m.pre;
+  var body = m.body;
+  var post = m.post;
+  var p = pre.split(',');
+
+  p[p.length-1] += '{' + body + '}';
+  var postParts = parseCommaParts(post);
+  if (post.length) {
+    p[p.length-1] += postParts.shift();
+    p.push.apply(p, postParts);
   }
 
-  // make `transition: foo, bar, baz` from style object
-  // HACK un-comment this when enableTransition can work
-  // while a transition is happening
-  // var transitionValues = [];
-  // for ( var prop in style ) {
-  //   // dash-ify camelCased properties like WebkitTransition
-  //   prop = vendorProperties[ prop ] || prop;
-  //   transitionValues.push( toDashedAll( prop ) );
-  // }
-  // enable transition styles
-  this.css({
-    transitionProperty: transitionProps,
-    transitionDuration: this.layout.options.transitionDuration
-  });
-  // listen for transition end event
-  this.element.addEventListener( transitionEndEvent, this, false );
-};
-
-// ----- events ----- //
-
-proto.onwebkitTransitionEnd = function( event ) {
-  this.ontransitionend( event );
-};
-
-proto.onotransitionend = function( event ) {
-  this.ontransitionend( event );
-};
-
-// properties that I munge to make my life easier
-var dashedVendorProperties = {
-  '-webkit-transform': 'transform'
-};
-
-proto.ontransitionend = function( event ) {
-  // disregard bubbled events from children
-  if ( event.target !== this.element ) {
-    return;
-  }
-  var _transition = this._transn;
-  // get property name of transitioned property, convert to prefix-free
-  var propertyName = dashedVendorProperties[ event.propertyName ] || event.propertyName;
-
-  // remove property that has completed transitioning
-  delete _transition.ingProperties[ propertyName ];
-  // check if any properties are still transitioning
-  if ( isEmptyObj( _transition.ingProperties ) ) {
-    // all properties have completed transitioning
-    this.disableTransition();
-  }
-  // clean style
-  if ( propertyName in _transition.clean ) {
-    // clean up style
-    this.element.style[ event.propertyName ] = '';
-    delete _transition.clean[ propertyName ];
-  }
-  // trigger onTransitionEnd callback
-  if ( propertyName in _transition.onEnd ) {
-    var onTransitionEnd = _transition.onEnd[ propertyName ];
-    onTransitionEnd.call( this );
-    delete _transition.onEnd[ propertyName ];
-  }
-
-  this.emitEvent( 'transitionEnd', [ this ] );
-};
-
-proto.disableTransition = function() {
-  this.removeTransitionStyles();
-  this.element.removeEventListener( transitionEndEvent, this, false );
-  this.isTransitioning = false;
-};
-
-/**
- * removes style property from element
- * @param {Object} style
-**/
-proto._removeStyles = function( style ) {
-  // clean up transition styles
-  var cleanStyle = {};
-  for ( var prop in style ) {
-    cleanStyle[ prop ] = '';
-  }
-  this.css( cleanStyle );
-};
-
-var cleanTransitionStyle = {
-  transitionProperty: '',
-  transitionDuration: ''
-};
-
-proto.removeTransitionStyles = function() {
-  // remove transition
-  this.css( cleanTransitionStyle );
-};
-
-// ----- show/hide/remove ----- //
-
-// remove element from DOM
-proto.removeElem = function() {
-  this.element.parentNode.removeChild( this.element );
-  // remove display: none
-  this.css({ display: '' });
-  this.emitEvent( 'remove', [ this ] );
-};
-
-proto.remove = function() {
-  // just remove element if no transition support or no transition
-  if ( !transitionProperty || !parseFloat( this.layout.options.transitionDuration ) ) {
-    this.removeElem();
-    return;
-  }
-
-  // start transition
-  this.once( 'transitionEnd', function() {
-    this.removeElem();
-  });
-  this.hide();
-};
-
-proto.reveal = function() {
-  delete this.isHidden;
-  // remove display: none
-  this.css({ display: '' });
-
-  var options = this.layout.options;
-
-  var onTransitionEnd = {};
-  var transitionEndProperty = this.getHideRevealTransitionEndProperty('visibleStyle');
-  onTransitionEnd[ transitionEndProperty ] = this.onRevealTransitionEnd;
-
-  this.transition({
-    from: options.hiddenStyle,
-    to: options.visibleStyle,
-    isCleaning: true,
-    onTransitionEnd: onTransitionEnd
-  });
-};
-
-proto.onRevealTransitionEnd = function() {
-  // check if still visible
-  // during transition, item may have been hidden
-  if ( !this.isHidden ) {
-    this.emitEvent('reveal');
-  }
-};
-
-/**
- * get style property use for hide/reveal transition end
- * @param {String} styleProperty - hiddenStyle/visibleStyle
- * @returns {String}
- */
-proto.getHideRevealTransitionEndProperty = function( styleProperty ) {
-  var optionStyle = this.layout.options[ styleProperty ];
-  // use opacity
-  if ( optionStyle.opacity ) {
-    return 'opacity';
-  }
-  // get first property
-  for ( var prop in optionStyle ) {
-    return prop;
-  }
-};
-
-proto.hide = function() {
-  // set flag
-  this.isHidden = true;
-  // remove display: none
-  this.css({ display: '' });
-
-  var options = this.layout.options;
-
-  var onTransitionEnd = {};
-  var transitionEndProperty = this.getHideRevealTransitionEndProperty('hiddenStyle');
-  onTransitionEnd[ transitionEndProperty ] = this.onHideTransitionEnd;
-
-  this.transition({
-    from: options.visibleStyle,
-    to: options.hiddenStyle,
-    // keep hidden stuff hidden
-    isCleaning: true,
-    onTransitionEnd: onTransitionEnd
-  });
-};
-
-proto.onHideTransitionEnd = function() {
-  // check if still hidden
-  // during transition, item may have been un-hidden
-  if ( this.isHidden ) {
-    this.css({ display: 'none' });
-    this.emitEvent('hide');
-  }
-};
-
-proto.destroy = function() {
-  this.css({
-    position: '',
-    left: '',
-    right: '',
-    top: '',
-    bottom: '',
-    transition: '',
-    transform: ''
-  });
-};
-
-return Item;
-
-}));
-
-},{"ev-emitter":7,"get-size":36}],45:[function(require,module,exports){
-/*!
- * Outlayer v2.0.1
- * the brains and guts of a layout library
- * MIT license
- */
-
-( function( window, factory ) {
-  'use strict';
-  // universal module definition
-  /* jshint strict: false */ /* globals define, module, require */
-  if ( typeof define == 'function' && define.amd ) {
-    // AMD - RequireJS
-    define( [
-        'ev-emitter/ev-emitter',
-        'get-size/get-size',
-        'fizzy-ui-utils/utils',
-        './item'
-      ],
-      function( EvEmitter, getSize, utils, Item ) {
-        return factory( window, EvEmitter, getSize, utils, Item);
-      }
-    );
-  } else if ( typeof module == 'object' && module.exports ) {
-    // CommonJS - Browserify, Webpack
-    module.exports = factory(
-      window,
-      require('ev-emitter'),
-      require('get-size'),
-      require('fizzy-ui-utils'),
-      require('./item')
-    );
-  } else {
-    // browser global
-    window.Outlayer = factory(
-      window,
-      window.EvEmitter,
-      window.getSize,
-      window.fizzyUIUtils,
-      window.Outlayer.Item
-    );
-  }
-
-}( window, function factory( window, EvEmitter, getSize, utils, Item ) {
-'use strict';
-
-// ----- vars ----- //
-
-var console = window.console;
-var jQuery = window.jQuery;
-var noop = function() {};
-
-// -------------------------- Outlayer -------------------------- //
-
-// globally unique identifiers
-var GUID = 0;
-// internal store of all Outlayer intances
-var instances = {};
-
-
-/**
- * @param {Element, String} element
- * @param {Object} options
- * @constructor
- */
-function Outlayer( element, options ) {
-  var queryElement = utils.getQueryElement( element );
-  if ( !queryElement ) {
-    if ( console ) {
-      console.error( 'Bad element for ' + this.constructor.namespace +
-        ': ' + ( queryElement || element ) );
-    }
-    return;
-  }
-  this.element = queryElement;
-  // add jQuery
-  if ( jQuery ) {
-    this.$element = jQuery( this.element );
-  }
-
-  // options
-  this.options = utils.extend( {}, this.constructor.defaults );
-  this.option( options );
-
-  // add id for Outlayer.getFromElement
-  var id = ++GUID;
-  this.element.outlayerGUID = id; // expando
-  instances[ id ] = this; // associate via id
-
-  // kick it off
-  this._create();
-
-  var isInitLayout = this._getOption('initLayout');
-  if ( isInitLayout ) {
-    this.layout();
-  }
-}
-
-// settings are for internal use only
-Outlayer.namespace = 'outlayer';
-Outlayer.Item = Item;
-
-// default options
-Outlayer.defaults = {
-  containerStyle: {
-    position: 'relative'
-  },
-  initLayout: true,
-  originLeft: true,
-  originTop: true,
-  resize: true,
-  resizeContainer: true,
-  // item options
-  transitionDuration: '0.4s',
-  hiddenStyle: {
-    opacity: 0,
-    transform: 'scale(0.001)'
-  },
-  visibleStyle: {
-    opacity: 1,
-    transform: 'scale(1)'
-  }
-};
-
-var proto = Outlayer.prototype;
-// inherit EvEmitter
-utils.extend( proto, EvEmitter.prototype );
-
-/**
- * set options
- * @param {Object} opts
- */
-proto.option = function( opts ) {
-  utils.extend( this.options, opts );
-};
-
-/**
- * get backwards compatible option value, check old name
- */
-proto._getOption = function( option ) {
-  var oldOption = this.constructor.compatOptions[ option ];
-  return oldOption && this.options[ oldOption ] !== undefined ?
-    this.options[ oldOption ] : this.options[ option ];
-};
-
-Outlayer.compatOptions = {
-  // currentName: oldName
-  initLayout: 'isInitLayout',
-  horizontal: 'isHorizontal',
-  layoutInstant: 'isLayoutInstant',
-  originLeft: 'isOriginLeft',
-  originTop: 'isOriginTop',
-  resize: 'isResizeBound',
-  resizeContainer: 'isResizingContainer'
-};
-
-proto._create = function() {
-  // get items from children
-  this.reloadItems();
-  // elements that affect layout, but are not laid out
-  this.stamps = [];
-  this.stamp( this.options.stamp );
-  // set container style
-  utils.extend( this.element.style, this.options.containerStyle );
-
-  // bind resize method
-  var canBindResize = this._getOption('resize');
-  if ( canBindResize ) {
-    this.bindResize();
-  }
-};
-
-// goes through all children again and gets bricks in proper order
-proto.reloadItems = function() {
-  // collection of item elements
-  this.items = this._itemize( this.element.children );
-};
-
-
-/**
- * turn elements into Outlayer.Items to be used in layout
- * @param {Array or NodeList or HTMLElement} elems
- * @returns {Array} items - collection of new Outlayer Items
- */
-proto._itemize = function( elems ) {
-
-  var itemElems = this._filterFindItemElements( elems );
-  var Item = this.constructor.Item;
-
-  // create new Outlayer Items for collection
-  var items = [];
-  for ( var i=0; i < itemElems.length; i++ ) {
-    var elem = itemElems[i];
-    var item = new Item( elem, this );
-    items.push( item );
-  }
-
-  return items;
-};
-
-/**
- * get item elements to be used in layout
- * @param {Array or NodeList or HTMLElement} elems
- * @returns {Array} items - item elements
- */
-proto._filterFindItemElements = function( elems ) {
-  return utils.filterFindElements( elems, this.options.itemSelector );
-};
-
-/**
- * getter method for getting item elements
- * @returns {Array} elems - collection of item elements
- */
-proto.getItemElements = function() {
-  return this.items.map( function( item ) {
-    return item.element;
-  });
-};
-
-// ----- init & layout ----- //
-
-/**
- * lays out all items
- */
-proto.layout = function() {
-  this._resetLayout();
-  this._manageStamps();
-
-  // don't animate first layout
-  var layoutInstant = this._getOption('layoutInstant');
-  var isInstant = layoutInstant !== undefined ?
-    layoutInstant : !this._isLayoutInited;
-  this.layoutItems( this.items, isInstant );
-
-  // flag for initalized
-  this._isLayoutInited = true;
-};
-
-// _init is alias for layout
-proto._init = proto.layout;
-
-/**
- * logic before any new layout
- */
-proto._resetLayout = function() {
-  this.getSize();
-};
-
-
-proto.getSize = function() {
-  this.size = getSize( this.element );
-};
-
-/**
- * get measurement from option, for columnWidth, rowHeight, gutter
- * if option is String -> get element from selector string, & get size of element
- * if option is Element -> get size of element
- * else use option as a number
- *
- * @param {String} measurement
- * @param {String} size - width or height
- * @private
- */
-proto._getMeasurement = function( measurement, size ) {
-  var option = this.options[ measurement ];
-  var elem;
-  if ( !option ) {
-    // default to 0
-    this[ measurement ] = 0;
-  } else {
-    // use option as an element
-    if ( typeof option == 'string' ) {
-      elem = this.element.querySelector( option );
-    } else if ( option instanceof HTMLElement ) {
-      elem = option;
-    }
-    // use size of element, if element
-    this[ measurement ] = elem ? getSize( elem )[ size ] : option;
-  }
-};
-
-/**
- * layout a collection of item elements
- * @api public
- */
-proto.layoutItems = function( items, isInstant ) {
-  items = this._getItemsForLayout( items );
-
-  this._layoutItems( items, isInstant );
-
-  this._postLayout();
-};
-
-/**
- * get the items to be laid out
- * you may want to skip over some items
- * @param {Array} items
- * @returns {Array} items
- */
-proto._getItemsForLayout = function( items ) {
-  return items.filter( function( item ) {
-    return !item.isIgnored;
-  });
-};
-
-/**
- * layout items
- * @param {Array} items
- * @param {Boolean} isInstant
- */
-proto._layoutItems = function( items, isInstant ) {
-  this._emitCompleteOnItems( 'layout', items );
-
-  if ( !items || !items.length ) {
-    // no items, emit event with empty array
-    return;
-  }
-
-  var queue = [];
-
-  items.forEach( function( item ) {
-    // get x/y object from method
-    var position = this._getItemLayoutPosition( item );
-    // enqueue
-    position.item = item;
-    position.isInstant = isInstant || item.isLayoutInstant;
-    queue.push( position );
-  }, this );
-
-  this._processLayoutQueue( queue );
-};
-
-/**
- * get item layout position
- * @param {Outlayer.Item} item
- * @returns {Object} x and y position
- */
-proto._getItemLayoutPosition = function( /* item */ ) {
-  return {
-    x: 0,
-    y: 0
-  };
-};
-
-/**
- * iterate over array and position each item
- * Reason being - separating this logic prevents 'layout invalidation'
- * thx @paul_irish
- * @param {Array} queue
- */
-proto._processLayoutQueue = function( queue ) {
-  queue.forEach( function( obj ) {
-    this._positionItem( obj.item, obj.x, obj.y, obj.isInstant );
-  }, this );
-};
-
-/**
- * Sets position of item in DOM
- * @param {Outlayer.Item} item
- * @param {Number} x - horizontal position
- * @param {Number} y - vertical position
- * @param {Boolean} isInstant - disables transitions
- */
-proto._positionItem = function( item, x, y, isInstant ) {
-  if ( isInstant ) {
-    // if not transition, just set CSS
-    item.goTo( x, y );
-  } else {
-    item.moveTo( x, y );
-  }
-};
-
-/**
- * Any logic you want to do after each layout,
- * i.e. size the container
- */
-proto._postLayout = function() {
-  this.resizeContainer();
-};
-
-proto.resizeContainer = function() {
-  var isResizingContainer = this._getOption('resizeContainer');
-  if ( !isResizingContainer ) {
-    return;
-  }
-  var size = this._getContainerSize();
-  if ( size ) {
-    this._setContainerMeasure( size.width, true );
-    this._setContainerMeasure( size.height, false );
-  }
-};
-
-/**
- * Sets width or height of container if returned
- * @returns {Object} size
- *   @param {Number} width
- *   @param {Number} height
- */
-proto._getContainerSize = noop;
-
-/**
- * @param {Number} measure - size of width or height
- * @param {Boolean} isWidth
- */
-proto._setContainerMeasure = function( measure, isWidth ) {
-  if ( measure === undefined ) {
-    return;
-  }
-
-  var elemSize = this.size;
-  // add padding and border width if border box
-  if ( elemSize.isBorderBox ) {
-    measure += isWidth ? elemSize.paddingLeft + elemSize.paddingRight +
-      elemSize.borderLeftWidth + elemSize.borderRightWidth :
-      elemSize.paddingBottom + elemSize.paddingTop +
-      elemSize.borderTopWidth + elemSize.borderBottomWidth;
-  }
-
-  measure = Math.max( measure, 0 );
-  this.element.style[ isWidth ? 'width' : 'height' ] = measure + 'px';
-};
-
-/**
- * emit eventComplete on a collection of items events
- * @param {String} eventName
- * @param {Array} items - Outlayer.Items
- */
-proto._emitCompleteOnItems = function( eventName, items ) {
-  var _this = this;
-  function onComplete() {
-    _this.dispatchEvent( eventName + 'Complete', null, [ items ] );
-  }
-
-  var count = items.length;
-  if ( !items || !count ) {
-    onComplete();
-    return;
-  }
-
-  var doneCount = 0;
-  function tick() {
-    doneCount++;
-    if ( doneCount == count ) {
-      onComplete();
-    }
-  }
-
-  // bind callback
-  items.forEach( function( item ) {
-    item.once( eventName, tick );
-  });
-};
-
-/**
- * emits events via EvEmitter and jQuery events
- * @param {String} type - name of event
- * @param {Event} event - original event
- * @param {Array} args - extra arguments
- */
-proto.dispatchEvent = function( type, event, args ) {
-  // add original event to arguments
-  var emitArgs = event ? [ event ].concat( args ) : args;
-  this.emitEvent( type, emitArgs );
-
-  if ( jQuery ) {
-    // set this.$element
-    this.$element = this.$element || jQuery( this.element );
-    if ( event ) {
-      // create jQuery event
-      var $event = jQuery.Event( event );
-      $event.type = type;
-      this.$element.trigger( $event, args );
-    } else {
-      // just trigger with type if no event available
-      this.$element.trigger( type, args );
-    }
-  }
-};
-
-// -------------------------- ignore & stamps -------------------------- //
-
-
-/**
- * keep item in collection, but do not lay it out
- * ignored items do not get skipped in layout
- * @param {Element} elem
- */
-proto.ignore = function( elem ) {
-  var item = this.getItem( elem );
-  if ( item ) {
-    item.isIgnored = true;
-  }
-};
-
-/**
- * return item to layout collection
- * @param {Element} elem
- */
-proto.unignore = function( elem ) {
-  var item = this.getItem( elem );
-  if ( item ) {
-    delete item.isIgnored;
-  }
-};
-
-/**
- * adds elements to stamps
- * @param {NodeList, Array, Element, or String} elems
- */
-proto.stamp = function( elems ) {
-  elems = this._find( elems );
-  if ( !elems ) {
-    return;
-  }
-
-  this.stamps = this.stamps.concat( elems );
-  // ignore
-  elems.forEach( this.ignore, this );
-};
-
-/**
- * removes elements to stamps
- * @param {NodeList, Array, or Element} elems
- */
-proto.unstamp = function( elems ) {
-  elems = this._find( elems );
-  if ( !elems ){
-    return;
-  }
-
-  elems.forEach( function( elem ) {
-    // filter out removed stamp elements
-    utils.removeFrom( this.stamps, elem );
-    this.unignore( elem );
-  }, this );
-};
-
-/**
- * finds child elements
- * @param {NodeList, Array, Element, or String} elems
- * @returns {Array} elems
- */
-proto._find = function( elems ) {
-  if ( !elems ) {
-    return;
-  }
-  // if string, use argument as selector string
-  if ( typeof elems == 'string' ) {
-    elems = this.element.querySelectorAll( elems );
-  }
-  elems = utils.makeArray( elems );
-  return elems;
-};
-
-proto._manageStamps = function() {
-  if ( !this.stamps || !this.stamps.length ) {
-    return;
-  }
-
-  this._getBoundingRect();
-
-  this.stamps.forEach( this._manageStamp, this );
-};
-
-// update boundingLeft / Top
-proto._getBoundingRect = function() {
-  // get bounding rect for container element
-  var boundingRect = this.element.getBoundingClientRect();
-  var size = this.size;
-  this._boundingRect = {
-    left: boundingRect.left + size.paddingLeft + size.borderLeftWidth,
-    top: boundingRect.top + size.paddingTop + size.borderTopWidth,
-    right: boundingRect.right - ( size.paddingRight + size.borderRightWidth ),
-    bottom: boundingRect.bottom - ( size.paddingBottom + size.borderBottomWidth )
-  };
-};
-
-/**
- * @param {Element} stamp
-**/
-proto._manageStamp = noop;
-
-/**
- * get x/y position of element relative to container element
- * @param {Element} elem
- * @returns {Object} offset - has left, top, right, bottom
- */
-proto._getElementOffset = function( elem ) {
-  var boundingRect = elem.getBoundingClientRect();
-  var thisRect = this._boundingRect;
-  var size = getSize( elem );
-  var offset = {
-    left: boundingRect.left - thisRect.left - size.marginLeft,
-    top: boundingRect.top - thisRect.top - size.marginTop,
-    right: thisRect.right - boundingRect.right - size.marginRight,
-    bottom: thisRect.bottom - boundingRect.bottom - size.marginBottom
-  };
-  return offset;
-};
-
-// -------------------------- resize -------------------------- //
-
-// enable event handlers for listeners
-// i.e. resize -> onresize
-proto.handleEvent = utils.handleEvent;
-
-/**
- * Bind layout to window resizing
- */
-proto.bindResize = function() {
-  window.addEventListener( 'resize', this );
-  this.isResizeBound = true;
-};
-
-/**
- * Unbind layout to window resizing
- */
-proto.unbindResize = function() {
-  window.removeEventListener( 'resize', this );
-  this.isResizeBound = false;
-};
-
-proto.onresize = function() {
-  this.resize();
-};
-
-utils.debounceMethod( Outlayer, 'onresize', 100 );
-
-proto.resize = function() {
-  // don't trigger if size did not change
-  // or if resize was unbound. See #9
-  if ( !this.isResizeBound || !this.needsResizeLayout() ) {
-    return;
-  }
-
-  this.layout();
-};
-
-/**
- * check if layout is needed post layout
- * @returns Boolean
- */
-proto.needsResizeLayout = function() {
-  var size = getSize( this.element );
-  // check that this.size and size are there
-  // IE8 triggers resize on body size change, so they might not be
-  var hasSizes = this.size && size;
-  return hasSizes && size.innerWidth !== this.size.innerWidth;
-};
-
-// -------------------------- methods -------------------------- //
-
-/**
- * add items to Outlayer instance
- * @param {Array or NodeList or Element} elems
- * @returns {Array} items - Outlayer.Items
-**/
-proto.addItems = function( elems ) {
-  var items = this._itemize( elems );
-  // add items to collection
-  if ( items.length ) {
-    this.items = this.items.concat( items );
-  }
-  return items;
-};
-
-/**
- * Layout newly-appended item elements
- * @param {Array or NodeList or Element} elems
- */
-proto.appended = function( elems ) {
-  var items = this.addItems( elems );
-  if ( !items.length ) {
-    return;
-  }
-  // layout and reveal just the new items
-  this.layoutItems( items, true );
-  this.reveal( items );
-};
-
-/**
- * Layout prepended elements
- * @param {Array or NodeList or Element} elems
- */
-proto.prepended = function( elems ) {
-  var items = this._itemize( elems );
-  if ( !items.length ) {
-    return;
-  }
-  // add items to beginning of collection
-  var previousItems = this.items.slice(0);
-  this.items = items.concat( previousItems );
-  // start new layout
-  this._resetLayout();
-  this._manageStamps();
-  // layout new stuff without transition
-  this.layoutItems( items, true );
-  this.reveal( items );
-  // layout previous items
-  this.layoutItems( previousItems );
-};
-
-/**
- * reveal a collection of items
- * @param {Array of Outlayer.Items} items
- */
-proto.reveal = function( items ) {
-  this._emitCompleteOnItems( 'reveal', items );
-  if ( !items || !items.length ) {
-    return;
-  }
-  items.forEach( function( item ) {
-    item.reveal();
-  });
-};
-
-/**
- * hide a collection of items
- * @param {Array of Outlayer.Items} items
- */
-proto.hide = function( items ) {
-  this._emitCompleteOnItems( 'hide', items );
-  if ( !items || !items.length ) {
-    return;
-  }
-  items.forEach( function( item ) {
-    item.hide();
-  });
-};
-
-/**
- * reveal item elements
- * @param {Array}, {Element}, {NodeList} items
- */
-proto.revealItemElements = function( elems ) {
-  var items = this.getItems( elems );
-  this.reveal( items );
-};
-
-/**
- * hide item elements
- * @param {Array}, {Element}, {NodeList} items
- */
-proto.hideItemElements = function( elems ) {
-  var items = this.getItems( elems );
-  this.hide( items );
-};
-
-/**
- * get Outlayer.Item, given an Element
- * @param {Element} elem
- * @param {Function} callback
- * @returns {Outlayer.Item} item
- */
-proto.getItem = function( elem ) {
-  // loop through items to get the one that matches
-  for ( var i=0; i < this.items.length; i++ ) {
-    var item = this.items[i];
-    if ( item.element == elem ) {
-      // return item
-      return item;
-    }
-  }
-};
-
-/**
- * get collection of Outlayer.Items, given Elements
- * @param {Array} elems
- * @returns {Array} items - Outlayer.Items
- */
-proto.getItems = function( elems ) {
-  elems = utils.makeArray( elems );
-  var items = [];
-  elems.forEach( function( elem ) {
-    var item = this.getItem( elem );
-    if ( item ) {
-      items.push( item );
-    }
-  }, this );
-
-  return items;
-};
-
-/**
- * remove element(s) from instance and DOM
- * @param {Array or NodeList or Element} elems
- */
-proto.remove = function( elems ) {
-  var removeItems = this.getItems( elems );
-
-  this._emitCompleteOnItems( 'remove', removeItems );
-
-  // bail if no items to remove
-  if ( !removeItems || !removeItems.length ) {
-    return;
-  }
-
-  removeItems.forEach( function( item ) {
-    item.remove();
-    // remove item from collection
-    utils.removeFrom( this.items, item );
-  }, this );
-};
-
-// ----- destroy ----- //
-
-// remove and disable Outlayer instance
-proto.destroy = function() {
-  // clean up dynamic styles
-  var style = this.element.style;
-  style.height = '';
-  style.position = '';
-  style.width = '';
-  // destroy items
-  this.items.forEach( function( item ) {
-    item.destroy();
-  });
-
-  this.unbindResize();
-
-  var id = this.element.outlayerGUID;
-  delete instances[ id ]; // remove reference to instance by id
-  delete this.element.outlayerGUID;
-  // remove data for jQuery
-  if ( jQuery ) {
-    jQuery.removeData( this.element, this.constructor.namespace );
-  }
-
-};
-
-// -------------------------- data -------------------------- //
-
-/**
- * get Outlayer instance from element
- * @param {Element} elem
- * @returns {Outlayer}
- */
-Outlayer.data = function( elem ) {
-  elem = utils.getQueryElement( elem );
-  var id = elem && elem.outlayerGUID;
-  return id && instances[ id ];
-};
-
-
-// -------------------------- create Outlayer class -------------------------- //
-
-/**
- * create a layout class
- * @param {String} namespace
- */
-Outlayer.create = function( namespace, options ) {
-  // sub-class Outlayer
-  var Layout = subclass( Outlayer );
-  // apply new options and compatOptions
-  Layout.defaults = utils.extend( {}, Outlayer.defaults );
-  utils.extend( Layout.defaults, options );
-  Layout.compatOptions = utils.extend( {}, Outlayer.compatOptions  );
-
-  Layout.namespace = namespace;
-
-  Layout.data = Outlayer.data;
-
-  // sub-class Item
-  Layout.Item = subclass( Item );
-
-  // -------------------------- declarative -------------------------- //
-
-  utils.htmlInit( Layout, namespace );
-
-  // -------------------------- jQuery bridge -------------------------- //
-
-  // make into jQuery plugin
-  if ( jQuery && jQuery.bridget ) {
-    jQuery.bridget( namespace, Layout );
-  }
-
-  return Layout;
-};
-
-function subclass( Parent ) {
-  function SubClass() {
-    Parent.apply( this, arguments );
-  }
-
-  SubClass.prototype = Object.create( Parent.prototype );
-  SubClass.prototype.constructor = SubClass;
-
-  return SubClass;
-}
-
-// ----- fin ----- //
-
-// back in global
-Outlayer.Item = Item;
-
-return Outlayer;
-
-}));
-
-},{"./item":44,"ev-emitter":7,"fizzy-ui-utils":35,"get-size":36}],46:[function(require,module,exports){
-(function (process){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-// resolves . and .. elements in a path array with directory names there
-// must be no slashes, empty elements, or device names (c:\) in the array
-// (so also no leading and trailing slashes - it does not distinguish
-// relative and absolute paths)
-function normalizeArray(parts, allowAboveRoot) {
-  // if the path tries to go above the root, `up` ends up > 0
-  var up = 0;
-  for (var i = parts.length - 1; i >= 0; i--) {
-    var last = parts[i];
-    if (last === '.') {
-      parts.splice(i, 1);
-    } else if (last === '..') {
-      parts.splice(i, 1);
-      up++;
-    } else if (up) {
-      parts.splice(i, 1);
-      up--;
-    }
-  }
-
-  // if the path is allowed to go above the root, restore leading ..s
-  if (allowAboveRoot) {
-    for (; up--; up) {
-      parts.unshift('..');
-    }
-  }
+  parts.push.apply(parts, p);
 
   return parts;
 }
 
-// Split a filename into [root, dir, basename, ext], unix version
-// 'root' is just a slash, or nothing.
-var splitPathRe =
-    /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
-var splitPath = function(filename) {
-  return splitPathRe.exec(filename).slice(1);
-};
+function expandTop(str) {
+  if (!str)
+    return [];
 
-// path.resolve([from ...], to)
-// posix version
-exports.resolve = function() {
-  var resolvedPath = '',
-      resolvedAbsolute = false;
-
-  for (var i = arguments.length - 1; i >= -1 && !resolvedAbsolute; i--) {
-    var path = (i >= 0) ? arguments[i] : process.cwd();
-
-    // Skip empty and invalid entries
-    if (typeof path !== 'string') {
-      throw new TypeError('Arguments to path.resolve must be strings');
-    } else if (!path) {
-      continue;
-    }
-
-    resolvedPath = path + '/' + resolvedPath;
-    resolvedAbsolute = path.charAt(0) === '/';
-  }
-
-  // At this point the path should be resolved to a full absolute path, but
-  // handle relative paths to be safe (might happen when process.cwd() fails)
-
-  // Normalize the path
-  resolvedPath = normalizeArray(filter(resolvedPath.split('/'), function(p) {
-    return !!p;
-  }), !resolvedAbsolute).join('/');
-
-  return ((resolvedAbsolute ? '/' : '') + resolvedPath) || '.';
-};
-
-// path.normalize(path)
-// posix version
-exports.normalize = function(path) {
-  var isAbsolute = exports.isAbsolute(path),
-      trailingSlash = substr(path, -1) === '/';
-
-  // Normalize the path
-  path = normalizeArray(filter(path.split('/'), function(p) {
-    return !!p;
-  }), !isAbsolute).join('/');
-
-  if (!path && !isAbsolute) {
-    path = '.';
-  }
-  if (path && trailingSlash) {
-    path += '/';
-  }
-
-  return (isAbsolute ? '/' : '') + path;
-};
-
-// posix version
-exports.isAbsolute = function(path) {
-  return path.charAt(0) === '/';
-};
-
-// posix version
-exports.join = function() {
-  var paths = Array.prototype.slice.call(arguments, 0);
-  return exports.normalize(filter(paths, function(p, index) {
-    if (typeof p !== 'string') {
-      throw new TypeError('Arguments to path.join must be strings');
-    }
-    return p;
-  }).join('/'));
-};
-
-
-// path.relative(from, to)
-// posix version
-exports.relative = function(from, to) {
-  from = exports.resolve(from).substr(1);
-  to = exports.resolve(to).substr(1);
-
-  function trim(arr) {
-    var start = 0;
-    for (; start < arr.length; start++) {
-      if (arr[start] !== '') break;
-    }
-
-    var end = arr.length - 1;
-    for (; end >= 0; end--) {
-      if (arr[end] !== '') break;
-    }
-
-    if (start > end) return [];
-    return arr.slice(start, end - start + 1);
-  }
-
-  var fromParts = trim(from.split('/'));
-  var toParts = trim(to.split('/'));
-
-  var length = Math.min(fromParts.length, toParts.length);
-  var samePartsLength = length;
-  for (var i = 0; i < length; i++) {
-    if (fromParts[i] !== toParts[i]) {
-      samePartsLength = i;
-      break;
-    }
-  }
-
-  var outputParts = [];
-  for (var i = samePartsLength; i < fromParts.length; i++) {
-    outputParts.push('..');
-  }
-
-  outputParts = outputParts.concat(toParts.slice(samePartsLength));
-
-  return outputParts.join('/');
-};
-
-exports.sep = '/';
-exports.delimiter = ':';
-
-exports.dirname = function(path) {
-  var result = splitPath(path),
-      root = result[0],
-      dir = result[1];
-
-  if (!root && !dir) {
-    // No dirname whatsoever
-    return '.';
-  }
-
-  if (dir) {
-    // It has a dirname, strip trailing slash
-    dir = dir.substr(0, dir.length - 1);
-  }
-
-  return root + dir;
-};
-
-
-exports.basename = function(path, ext) {
-  var f = splitPath(path)[2];
-  // TODO: make this comparison case-insensitive on windows?
-  if (ext && f.substr(-1 * ext.length) === ext) {
-    f = f.substr(0, f.length - ext.length);
-  }
-  return f;
-};
-
-
-exports.extname = function(path) {
-  return splitPath(path)[3];
-};
-
-function filter (xs, f) {
-    if (xs.filter) return xs.filter(f);
-    var res = [];
-    for (var i = 0; i < xs.length; i++) {
-        if (f(xs[i], i, xs)) res.push(xs[i]);
-    }
-    return res;
+  return expand(escapeBraces(str), true).map(unescapeBraces);
 }
 
-// String.prototype.substr - negative index don't work in IE8
-var substr = 'ab'.substr(-1) === 'b'
-    ? function (str, start, len) { return str.substr(start, len) }
-    : function (str, start, len) {
-        if (start < 0) start = str.length + start;
-        return str.substr(start, len);
-    }
-;
-
-}).call(this,require('_process'))
-},{"_process":47}],47:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
+function identity(e) {
+  return e;
 }
 
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = setTimeout(cleanUpNextTick);
-    draining = true;
+function embrace(str) {
+  return '{' + str + '}';
+}
+function isPadded(el) {
+  return /^-?0\d/.test(el);
+}
 
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
+function lte(i, y) {
+  return i <= y;
+}
+function gte(i, y) {
+  return i >= y;
+}
+
+function expand(str, isTop) {
+  var expansions = [];
+
+  var m = balanced('{', '}', str);
+  if (!m || /\$$/.test(m.pre)) return [str];
+
+  var isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
+  var isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
+  var isSequence = isNumericSequence || isAlphaSequence;
+  var isOptions = /^(.*,)+(.+)?$/.test(m.body);
+  if (!isSequence && !isOptions) {
+    // {a},b}
+    if (m.post.match(/,.*\}/)) {
+      str = m.pre + '{' + m.body + escClose + m.post;
+      return expand(str);
+    }
+    return [str];
+  }
+
+  var n;
+  if (isSequence) {
+    n = m.body.split(/\.\./);
+  } else {
+    n = parseCommaParts(m.body);
+    if (n.length === 1) {
+      // x{{a,b}}y ==> x{a}y x{b}y
+      n = expand(n[0], false).map(embrace);
+      if (n.length === 1) {
+        var post = m.post.length
+          ? expand(m.post, false)
+          : [''];
+        return post.map(function(p) {
+          return m.pre + n[0] + p;
+        });
+      }
+    }
+  }
+
+  // at this point, n is the parts, and we know it's not a comma set
+  // with a single entry.
+
+  // no need to expand pre, since it is guaranteed to be free of brace-sets
+  var pre = m.pre;
+  var post = m.post.length
+    ? expand(m.post, false)
+    : [''];
+
+  var N;
+
+  if (isSequence) {
+    var x = numeric(n[0]);
+    var y = numeric(n[1]);
+    var width = Math.max(n[0].length, n[1].length)
+    var incr = n.length == 3
+      ? Math.abs(numeric(n[2]))
+      : 1;
+    var test = lte;
+    var reverse = y < x;
+    if (reverse) {
+      incr *= -1;
+      test = gte;
+    }
+    var pad = n.some(isPadded);
+
+    N = [];
+
+    for (var i = x; test(i, y); i += incr) {
+      var c;
+      if (isAlphaSequence) {
+        c = String.fromCharCode(i);
+        if (c === '\\')
+          c = '';
+      } else {
+        c = String(i);
+        if (pad) {
+          var need = width - c.length;
+          if (need > 0) {
+            var z = new Array(need + 1).join('0');
+            if (i < 0)
+              c = '-' + z + c.slice(1);
+            else
+              c = z + c;
+          }
         }
-        queueIndex = -1;
-        len = queue.length;
+      }
+      N.push(c);
     }
-    currentQueue = null;
-    draining = false;
-    clearTimeout(timeout);
+  } else {
+    N = concatMap(n, function(el) { return expand(el, false) });
+  }
+
+  for (var j = 0; j < N.length; j++) {
+    for (var k = 0; k < post.length; k++) {
+      var expansion = pre + N[j] + post[k];
+      if (!isTop || isSequence || expansion)
+        expansions.push(expansion);
+    }
+  }
+
+  return expansions;
 }
 
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
+
+},{"balanced-match":47,"concat-map":48}],47:[function(require,module,exports){
+module.exports = balanced;
+function balanced(a, b, str) {
+  var r = range(a, b, str);
+
+  return r && {
+    start: r[0],
+    end: r[1],
+    pre: str.slice(0, r[0]),
+    body: str.slice(r[0] + a.length, r[1]),
+    post: str.slice(r[1] + b.length)
+  };
+}
+
+balanced.range = range;
+function range(a, b, str) {
+  var begs, beg, left, right, result;
+  var ai = str.indexOf(a);
+  var bi = str.indexOf(b, ai + 1);
+  var i = ai;
+
+  if (ai >= 0 && bi > 0) {
+    begs = [];
+    left = str.length;
+
+    while (i < str.length && i >= 0 && ! result) {
+      if (i == ai) {
+        begs.push(i);
+        ai = str.indexOf(a, i + 1);
+      } else if (begs.length == 1) {
+        result = [ begs.pop(), bi ];
+      } else {
+        beg = begs.pop();
+        if (beg < left) {
+          left = beg;
+          right = bi;
         }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        setTimeout(drainQueue, 0);
-    }
-};
 
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
+        bi = str.indexOf(b, i + 1);
+      }
+
+      i = ai < bi && ai >= 0 ? ai : bi;
+    }
+
+    if (begs.length) {
+      result = [ left, right ];
+    }
+  }
+
+  return result;
 }
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
 
 },{}],48:[function(require,module,exports){
+module.exports = function (xs, fn) {
+    var res = [];
+    for (var i = 0; i < xs.length; i++) {
+        var x = fn(xs[i], i);
+        if (isArray(x)) res.push.apply(res, x);
+        else res.push(x);
+    }
+    return res;
+};
+
+var isArray = Array.isArray || function (xs) {
+    return Object.prototype.toString.call(xs) === '[object Array]';
+};
+
+},{}],49:[function(require,module,exports){
 'use strict';
 
 module.exports = require('react/lib/ReactDOM');
 
-},{"react/lib/ReactDOM":83}],49:[function(require,module,exports){
+},{"react/lib/ReactDOM":84}],50:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -6035,7 +6037,7 @@ var AutoFocusUtils = {
 };
 
 module.exports = AutoFocusUtils;
-},{"./ReactMount":113,"./findDOMNode":156,"fbjs/lib/focusNode":17}],50:[function(require,module,exports){
+},{"./ReactMount":114,"./findDOMNode":157,"fbjs/lib/focusNode":11}],51:[function(require,module,exports){
 /**
  * Copyright 2013-2015 Facebook, Inc.
  * All rights reserved.
@@ -6441,7 +6443,7 @@ var BeforeInputEventPlugin = {
 };
 
 module.exports = BeforeInputEventPlugin;
-},{"./EventConstants":62,"./EventPropagators":66,"./FallbackCompositionState":67,"./SyntheticCompositionEvent":138,"./SyntheticInputEvent":142,"fbjs/lib/ExecutionEnvironment":9,"fbjs/lib/keyOf":27}],51:[function(require,module,exports){
+},{"./EventConstants":63,"./EventPropagators":67,"./FallbackCompositionState":68,"./SyntheticCompositionEvent":139,"./SyntheticInputEvent":143,"fbjs/lib/ExecutionEnvironment":3,"fbjs/lib/keyOf":21}],52:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -6581,7 +6583,7 @@ var CSSProperty = {
 };
 
 module.exports = CSSProperty;
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -6759,7 +6761,7 @@ ReactPerf.measureMethods(CSSPropertyOperations, 'CSSPropertyOperations', {
 
 module.exports = CSSPropertyOperations;
 }).call(this,require('_process'))
-},{"./CSSProperty":51,"./ReactPerf":119,"./dangerousStyleValue":153,"_process":47,"fbjs/lib/ExecutionEnvironment":9,"fbjs/lib/camelizeStyleName":11,"fbjs/lib/hyphenateStyleName":22,"fbjs/lib/memoizeStringOnly":29,"fbjs/lib/warning":34}],53:[function(require,module,exports){
+},{"./CSSProperty":52,"./ReactPerf":120,"./dangerousStyleValue":154,"_process":31,"fbjs/lib/ExecutionEnvironment":3,"fbjs/lib/camelizeStyleName":5,"fbjs/lib/hyphenateStyleName":16,"fbjs/lib/memoizeStringOnly":23,"fbjs/lib/warning":28}],54:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -6855,7 +6857,7 @@ PooledClass.addPoolingTo(CallbackQueue);
 
 module.exports = CallbackQueue;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"./PooledClass":71,"_process":47,"fbjs/lib/invariant":23}],54:[function(require,module,exports){
+},{"./Object.assign":71,"./PooledClass":72,"_process":31,"fbjs/lib/invariant":17}],55:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -7177,7 +7179,7 @@ var ChangeEventPlugin = {
 };
 
 module.exports = ChangeEventPlugin;
-},{"./EventConstants":62,"./EventPluginHub":63,"./EventPropagators":66,"./ReactUpdates":131,"./SyntheticEvent":140,"./getEventTarget":162,"./isEventSupported":167,"./isTextInputElement":168,"fbjs/lib/ExecutionEnvironment":9,"fbjs/lib/keyOf":27}],55:[function(require,module,exports){
+},{"./EventConstants":63,"./EventPluginHub":64,"./EventPropagators":67,"./ReactUpdates":132,"./SyntheticEvent":141,"./getEventTarget":163,"./isEventSupported":168,"./isTextInputElement":169,"fbjs/lib/ExecutionEnvironment":3,"fbjs/lib/keyOf":21}],56:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -7201,7 +7203,7 @@ var ClientReactRootIndex = {
 };
 
 module.exports = ClientReactRootIndex;
-},{}],56:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7333,7 +7335,7 @@ ReactPerf.measureMethods(DOMChildrenOperations, 'DOMChildrenOperations', {
 
 module.exports = DOMChildrenOperations;
 }).call(this,require('_process'))
-},{"./Danger":59,"./ReactMultiChildUpdateTypes":115,"./ReactPerf":119,"./setInnerHTML":172,"./setTextContent":173,"_process":47,"fbjs/lib/invariant":23}],57:[function(require,module,exports){
+},{"./Danger":60,"./ReactMultiChildUpdateTypes":116,"./ReactPerf":120,"./setInnerHTML":173,"./setTextContent":174,"_process":31,"fbjs/lib/invariant":17}],58:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7570,7 +7572,7 @@ var DOMProperty = {
 
 module.exports = DOMProperty;
 }).call(this,require('_process'))
-},{"_process":47,"fbjs/lib/invariant":23}],58:[function(require,module,exports){
+},{"_process":31,"fbjs/lib/invariant":17}],59:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7798,7 +7800,7 @@ ReactPerf.measureMethods(DOMPropertyOperations, 'DOMPropertyOperations', {
 
 module.exports = DOMPropertyOperations;
 }).call(this,require('_process'))
-},{"./DOMProperty":57,"./ReactPerf":119,"./quoteAttributeValueForBrowser":170,"_process":47,"fbjs/lib/warning":34}],59:[function(require,module,exports){
+},{"./DOMProperty":58,"./ReactPerf":120,"./quoteAttributeValueForBrowser":171,"_process":31,"fbjs/lib/warning":28}],60:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7946,7 +7948,7 @@ var Danger = {
 
 module.exports = Danger;
 }).call(this,require('_process'))
-},{"_process":47,"fbjs/lib/ExecutionEnvironment":9,"fbjs/lib/createNodesFromMarkup":14,"fbjs/lib/emptyFunction":15,"fbjs/lib/getMarkupWrap":19,"fbjs/lib/invariant":23}],60:[function(require,module,exports){
+},{"_process":31,"fbjs/lib/ExecutionEnvironment":3,"fbjs/lib/createNodesFromMarkup":8,"fbjs/lib/emptyFunction":9,"fbjs/lib/getMarkupWrap":13,"fbjs/lib/invariant":17}],61:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -7974,7 +7976,7 @@ var keyOf = require('fbjs/lib/keyOf');
 var DefaultEventPluginOrder = [keyOf({ ResponderEventPlugin: null }), keyOf({ SimpleEventPlugin: null }), keyOf({ TapEventPlugin: null }), keyOf({ EnterLeaveEventPlugin: null }), keyOf({ ChangeEventPlugin: null }), keyOf({ SelectEventPlugin: null }), keyOf({ BeforeInputEventPlugin: null })];
 
 module.exports = DefaultEventPluginOrder;
-},{"fbjs/lib/keyOf":27}],61:[function(require,module,exports){
+},{"fbjs/lib/keyOf":21}],62:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8099,7 +8101,7 @@ var EnterLeaveEventPlugin = {
 };
 
 module.exports = EnterLeaveEventPlugin;
-},{"./EventConstants":62,"./EventPropagators":66,"./ReactMount":113,"./SyntheticMouseEvent":144,"fbjs/lib/keyOf":27}],62:[function(require,module,exports){
+},{"./EventConstants":63,"./EventPropagators":67,"./ReactMount":114,"./SyntheticMouseEvent":145,"fbjs/lib/keyOf":21}],63:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8192,7 +8194,7 @@ var EventConstants = {
 };
 
 module.exports = EventConstants;
-},{"fbjs/lib/keyMirror":26}],63:[function(require,module,exports){
+},{"fbjs/lib/keyMirror":20}],64:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -8474,7 +8476,7 @@ var EventPluginHub = {
 
 module.exports = EventPluginHub;
 }).call(this,require('_process'))
-},{"./EventPluginRegistry":64,"./EventPluginUtils":65,"./ReactErrorUtils":104,"./accumulateInto":150,"./forEachAccumulated":158,"_process":47,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],64:[function(require,module,exports){
+},{"./EventPluginRegistry":65,"./EventPluginUtils":66,"./ReactErrorUtils":105,"./accumulateInto":151,"./forEachAccumulated":159,"_process":31,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],65:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -8697,7 +8699,7 @@ var EventPluginRegistry = {
 
 module.exports = EventPluginRegistry;
 }).call(this,require('_process'))
-},{"_process":47,"fbjs/lib/invariant":23}],65:[function(require,module,exports){
+},{"_process":31,"fbjs/lib/invariant":17}],66:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -8902,7 +8904,7 @@ var EventPluginUtils = {
 
 module.exports = EventPluginUtils;
 }).call(this,require('_process'))
-},{"./EventConstants":62,"./ReactErrorUtils":104,"_process":47,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],66:[function(require,module,exports){
+},{"./EventConstants":63,"./ReactErrorUtils":105,"_process":31,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],67:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -9040,7 +9042,7 @@ var EventPropagators = {
 
 module.exports = EventPropagators;
 }).call(this,require('_process'))
-},{"./EventConstants":62,"./EventPluginHub":63,"./accumulateInto":150,"./forEachAccumulated":158,"_process":47,"fbjs/lib/warning":34}],67:[function(require,module,exports){
+},{"./EventConstants":63,"./EventPluginHub":64,"./accumulateInto":151,"./forEachAccumulated":159,"_process":31,"fbjs/lib/warning":28}],68:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -9136,7 +9138,7 @@ assign(FallbackCompositionState.prototype, {
 PooledClass.addPoolingTo(FallbackCompositionState);
 
 module.exports = FallbackCompositionState;
-},{"./Object.assign":70,"./PooledClass":71,"./getTextContentAccessor":165}],68:[function(require,module,exports){
+},{"./Object.assign":71,"./PooledClass":72,"./getTextContentAccessor":166}],69:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -9367,7 +9369,7 @@ var HTMLDOMPropertyConfig = {
 };
 
 module.exports = HTMLDOMPropertyConfig;
-},{"./DOMProperty":57,"fbjs/lib/ExecutionEnvironment":9}],69:[function(require,module,exports){
+},{"./DOMProperty":58,"fbjs/lib/ExecutionEnvironment":3}],70:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -9504,7 +9506,7 @@ var LinkedValueUtils = {
 
 module.exports = LinkedValueUtils;
 }).call(this,require('_process'))
-},{"./ReactPropTypeLocations":121,"./ReactPropTypes":122,"_process":47,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],70:[function(require,module,exports){
+},{"./ReactPropTypeLocations":122,"./ReactPropTypes":123,"_process":31,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],71:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -9552,7 +9554,7 @@ function assign(target, sources) {
 }
 
 module.exports = assign;
-},{}],71:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -9674,7 +9676,7 @@ var PooledClass = {
 
 module.exports = PooledClass;
 }).call(this,require('_process'))
-},{"_process":47,"fbjs/lib/invariant":23}],72:[function(require,module,exports){
+},{"_process":31,"fbjs/lib/invariant":17}],73:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -9715,7 +9717,7 @@ React.__SECRET_DOM_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = ReactDOM;
 React.__SECRET_DOM_SERVER_DO_NOT_USE_OR_YOU_WILL_BE_FIRED = ReactDOMServer;
 
 module.exports = React;
-},{"./Object.assign":70,"./ReactDOM":83,"./ReactDOMServer":93,"./ReactIsomorphic":111,"./deprecated":154}],73:[function(require,module,exports){
+},{"./Object.assign":71,"./ReactDOM":84,"./ReactDOMServer":94,"./ReactIsomorphic":112,"./deprecated":155}],74:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -9754,7 +9756,7 @@ var ReactBrowserComponentMixin = {
 
 module.exports = ReactBrowserComponentMixin;
 }).call(this,require('_process'))
-},{"./ReactInstanceMap":110,"./findDOMNode":156,"_process":47,"fbjs/lib/warning":34}],74:[function(require,module,exports){
+},{"./ReactInstanceMap":111,"./findDOMNode":157,"_process":31,"fbjs/lib/warning":28}],75:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -10079,7 +10081,7 @@ ReactPerf.measureMethods(ReactBrowserEventEmitter, 'ReactBrowserEventEmitter', {
 });
 
 module.exports = ReactBrowserEventEmitter;
-},{"./EventConstants":62,"./EventPluginHub":63,"./EventPluginRegistry":64,"./Object.assign":70,"./ReactEventEmitterMixin":105,"./ReactPerf":119,"./ViewportMetrics":149,"./isEventSupported":167}],75:[function(require,module,exports){
+},{"./EventConstants":63,"./EventPluginHub":64,"./EventPluginRegistry":65,"./Object.assign":71,"./ReactEventEmitterMixin":106,"./ReactPerf":120,"./ViewportMetrics":150,"./isEventSupported":168}],76:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -10204,7 +10206,7 @@ var ReactChildReconciler = {
 
 module.exports = ReactChildReconciler;
 }).call(this,require('_process'))
-},{"./ReactReconciler":124,"./instantiateReactComponent":166,"./shouldUpdateReactComponent":174,"./traverseAllChildren":175,"_process":47,"fbjs/lib/warning":34}],76:[function(require,module,exports){
+},{"./ReactReconciler":125,"./instantiateReactComponent":167,"./shouldUpdateReactComponent":175,"./traverseAllChildren":176,"_process":31,"fbjs/lib/warning":28}],77:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -10387,7 +10389,7 @@ var ReactChildren = {
 };
 
 module.exports = ReactChildren;
-},{"./PooledClass":71,"./ReactElement":100,"./traverseAllChildren":175,"fbjs/lib/emptyFunction":15}],77:[function(require,module,exports){
+},{"./PooledClass":72,"./ReactElement":101,"./traverseAllChildren":176,"fbjs/lib/emptyFunction":9}],78:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -11161,7 +11163,7 @@ var ReactClass = {
 
 module.exports = ReactClass;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"./ReactComponent":78,"./ReactElement":100,"./ReactNoopUpdateQueue":117,"./ReactPropTypeLocationNames":120,"./ReactPropTypeLocations":121,"_process":47,"fbjs/lib/emptyObject":16,"fbjs/lib/invariant":23,"fbjs/lib/keyMirror":26,"fbjs/lib/keyOf":27,"fbjs/lib/warning":34}],78:[function(require,module,exports){
+},{"./Object.assign":71,"./ReactComponent":79,"./ReactElement":101,"./ReactNoopUpdateQueue":118,"./ReactPropTypeLocationNames":121,"./ReactPropTypeLocations":122,"_process":31,"fbjs/lib/emptyObject":10,"fbjs/lib/invariant":17,"fbjs/lib/keyMirror":20,"fbjs/lib/keyOf":21,"fbjs/lib/warning":28}],79:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -11286,7 +11288,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = ReactComponent;
 }).call(this,require('_process'))
-},{"./ReactNoopUpdateQueue":117,"./canDefineProperty":152,"_process":47,"fbjs/lib/emptyObject":16,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],79:[function(require,module,exports){
+},{"./ReactNoopUpdateQueue":118,"./canDefineProperty":153,"_process":31,"fbjs/lib/emptyObject":10,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],80:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -11328,7 +11330,7 @@ var ReactComponentBrowserEnvironment = {
 };
 
 module.exports = ReactComponentBrowserEnvironment;
-},{"./ReactDOMIDOperations":88,"./ReactMount":113}],80:[function(require,module,exports){
+},{"./ReactDOMIDOperations":89,"./ReactMount":114}],81:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -11382,7 +11384,7 @@ var ReactComponentEnvironment = {
 
 module.exports = ReactComponentEnvironment;
 }).call(this,require('_process'))
-},{"_process":47,"fbjs/lib/invariant":23}],81:[function(require,module,exports){
+},{"_process":31,"fbjs/lib/invariant":17}],82:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -12079,7 +12081,7 @@ var ReactCompositeComponent = {
 
 module.exports = ReactCompositeComponent;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"./ReactComponentEnvironment":80,"./ReactCurrentOwner":82,"./ReactElement":100,"./ReactInstanceMap":110,"./ReactPerf":119,"./ReactPropTypeLocationNames":120,"./ReactPropTypeLocations":121,"./ReactReconciler":124,"./ReactUpdateQueue":130,"./shouldUpdateReactComponent":174,"_process":47,"fbjs/lib/emptyObject":16,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],82:[function(require,module,exports){
+},{"./Object.assign":71,"./ReactComponentEnvironment":81,"./ReactCurrentOwner":83,"./ReactElement":101,"./ReactInstanceMap":111,"./ReactPerf":120,"./ReactPropTypeLocationNames":121,"./ReactPropTypeLocations":122,"./ReactReconciler":125,"./ReactUpdateQueue":131,"./shouldUpdateReactComponent":175,"_process":31,"fbjs/lib/emptyObject":10,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],83:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -12110,7 +12112,7 @@ var ReactCurrentOwner = {
 };
 
 module.exports = ReactCurrentOwner;
-},{}],83:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -12205,7 +12207,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = React;
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":82,"./ReactDOMTextComponent":94,"./ReactDefaultInjection":97,"./ReactInstanceHandles":109,"./ReactMount":113,"./ReactPerf":119,"./ReactReconciler":124,"./ReactUpdates":131,"./ReactVersion":132,"./findDOMNode":156,"./renderSubtreeIntoContainer":171,"_process":47,"fbjs/lib/ExecutionEnvironment":9,"fbjs/lib/warning":34}],84:[function(require,module,exports){
+},{"./ReactCurrentOwner":83,"./ReactDOMTextComponent":95,"./ReactDefaultInjection":98,"./ReactInstanceHandles":110,"./ReactMount":114,"./ReactPerf":120,"./ReactReconciler":125,"./ReactUpdates":132,"./ReactVersion":133,"./findDOMNode":157,"./renderSubtreeIntoContainer":172,"_process":31,"fbjs/lib/ExecutionEnvironment":3,"fbjs/lib/warning":28}],85:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -12256,7 +12258,7 @@ var ReactDOMButton = {
 };
 
 module.exports = ReactDOMButton;
-},{}],85:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13221,7 +13223,7 @@ assign(ReactDOMComponent.prototype, ReactDOMComponent.Mixin, ReactMultiChild.Mix
 
 module.exports = ReactDOMComponent;
 }).call(this,require('_process'))
-},{"./AutoFocusUtils":49,"./CSSPropertyOperations":52,"./DOMProperty":57,"./DOMPropertyOperations":58,"./EventConstants":62,"./Object.assign":70,"./ReactBrowserEventEmitter":74,"./ReactComponentBrowserEnvironment":79,"./ReactDOMButton":84,"./ReactDOMInput":89,"./ReactDOMOption":90,"./ReactDOMSelect":91,"./ReactDOMTextarea":95,"./ReactMount":113,"./ReactMultiChild":114,"./ReactPerf":119,"./ReactUpdateQueue":130,"./canDefineProperty":152,"./escapeTextContentForBrowser":155,"./isEventSupported":167,"./setInnerHTML":172,"./setTextContent":173,"./validateDOMNesting":176,"_process":47,"fbjs/lib/invariant":23,"fbjs/lib/keyOf":27,"fbjs/lib/shallowEqual":32,"fbjs/lib/warning":34}],86:[function(require,module,exports){
+},{"./AutoFocusUtils":50,"./CSSPropertyOperations":53,"./DOMProperty":58,"./DOMPropertyOperations":59,"./EventConstants":63,"./Object.assign":71,"./ReactBrowserEventEmitter":75,"./ReactComponentBrowserEnvironment":80,"./ReactDOMButton":85,"./ReactDOMInput":90,"./ReactDOMOption":91,"./ReactDOMSelect":92,"./ReactDOMTextarea":96,"./ReactMount":114,"./ReactMultiChild":115,"./ReactPerf":120,"./ReactUpdateQueue":131,"./canDefineProperty":153,"./escapeTextContentForBrowser":156,"./isEventSupported":168,"./setInnerHTML":173,"./setTextContent":174,"./validateDOMNesting":177,"_process":31,"fbjs/lib/invariant":17,"fbjs/lib/keyOf":21,"fbjs/lib/shallowEqual":26,"fbjs/lib/warning":28}],87:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13401,7 +13403,7 @@ var ReactDOMFactories = mapObject({
 
 module.exports = ReactDOMFactories;
 }).call(this,require('_process'))
-},{"./ReactElement":100,"./ReactElementValidator":101,"_process":47,"fbjs/lib/mapObject":28}],87:[function(require,module,exports){
+},{"./ReactElement":101,"./ReactElementValidator":102,"_process":31,"fbjs/lib/mapObject":22}],88:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -13420,7 +13422,7 @@ var ReactDOMFeatureFlags = {
 };
 
 module.exports = ReactDOMFeatureFlags;
-},{}],88:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13517,7 +13519,7 @@ ReactPerf.measureMethods(ReactDOMIDOperations, 'ReactDOMIDOperations', {
 
 module.exports = ReactDOMIDOperations;
 }).call(this,require('_process'))
-},{"./DOMChildrenOperations":56,"./DOMPropertyOperations":58,"./ReactMount":113,"./ReactPerf":119,"_process":47,"fbjs/lib/invariant":23}],89:[function(require,module,exports){
+},{"./DOMChildrenOperations":57,"./DOMPropertyOperations":59,"./ReactMount":114,"./ReactPerf":120,"_process":31,"fbjs/lib/invariant":17}],90:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13673,7 +13675,7 @@ function _handleChange(event) {
 
 module.exports = ReactDOMInput;
 }).call(this,require('_process'))
-},{"./LinkedValueUtils":69,"./Object.assign":70,"./ReactDOMIDOperations":88,"./ReactMount":113,"./ReactUpdates":131,"_process":47,"fbjs/lib/invariant":23}],90:[function(require,module,exports){
+},{"./LinkedValueUtils":70,"./Object.assign":71,"./ReactDOMIDOperations":89,"./ReactMount":114,"./ReactUpdates":132,"_process":31,"fbjs/lib/invariant":17}],91:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13765,7 +13767,7 @@ var ReactDOMOption = {
 
 module.exports = ReactDOMOption;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"./ReactChildren":76,"./ReactDOMSelect":91,"_process":47,"fbjs/lib/warning":34}],91:[function(require,module,exports){
+},{"./Object.assign":71,"./ReactChildren":77,"./ReactDOMSelect":92,"_process":31,"fbjs/lib/warning":28}],92:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13956,7 +13958,7 @@ function _handleChange(event) {
 
 module.exports = ReactDOMSelect;
 }).call(this,require('_process'))
-},{"./LinkedValueUtils":69,"./Object.assign":70,"./ReactMount":113,"./ReactUpdates":131,"_process":47,"fbjs/lib/warning":34}],92:[function(require,module,exports){
+},{"./LinkedValueUtils":70,"./Object.assign":71,"./ReactMount":114,"./ReactUpdates":132,"_process":31,"fbjs/lib/warning":28}],93:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -14169,7 +14171,7 @@ var ReactDOMSelection = {
 };
 
 module.exports = ReactDOMSelection;
-},{"./getNodeForCharacterOffset":164,"./getTextContentAccessor":165,"fbjs/lib/ExecutionEnvironment":9}],93:[function(require,module,exports){
+},{"./getNodeForCharacterOffset":165,"./getTextContentAccessor":166,"fbjs/lib/ExecutionEnvironment":3}],94:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -14196,7 +14198,7 @@ var ReactDOMServer = {
 };
 
 module.exports = ReactDOMServer;
-},{"./ReactDefaultInjection":97,"./ReactServerRendering":128,"./ReactVersion":132}],94:[function(require,module,exports){
+},{"./ReactDefaultInjection":98,"./ReactServerRendering":129,"./ReactVersion":133}],95:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -14326,7 +14328,7 @@ assign(ReactDOMTextComponent.prototype, {
 
 module.exports = ReactDOMTextComponent;
 }).call(this,require('_process'))
-},{"./DOMChildrenOperations":56,"./DOMPropertyOperations":58,"./Object.assign":70,"./ReactComponentBrowserEnvironment":79,"./ReactMount":113,"./escapeTextContentForBrowser":155,"./setTextContent":173,"./validateDOMNesting":176,"_process":47}],95:[function(require,module,exports){
+},{"./DOMChildrenOperations":57,"./DOMPropertyOperations":59,"./Object.assign":71,"./ReactComponentBrowserEnvironment":80,"./ReactMount":114,"./escapeTextContentForBrowser":156,"./setTextContent":174,"./validateDOMNesting":177,"_process":31}],96:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -14442,7 +14444,7 @@ function _handleChange(event) {
 
 module.exports = ReactDOMTextarea;
 }).call(this,require('_process'))
-},{"./LinkedValueUtils":69,"./Object.assign":70,"./ReactDOMIDOperations":88,"./ReactUpdates":131,"_process":47,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],96:[function(require,module,exports){
+},{"./LinkedValueUtils":70,"./Object.assign":71,"./ReactDOMIDOperations":89,"./ReactUpdates":132,"_process":31,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],97:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -14510,7 +14512,7 @@ var ReactDefaultBatchingStrategy = {
 };
 
 module.exports = ReactDefaultBatchingStrategy;
-},{"./Object.assign":70,"./ReactUpdates":131,"./Transaction":148,"fbjs/lib/emptyFunction":15}],97:[function(require,module,exports){
+},{"./Object.assign":71,"./ReactUpdates":132,"./Transaction":149,"fbjs/lib/emptyFunction":9}],98:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -14610,7 +14612,7 @@ module.exports = {
   inject: inject
 };
 }).call(this,require('_process'))
-},{"./BeforeInputEventPlugin":50,"./ChangeEventPlugin":54,"./ClientReactRootIndex":55,"./DefaultEventPluginOrder":60,"./EnterLeaveEventPlugin":61,"./HTMLDOMPropertyConfig":68,"./ReactBrowserComponentMixin":73,"./ReactComponentBrowserEnvironment":79,"./ReactDOMComponent":85,"./ReactDOMTextComponent":94,"./ReactDefaultBatchingStrategy":96,"./ReactDefaultPerf":98,"./ReactEventListener":106,"./ReactInjection":107,"./ReactInstanceHandles":109,"./ReactMount":113,"./ReactReconcileTransaction":123,"./SVGDOMPropertyConfig":133,"./SelectEventPlugin":134,"./ServerReactRootIndex":135,"./SimpleEventPlugin":136,"_process":47,"fbjs/lib/ExecutionEnvironment":9}],98:[function(require,module,exports){
+},{"./BeforeInputEventPlugin":51,"./ChangeEventPlugin":55,"./ClientReactRootIndex":56,"./DefaultEventPluginOrder":61,"./EnterLeaveEventPlugin":62,"./HTMLDOMPropertyConfig":69,"./ReactBrowserComponentMixin":74,"./ReactComponentBrowserEnvironment":80,"./ReactDOMComponent":86,"./ReactDOMTextComponent":95,"./ReactDefaultBatchingStrategy":97,"./ReactDefaultPerf":99,"./ReactEventListener":107,"./ReactInjection":108,"./ReactInstanceHandles":110,"./ReactMount":114,"./ReactReconcileTransaction":124,"./SVGDOMPropertyConfig":134,"./SelectEventPlugin":135,"./ServerReactRootIndex":136,"./SimpleEventPlugin":137,"_process":31,"fbjs/lib/ExecutionEnvironment":3}],99:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -14848,7 +14850,7 @@ var ReactDefaultPerf = {
 };
 
 module.exports = ReactDefaultPerf;
-},{"./DOMProperty":57,"./ReactDefaultPerfAnalysis":99,"./ReactMount":113,"./ReactPerf":119,"fbjs/lib/performanceNow":31}],99:[function(require,module,exports){
+},{"./DOMProperty":58,"./ReactDefaultPerfAnalysis":100,"./ReactMount":114,"./ReactPerf":120,"fbjs/lib/performanceNow":25}],100:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15050,7 +15052,7 @@ var ReactDefaultPerfAnalysis = {
 };
 
 module.exports = ReactDefaultPerfAnalysis;
-},{"./Object.assign":70}],100:[function(require,module,exports){
+},{"./Object.assign":71}],101:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -15300,7 +15302,7 @@ ReactElement.isValidElement = function (object) {
 
 module.exports = ReactElement;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"./ReactCurrentOwner":82,"./canDefineProperty":152,"_process":47}],101:[function(require,module,exports){
+},{"./Object.assign":71,"./ReactCurrentOwner":83,"./canDefineProperty":153,"_process":31}],102:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -15584,7 +15586,7 @@ var ReactElementValidator = {
 
 module.exports = ReactElementValidator;
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":82,"./ReactElement":100,"./ReactPropTypeLocationNames":120,"./ReactPropTypeLocations":121,"./canDefineProperty":152,"./getIteratorFn":163,"_process":47,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],102:[function(require,module,exports){
+},{"./ReactCurrentOwner":83,"./ReactElement":101,"./ReactPropTypeLocationNames":121,"./ReactPropTypeLocations":122,"./canDefineProperty":153,"./getIteratorFn":164,"_process":31,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],103:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -15612,6 +15614,10 @@ var ReactEmptyComponentInjection = {
   }
 };
 
+function registerNullComponentID() {
+  ReactEmptyComponentRegistry.registerNullComponentID(this._rootNodeID);
+}
+
 var ReactEmptyComponent = function (instantiate) {
   this._currentElement = null;
   this._rootNodeID = null;
@@ -15620,7 +15626,7 @@ var ReactEmptyComponent = function (instantiate) {
 assign(ReactEmptyComponent.prototype, {
   construct: function (element) {},
   mountComponent: function (rootID, transaction, context) {
-    ReactEmptyComponentRegistry.registerNullComponentID(rootID);
+    transaction.getReactMountReady().enqueue(registerNullComponentID, this);
     this._rootNodeID = rootID;
     return ReactReconciler.mountComponent(this._renderedComponent, rootID, transaction, context);
   },
@@ -15636,7 +15642,7 @@ assign(ReactEmptyComponent.prototype, {
 ReactEmptyComponent.injection = ReactEmptyComponentInjection;
 
 module.exports = ReactEmptyComponent;
-},{"./Object.assign":70,"./ReactElement":100,"./ReactEmptyComponentRegistry":103,"./ReactReconciler":124}],103:[function(require,module,exports){
+},{"./Object.assign":71,"./ReactElement":101,"./ReactEmptyComponentRegistry":104,"./ReactReconciler":125}],104:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -15685,7 +15691,7 @@ var ReactEmptyComponentRegistry = {
 };
 
 module.exports = ReactEmptyComponentRegistry;
-},{}],104:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -15765,7 +15771,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = ReactErrorUtils;
 }).call(this,require('_process'))
-},{"_process":47}],105:[function(require,module,exports){
+},{"_process":31}],106:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15804,7 +15810,7 @@ var ReactEventEmitterMixin = {
 };
 
 module.exports = ReactEventEmitterMixin;
-},{"./EventPluginHub":63}],106:[function(require,module,exports){
+},{"./EventPluginHub":64}],107:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16016,7 +16022,7 @@ var ReactEventListener = {
 };
 
 module.exports = ReactEventListener;
-},{"./Object.assign":70,"./PooledClass":71,"./ReactInstanceHandles":109,"./ReactMount":113,"./ReactUpdates":131,"./getEventTarget":162,"fbjs/lib/EventListener":8,"fbjs/lib/ExecutionEnvironment":9,"fbjs/lib/getUnboundedScrollPosition":20}],107:[function(require,module,exports){
+},{"./Object.assign":71,"./PooledClass":72,"./ReactInstanceHandles":110,"./ReactMount":114,"./ReactUpdates":132,"./getEventTarget":163,"fbjs/lib/EventListener":2,"fbjs/lib/ExecutionEnvironment":3,"fbjs/lib/getUnboundedScrollPosition":14}],108:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16055,7 +16061,7 @@ var ReactInjection = {
 };
 
 module.exports = ReactInjection;
-},{"./DOMProperty":57,"./EventPluginHub":63,"./ReactBrowserEventEmitter":74,"./ReactClass":77,"./ReactComponentEnvironment":80,"./ReactEmptyComponent":102,"./ReactNativeComponent":116,"./ReactPerf":119,"./ReactRootIndex":126,"./ReactUpdates":131}],108:[function(require,module,exports){
+},{"./DOMProperty":58,"./EventPluginHub":64,"./ReactBrowserEventEmitter":75,"./ReactClass":78,"./ReactComponentEnvironment":81,"./ReactEmptyComponent":103,"./ReactNativeComponent":117,"./ReactPerf":120,"./ReactRootIndex":127,"./ReactUpdates":132}],109:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16180,7 +16186,7 @@ var ReactInputSelection = {
 };
 
 module.exports = ReactInputSelection;
-},{"./ReactDOMSelection":92,"fbjs/lib/containsNode":12,"fbjs/lib/focusNode":17,"fbjs/lib/getActiveElement":18}],109:[function(require,module,exports){
+},{"./ReactDOMSelection":93,"fbjs/lib/containsNode":6,"fbjs/lib/focusNode":11,"fbjs/lib/getActiveElement":12}],110:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -16485,7 +16491,7 @@ var ReactInstanceHandles = {
 
 module.exports = ReactInstanceHandles;
 }).call(this,require('_process'))
-},{"./ReactRootIndex":126,"_process":47,"fbjs/lib/invariant":23}],110:[function(require,module,exports){
+},{"./ReactRootIndex":127,"_process":31,"fbjs/lib/invariant":17}],111:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16533,7 +16539,7 @@ var ReactInstanceMap = {
 };
 
 module.exports = ReactInstanceMap;
-},{}],111:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -16610,7 +16616,7 @@ var React = {
 
 module.exports = React;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"./ReactChildren":76,"./ReactClass":77,"./ReactComponent":78,"./ReactDOMFactories":86,"./ReactElement":100,"./ReactElementValidator":101,"./ReactPropTypes":122,"./ReactVersion":132,"./onlyChild":169,"_process":47}],112:[function(require,module,exports){
+},{"./Object.assign":71,"./ReactChildren":77,"./ReactClass":78,"./ReactComponent":79,"./ReactDOMFactories":87,"./ReactElement":101,"./ReactElementValidator":102,"./ReactPropTypes":123,"./ReactVersion":133,"./onlyChild":170,"_process":31}],113:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16656,7 +16662,7 @@ var ReactMarkupChecksum = {
 };
 
 module.exports = ReactMarkupChecksum;
-},{"./adler32":151}],113:[function(require,module,exports){
+},{"./adler32":152}],114:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -17509,7 +17515,7 @@ ReactPerf.measureMethods(ReactMount, 'ReactMount', {
 
 module.exports = ReactMount;
 }).call(this,require('_process'))
-},{"./DOMProperty":57,"./Object.assign":70,"./ReactBrowserEventEmitter":74,"./ReactCurrentOwner":82,"./ReactDOMFeatureFlags":87,"./ReactElement":100,"./ReactEmptyComponentRegistry":103,"./ReactInstanceHandles":109,"./ReactInstanceMap":110,"./ReactMarkupChecksum":112,"./ReactPerf":119,"./ReactReconciler":124,"./ReactUpdateQueue":130,"./ReactUpdates":131,"./instantiateReactComponent":166,"./setInnerHTML":172,"./shouldUpdateReactComponent":174,"./validateDOMNesting":176,"_process":47,"fbjs/lib/containsNode":12,"fbjs/lib/emptyObject":16,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],114:[function(require,module,exports){
+},{"./DOMProperty":58,"./Object.assign":71,"./ReactBrowserEventEmitter":75,"./ReactCurrentOwner":83,"./ReactDOMFeatureFlags":88,"./ReactElement":101,"./ReactEmptyComponentRegistry":104,"./ReactInstanceHandles":110,"./ReactInstanceMap":111,"./ReactMarkupChecksum":113,"./ReactPerf":120,"./ReactReconciler":125,"./ReactUpdateQueue":131,"./ReactUpdates":132,"./instantiateReactComponent":167,"./setInnerHTML":173,"./shouldUpdateReactComponent":175,"./validateDOMNesting":177,"_process":31,"fbjs/lib/containsNode":6,"fbjs/lib/emptyObject":10,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],115:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18008,7 +18014,7 @@ var ReactMultiChild = {
 
 module.exports = ReactMultiChild;
 }).call(this,require('_process'))
-},{"./ReactChildReconciler":75,"./ReactComponentEnvironment":80,"./ReactCurrentOwner":82,"./ReactMultiChildUpdateTypes":115,"./ReactReconciler":124,"./flattenChildren":157,"_process":47}],115:[function(require,module,exports){
+},{"./ReactChildReconciler":76,"./ReactComponentEnvironment":81,"./ReactCurrentOwner":83,"./ReactMultiChildUpdateTypes":116,"./ReactReconciler":125,"./flattenChildren":158,"_process":31}],116:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18041,7 +18047,7 @@ var ReactMultiChildUpdateTypes = keyMirror({
 });
 
 module.exports = ReactMultiChildUpdateTypes;
-},{"fbjs/lib/keyMirror":26}],116:[function(require,module,exports){
+},{"fbjs/lib/keyMirror":20}],117:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -18138,7 +18144,7 @@ var ReactNativeComponent = {
 
 module.exports = ReactNativeComponent;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"_process":47,"fbjs/lib/invariant":23}],117:[function(require,module,exports){
+},{"./Object.assign":71,"_process":31,"fbjs/lib/invariant":17}],118:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015, Facebook, Inc.
@@ -18259,7 +18265,7 @@ var ReactNoopUpdateQueue = {
 
 module.exports = ReactNoopUpdateQueue;
 }).call(this,require('_process'))
-},{"_process":47,"fbjs/lib/warning":34}],118:[function(require,module,exports){
+},{"_process":31,"fbjs/lib/warning":28}],119:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18353,7 +18359,7 @@ var ReactOwner = {
 
 module.exports = ReactOwner;
 }).call(this,require('_process'))
-},{"_process":47,"fbjs/lib/invariant":23}],119:[function(require,module,exports){
+},{"_process":31,"fbjs/lib/invariant":17}],120:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18452,7 +18458,7 @@ function _noMeasure(objName, fnName, func) {
 
 module.exports = ReactPerf;
 }).call(this,require('_process'))
-},{"_process":47}],120:[function(require,module,exports){
+},{"_process":31}],121:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18479,7 +18485,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = ReactPropTypeLocationNames;
 }).call(this,require('_process'))
-},{"_process":47}],121:[function(require,module,exports){
+},{"_process":31}],122:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18502,7 +18508,7 @@ var ReactPropTypeLocations = keyMirror({
 });
 
 module.exports = ReactPropTypeLocations;
-},{"fbjs/lib/keyMirror":26}],122:[function(require,module,exports){
+},{"fbjs/lib/keyMirror":20}],123:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18859,7 +18865,7 @@ function getClassName(propValue) {
 }
 
 module.exports = ReactPropTypes;
-},{"./ReactElement":100,"./ReactPropTypeLocationNames":120,"./getIteratorFn":163,"fbjs/lib/emptyFunction":15}],123:[function(require,module,exports){
+},{"./ReactElement":101,"./ReactPropTypeLocationNames":121,"./getIteratorFn":164,"fbjs/lib/emptyFunction":9}],124:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -19011,7 +19017,7 @@ assign(ReactReconcileTransaction.prototype, Transaction.Mixin, Mixin);
 PooledClass.addPoolingTo(ReactReconcileTransaction);
 
 module.exports = ReactReconcileTransaction;
-},{"./CallbackQueue":53,"./Object.assign":70,"./PooledClass":71,"./ReactBrowserEventEmitter":74,"./ReactDOMFeatureFlags":87,"./ReactInputSelection":108,"./Transaction":148}],124:[function(require,module,exports){
+},{"./CallbackQueue":54,"./Object.assign":71,"./PooledClass":72,"./ReactBrowserEventEmitter":75,"./ReactDOMFeatureFlags":88,"./ReactInputSelection":109,"./Transaction":149}],125:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -19119,7 +19125,7 @@ var ReactReconciler = {
 };
 
 module.exports = ReactReconciler;
-},{"./ReactRef":125}],125:[function(require,module,exports){
+},{"./ReactRef":126}],126:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -19198,7 +19204,7 @@ ReactRef.detachRefs = function (instance, element) {
 };
 
 module.exports = ReactRef;
-},{"./ReactOwner":118}],126:[function(require,module,exports){
+},{"./ReactOwner":119}],127:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -19228,7 +19234,7 @@ var ReactRootIndex = {
 };
 
 module.exports = ReactRootIndex;
-},{}],127:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -19252,7 +19258,7 @@ var ReactServerBatchingStrategy = {
 };
 
 module.exports = ReactServerBatchingStrategy;
-},{}],128:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -19338,7 +19344,7 @@ module.exports = {
   renderToStaticMarkup: renderToStaticMarkup
 };
 }).call(this,require('_process'))
-},{"./ReactDefaultBatchingStrategy":96,"./ReactElement":100,"./ReactInstanceHandles":109,"./ReactMarkupChecksum":112,"./ReactServerBatchingStrategy":127,"./ReactServerRenderingTransaction":129,"./ReactUpdates":131,"./instantiateReactComponent":166,"_process":47,"fbjs/lib/emptyObject":16,"fbjs/lib/invariant":23}],129:[function(require,module,exports){
+},{"./ReactDefaultBatchingStrategy":97,"./ReactElement":101,"./ReactInstanceHandles":110,"./ReactMarkupChecksum":113,"./ReactServerBatchingStrategy":128,"./ReactServerRenderingTransaction":130,"./ReactUpdates":132,"./instantiateReactComponent":167,"_process":31,"fbjs/lib/emptyObject":10,"fbjs/lib/invariant":17}],130:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -19426,7 +19432,7 @@ assign(ReactServerRenderingTransaction.prototype, Transaction.Mixin, Mixin);
 PooledClass.addPoolingTo(ReactServerRenderingTransaction);
 
 module.exports = ReactServerRenderingTransaction;
-},{"./CallbackQueue":53,"./Object.assign":70,"./PooledClass":71,"./Transaction":148,"fbjs/lib/emptyFunction":15}],130:[function(require,module,exports){
+},{"./CallbackQueue":54,"./Object.assign":71,"./PooledClass":72,"./Transaction":149,"fbjs/lib/emptyFunction":9}],131:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015, Facebook, Inc.
@@ -19686,7 +19692,7 @@ var ReactUpdateQueue = {
 
 module.exports = ReactUpdateQueue;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"./ReactCurrentOwner":82,"./ReactElement":100,"./ReactInstanceMap":110,"./ReactUpdates":131,"_process":47,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],131:[function(require,module,exports){
+},{"./Object.assign":71,"./ReactCurrentOwner":83,"./ReactElement":101,"./ReactInstanceMap":111,"./ReactUpdates":132,"_process":31,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],132:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -19912,7 +19918,7 @@ var ReactUpdates = {
 
 module.exports = ReactUpdates;
 }).call(this,require('_process'))
-},{"./CallbackQueue":53,"./Object.assign":70,"./PooledClass":71,"./ReactPerf":119,"./ReactReconciler":124,"./Transaction":148,"_process":47,"fbjs/lib/invariant":23}],132:[function(require,module,exports){
+},{"./CallbackQueue":54,"./Object.assign":71,"./PooledClass":72,"./ReactPerf":120,"./ReactReconciler":125,"./Transaction":149,"_process":31,"fbjs/lib/invariant":17}],133:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -19926,8 +19932,8 @@ module.exports = ReactUpdates;
 
 'use strict';
 
-module.exports = '0.14.7';
-},{}],133:[function(require,module,exports){
+module.exports = '0.14.8';
+},{}],134:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20055,7 +20061,7 @@ var SVGDOMPropertyConfig = {
 };
 
 module.exports = SVGDOMPropertyConfig;
-},{"./DOMProperty":57}],134:[function(require,module,exports){
+},{"./DOMProperty":58}],135:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20257,7 +20263,7 @@ var SelectEventPlugin = {
 };
 
 module.exports = SelectEventPlugin;
-},{"./EventConstants":62,"./EventPropagators":66,"./ReactInputSelection":108,"./SyntheticEvent":140,"./isTextInputElement":168,"fbjs/lib/ExecutionEnvironment":9,"fbjs/lib/getActiveElement":18,"fbjs/lib/keyOf":27,"fbjs/lib/shallowEqual":32}],135:[function(require,module,exports){
+},{"./EventConstants":63,"./EventPropagators":67,"./ReactInputSelection":109,"./SyntheticEvent":141,"./isTextInputElement":169,"fbjs/lib/ExecutionEnvironment":3,"fbjs/lib/getActiveElement":12,"fbjs/lib/keyOf":21,"fbjs/lib/shallowEqual":26}],136:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20287,7 +20293,7 @@ var ServerReactRootIndex = {
 };
 
 module.exports = ServerReactRootIndex;
-},{}],136:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -20877,7 +20883,7 @@ var SimpleEventPlugin = {
 
 module.exports = SimpleEventPlugin;
 }).call(this,require('_process'))
-},{"./EventConstants":62,"./EventPropagators":66,"./ReactMount":113,"./SyntheticClipboardEvent":137,"./SyntheticDragEvent":139,"./SyntheticEvent":140,"./SyntheticFocusEvent":141,"./SyntheticKeyboardEvent":143,"./SyntheticMouseEvent":144,"./SyntheticTouchEvent":145,"./SyntheticUIEvent":146,"./SyntheticWheelEvent":147,"./getEventCharCode":159,"_process":47,"fbjs/lib/EventListener":8,"fbjs/lib/emptyFunction":15,"fbjs/lib/invariant":23,"fbjs/lib/keyOf":27}],137:[function(require,module,exports){
+},{"./EventConstants":63,"./EventPropagators":67,"./ReactMount":114,"./SyntheticClipboardEvent":138,"./SyntheticDragEvent":140,"./SyntheticEvent":141,"./SyntheticFocusEvent":142,"./SyntheticKeyboardEvent":144,"./SyntheticMouseEvent":145,"./SyntheticTouchEvent":146,"./SyntheticUIEvent":147,"./SyntheticWheelEvent":148,"./getEventCharCode":160,"_process":31,"fbjs/lib/EventListener":2,"fbjs/lib/emptyFunction":9,"fbjs/lib/invariant":17,"fbjs/lib/keyOf":21}],138:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20917,7 +20923,7 @@ function SyntheticClipboardEvent(dispatchConfig, dispatchMarker, nativeEvent, na
 SyntheticEvent.augmentClass(SyntheticClipboardEvent, ClipboardEventInterface);
 
 module.exports = SyntheticClipboardEvent;
-},{"./SyntheticEvent":140}],138:[function(require,module,exports){
+},{"./SyntheticEvent":141}],139:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20955,7 +20961,7 @@ function SyntheticCompositionEvent(dispatchConfig, dispatchMarker, nativeEvent, 
 SyntheticEvent.augmentClass(SyntheticCompositionEvent, CompositionEventInterface);
 
 module.exports = SyntheticCompositionEvent;
-},{"./SyntheticEvent":140}],139:[function(require,module,exports){
+},{"./SyntheticEvent":141}],140:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20993,7 +20999,7 @@ function SyntheticDragEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeE
 SyntheticMouseEvent.augmentClass(SyntheticDragEvent, DragEventInterface);
 
 module.exports = SyntheticDragEvent;
-},{"./SyntheticMouseEvent":144}],140:[function(require,module,exports){
+},{"./SyntheticMouseEvent":145}],141:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -21176,7 +21182,7 @@ PooledClass.addPoolingTo(SyntheticEvent, PooledClass.fourArgumentPooler);
 
 module.exports = SyntheticEvent;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"./PooledClass":71,"_process":47,"fbjs/lib/emptyFunction":15,"fbjs/lib/warning":34}],141:[function(require,module,exports){
+},{"./Object.assign":71,"./PooledClass":72,"_process":31,"fbjs/lib/emptyFunction":9,"fbjs/lib/warning":28}],142:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21214,7 +21220,7 @@ function SyntheticFocusEvent(dispatchConfig, dispatchMarker, nativeEvent, native
 SyntheticUIEvent.augmentClass(SyntheticFocusEvent, FocusEventInterface);
 
 module.exports = SyntheticFocusEvent;
-},{"./SyntheticUIEvent":146}],142:[function(require,module,exports){
+},{"./SyntheticUIEvent":147}],143:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21253,7 +21259,7 @@ function SyntheticInputEvent(dispatchConfig, dispatchMarker, nativeEvent, native
 SyntheticEvent.augmentClass(SyntheticInputEvent, InputEventInterface);
 
 module.exports = SyntheticInputEvent;
-},{"./SyntheticEvent":140}],143:[function(require,module,exports){
+},{"./SyntheticEvent":141}],144:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21339,7 +21345,7 @@ function SyntheticKeyboardEvent(dispatchConfig, dispatchMarker, nativeEvent, nat
 SyntheticUIEvent.augmentClass(SyntheticKeyboardEvent, KeyboardEventInterface);
 
 module.exports = SyntheticKeyboardEvent;
-},{"./SyntheticUIEvent":146,"./getEventCharCode":159,"./getEventKey":160,"./getEventModifierState":161}],144:[function(require,module,exports){
+},{"./SyntheticUIEvent":147,"./getEventCharCode":160,"./getEventKey":161,"./getEventModifierState":162}],145:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21413,7 +21419,7 @@ function SyntheticMouseEvent(dispatchConfig, dispatchMarker, nativeEvent, native
 SyntheticUIEvent.augmentClass(SyntheticMouseEvent, MouseEventInterface);
 
 module.exports = SyntheticMouseEvent;
-},{"./SyntheticUIEvent":146,"./ViewportMetrics":149,"./getEventModifierState":161}],145:[function(require,module,exports){
+},{"./SyntheticUIEvent":147,"./ViewportMetrics":150,"./getEventModifierState":162}],146:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21460,7 +21466,7 @@ function SyntheticTouchEvent(dispatchConfig, dispatchMarker, nativeEvent, native
 SyntheticUIEvent.augmentClass(SyntheticTouchEvent, TouchEventInterface);
 
 module.exports = SyntheticTouchEvent;
-},{"./SyntheticUIEvent":146,"./getEventModifierState":161}],146:[function(require,module,exports){
+},{"./SyntheticUIEvent":147,"./getEventModifierState":162}],147:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21521,7 +21527,7 @@ function SyntheticUIEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeEve
 SyntheticEvent.augmentClass(SyntheticUIEvent, UIEventInterface);
 
 module.exports = SyntheticUIEvent;
-},{"./SyntheticEvent":140,"./getEventTarget":162}],147:[function(require,module,exports){
+},{"./SyntheticEvent":141,"./getEventTarget":163}],148:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21577,7 +21583,7 @@ function SyntheticWheelEvent(dispatchConfig, dispatchMarker, nativeEvent, native
 SyntheticMouseEvent.augmentClass(SyntheticWheelEvent, WheelEventInterface);
 
 module.exports = SyntheticWheelEvent;
-},{"./SyntheticMouseEvent":144}],148:[function(require,module,exports){
+},{"./SyntheticMouseEvent":145}],149:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -21811,7 +21817,7 @@ var Transaction = {
 
 module.exports = Transaction;
 }).call(this,require('_process'))
-},{"_process":47,"fbjs/lib/invariant":23}],149:[function(require,module,exports){
+},{"_process":31,"fbjs/lib/invariant":17}],150:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21839,7 +21845,7 @@ var ViewportMetrics = {
 };
 
 module.exports = ViewportMetrics;
-},{}],150:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -21901,7 +21907,7 @@ function accumulateInto(current, next) {
 
 module.exports = accumulateInto;
 }).call(this,require('_process'))
-},{"_process":47,"fbjs/lib/invariant":23}],151:[function(require,module,exports){
+},{"_process":31,"fbjs/lib/invariant":17}],152:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21944,7 +21950,7 @@ function adler32(data) {
 }
 
 module.exports = adler32;
-},{}],152:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -21971,7 +21977,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = canDefineProperty;
 }).call(this,require('_process'))
-},{"_process":47}],153:[function(require,module,exports){
+},{"_process":31}],154:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22027,7 +22033,7 @@ function dangerousStyleValue(name, value) {
 }
 
 module.exports = dangerousStyleValue;
-},{"./CSSProperty":51}],154:[function(require,module,exports){
+},{"./CSSProperty":52}],155:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -22078,7 +22084,7 @@ function deprecated(fnName, newModule, newPackage, ctx, fn) {
 
 module.exports = deprecated;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"_process":47,"fbjs/lib/warning":34}],155:[function(require,module,exports){
+},{"./Object.assign":71,"_process":31,"fbjs/lib/warning":28}],156:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22117,7 +22123,7 @@ function escapeTextContentForBrowser(text) {
 }
 
 module.exports = escapeTextContentForBrowser;
-},{}],156:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -22169,7 +22175,7 @@ function findDOMNode(componentOrElement) {
 
 module.exports = findDOMNode;
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":82,"./ReactInstanceMap":110,"./ReactMount":113,"_process":47,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],157:[function(require,module,exports){
+},{"./ReactCurrentOwner":83,"./ReactInstanceMap":111,"./ReactMount":114,"_process":31,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],158:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -22220,7 +22226,7 @@ function flattenChildren(children) {
 
 module.exports = flattenChildren;
 }).call(this,require('_process'))
-},{"./traverseAllChildren":175,"_process":47,"fbjs/lib/warning":34}],158:[function(require,module,exports){
+},{"./traverseAllChildren":176,"_process":31,"fbjs/lib/warning":28}],159:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22250,7 +22256,7 @@ var forEachAccumulated = function (arr, cb, scope) {
 };
 
 module.exports = forEachAccumulated;
-},{}],159:[function(require,module,exports){
+},{}],160:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22301,7 +22307,7 @@ function getEventCharCode(nativeEvent) {
 }
 
 module.exports = getEventCharCode;
-},{}],160:[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22405,7 +22411,7 @@ function getEventKey(nativeEvent) {
 }
 
 module.exports = getEventKey;
-},{"./getEventCharCode":159}],161:[function(require,module,exports){
+},{"./getEventCharCode":160}],162:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22450,7 +22456,7 @@ function getEventModifierState(nativeEvent) {
 }
 
 module.exports = getEventModifierState;
-},{}],162:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22480,7 +22486,7 @@ function getEventTarget(nativeEvent) {
 }
 
 module.exports = getEventTarget;
-},{}],163:[function(require,module,exports){
+},{}],164:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22521,7 +22527,7 @@ function getIteratorFn(maybeIterable) {
 }
 
 module.exports = getIteratorFn;
-},{}],164:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22595,7 +22601,7 @@ function getNodeForCharacterOffset(root, offset) {
 }
 
 module.exports = getNodeForCharacterOffset;
-},{}],165:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22629,7 +22635,7 @@ function getTextContentAccessor() {
 }
 
 module.exports = getTextContentAccessor;
-},{"fbjs/lib/ExecutionEnvironment":9}],166:[function(require,module,exports){
+},{"fbjs/lib/ExecutionEnvironment":3}],167:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -22744,7 +22750,7 @@ function instantiateReactComponent(node) {
 
 module.exports = instantiateReactComponent;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"./ReactCompositeComponent":81,"./ReactEmptyComponent":102,"./ReactNativeComponent":116,"_process":47,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],167:[function(require,module,exports){
+},{"./Object.assign":71,"./ReactCompositeComponent":82,"./ReactEmptyComponent":103,"./ReactNativeComponent":117,"_process":31,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],168:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22805,7 +22811,7 @@ function isEventSupported(eventNameSuffix, capture) {
 }
 
 module.exports = isEventSupported;
-},{"fbjs/lib/ExecutionEnvironment":9}],168:[function(require,module,exports){
+},{"fbjs/lib/ExecutionEnvironment":3}],169:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22846,7 +22852,7 @@ function isTextInputElement(elem) {
 }
 
 module.exports = isTextInputElement;
-},{}],169:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -22882,7 +22888,7 @@ function onlyChild(children) {
 
 module.exports = onlyChild;
 }).call(this,require('_process'))
-},{"./ReactElement":100,"_process":47,"fbjs/lib/invariant":23}],170:[function(require,module,exports){
+},{"./ReactElement":101,"_process":31,"fbjs/lib/invariant":17}],171:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22909,7 +22915,7 @@ function quoteAttributeValueForBrowser(value) {
 }
 
 module.exports = quoteAttributeValueForBrowser;
-},{"./escapeTextContentForBrowser":155}],171:[function(require,module,exports){
+},{"./escapeTextContentForBrowser":156}],172:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22926,7 +22932,7 @@ module.exports = quoteAttributeValueForBrowser;
 var ReactMount = require('./ReactMount');
 
 module.exports = ReactMount.renderSubtreeIntoContainer;
-},{"./ReactMount":113}],172:[function(require,module,exports){
+},{"./ReactMount":114}],173:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23017,7 +23023,7 @@ if (ExecutionEnvironment.canUseDOM) {
 }
 
 module.exports = setInnerHTML;
-},{"fbjs/lib/ExecutionEnvironment":9}],173:[function(require,module,exports){
+},{"fbjs/lib/ExecutionEnvironment":3}],174:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23058,7 +23064,7 @@ if (ExecutionEnvironment.canUseDOM) {
 }
 
 module.exports = setTextContent;
-},{"./escapeTextContentForBrowser":155,"./setInnerHTML":172,"fbjs/lib/ExecutionEnvironment":9}],174:[function(require,module,exports){
+},{"./escapeTextContentForBrowser":156,"./setInnerHTML":173,"fbjs/lib/ExecutionEnvironment":3}],175:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23102,7 +23108,7 @@ function shouldUpdateReactComponent(prevElement, nextElement) {
 }
 
 module.exports = shouldUpdateReactComponent;
-},{}],175:[function(require,module,exports){
+},{}],176:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -23294,7 +23300,7 @@ function traverseAllChildren(children, callback, traverseContext) {
 
 module.exports = traverseAllChildren;
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":82,"./ReactElement":100,"./ReactInstanceHandles":109,"./getIteratorFn":163,"_process":47,"fbjs/lib/invariant":23,"fbjs/lib/warning":34}],176:[function(require,module,exports){
+},{"./ReactCurrentOwner":83,"./ReactElement":101,"./ReactInstanceHandles":110,"./getIteratorFn":164,"_process":31,"fbjs/lib/invariant":17,"fbjs/lib/warning":28}],177:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015, Facebook, Inc.
@@ -23660,12 +23666,12 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = validateDOMNesting;
 }).call(this,require('_process'))
-},{"./Object.assign":70,"_process":47,"fbjs/lib/emptyFunction":15,"fbjs/lib/warning":34}],177:[function(require,module,exports){
+},{"./Object.assign":71,"_process":31,"fbjs/lib/emptyFunction":9,"fbjs/lib/warning":28}],178:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./lib/React');
 
-},{"./lib/React":72}],178:[function(require,module,exports){
+},{"./lib/React":73}],179:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
 var Upload = require('./upload.jsx');
@@ -23690,8 +23696,24 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             display: DisplayEnum.DISPLAY_LOGIN,
             displayName: '', 
             feed: [],
-            subpage: ''
+            subpage: '', 
+            piece: {}
         };
+    },
+
+    testGetPiece: function(){
+        $.ajax({
+            url: '/api/pieces/getPiece/570ac1c99816a4771a95a866',
+            dataType: 'json',
+            cache: false,
+            type: 'GET',
+            success: function(res){
+                console.log("Here is the data I will need for the tree: ", res);
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error('/api/pieces/getPiece', status, err.toString());
+            }.bind(this)
+        });
     },
 
     handleUploadCode: function(uploadcode) {
@@ -23700,12 +23722,13 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {src: uploadcode.embedcode, title: uploadcode.title},
+            data: {src: uploadcode.embedcode, title: uploadcode.title, inspirations: uploadcode.checkedInspirations},
             success: function(user) {
-                this.setState({
-                    display: DisplayEnum.DISPLAY_MYBOARD, 
-                    user: user,
-                });
+                // this.setState({
+                //     display: DisplayEnum.DISPLAY_HOME, 
+                //     user: user,
+                // });
+                this.handleFeed({user : user}); 
             }.bind(this),
             error: function(xhr, status, err) {
                 console.error('/api/user/postUpload', status, err.toString());
@@ -23715,7 +23738,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
 
     handleFeed: function(object){ 
         $.ajax({ 
-            url: '/api/user/feed',
+            url: '/api/pieces/feed',
             dataType: 'json', 
             type: 'GET', 
             success: function(feedItems){ 
@@ -23726,7 +23749,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
 
             }.bind(this), 
             error: function(xhr, status, err){ 
-                console.log("cannot get feed, '/api/user/feed'", status, err.toString()); 
+                console.log("cannot get feed, '/api/pieces/feed'", status, err.toString()); 
             }.bind(this)
         })
     },
@@ -23745,6 +23768,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
     showMyBoard: function() {
         this.setState({
             display: DisplayEnum.DISPLAY_MYBOARD,
+            subpage: 'home',
         });
     },
 
@@ -23783,7 +23807,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
 
     addInspiration: function(item){ 
         console.log("you're about to add this inspiration", item)
-
+        console.log("what is this id", item._id)
         $.ajax({ 
             url: '/api/user/postInspiration',
             dataType: 'json',
@@ -23794,7 +23818,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                 console.log("alleged user object", userObject)
 
                 userObject.inspirations.forEach(function(i){ 
-                    console.log(i)
+                    console.log("inspiraaation", i)
                 })
                 
                 this.setState({user: userObject}); 
@@ -23805,8 +23829,53 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
 
             }.bind(this)
         })
-
     }, 
+
+    getPieceAndTree: function(item, callback){ 
+        console.log("You're about to get this item", item)
+        $.ajax({ 
+            url: '/api/pieces/getPiece/'+ item._id, 
+            dataType: 'json', 
+            type: 'GET', 
+            success: function(piece){ 
+                console.log("This is the tree", piece)
+                return callback(piece)
+            }.bind(this), 
+            error: function(xhr, status, err) {
+                console.log("error displaying piece")
+            }.bind(this)
+        })
+    }, 
+
+    deleteInspiration: function(item, boardtype) {
+        console.log(boardtype, item);
+
+        if (boardtype==="uploads"){
+            console.log(boardtype, item);
+        } else {
+            $.ajax({ 
+                url: '/api/user/deleteInspiration',
+                dataType: 'json',
+                cache: false,
+                type: 'POST',
+                data: {srcId: item._id}, 
+                success: function(userObject){ 
+                    console.log("alleged user object", userObject)
+
+                    userObject.inspirations.forEach(function(i){ 
+                        console.log(i)
+                    })
+                    
+                    this.setState({user: userObject}); 
+                }.bind(this), 
+                error: function(xhr, status, err){ 
+                    console.log("there has been an error")
+                    console.error('/api/user/postInspiration', status, err.toString())
+
+                }.bind(this)
+            }) 
+        }
+    },
 
     render: function() {
         var page;
@@ -23818,7 +23887,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                     React.createElement("div", null, 
                         React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchMyBoardInspirations: this.showMyBoardInspirations, 
                         switchMyBoardUploads: this.showMyBoardUploads, displayName: this.state.displayName || ''}), 
-                        React.createElement(Upload, {uploadCode: this.handleUploadCode})
+                        React.createElement(Upload, {uploadCode: this.handleUploadCode, inspirations: this.state.user.inspirations})
                     )
                 );
                 break;
@@ -23828,9 +23897,10 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                     React.createElement("div", null, 
                         React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchMyBoardInspirations: this.showMyBoardInspirations, 
                         switchMyBoardUploads: this.showMyBoardUploads, displayName: this.state.displayName || ''}), 
-                        React.createElement("button", {onClick: this.showMyBoardUploads, className: "button"}, "My Uploads"), 
-                        React.createElement("button", {onClick: this.showMyBoardInspirations, className: "button"}, "My Inspirations"), 
-                        React.createElement(MyBoard, {subpage: this.state.subpage, uploads: this.state.user.uploads, inspirations: this.state.user.inspirations}), 
+                        React.createElement("button", {onClick: this.showMyBoardUploads, className: "button board"}, "My Uploads"), 
+                        React.createElement("button", {onClick: this.showMyBoardInspirations, className: "button board"}, "My Inspirations"), 
+                        React.createElement("br", null), 
+                        React.createElement(MyBoard, {subpage: this.state.subpage, uploads: this.state.user.uploads, inspirations: this.state.user.inspirations, deleteInspir: this.deleteInspiration}), 
                         React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )
                 );
@@ -23841,7 +23911,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                     React.createElement("div", null, 
                         React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchMyBoardInspirations: this.showMyBoardInspirations, 
                         switchMyBoardUploads: this.showMyBoardUploads, displayName: this.state.displayName || ''}), 
-                        React.createElement(Feed, {addInspir: this.addInspiration, feedObjects: this.state.feed, userInspirations: this.state.user.inspirations}), 
+                        React.createElement(Feed, {addInspir: this.addInspiration, feedObjects: this.state.feed, userInspirations: this.state.user.inspirations, getPiece: this.getPieceAndTree}), 
                         React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )
                 );
@@ -23868,7 +23938,166 @@ ReactDOM.render(
   React.createElement(CatalystBox, null),
   document.getElementById('content')
 );
-},{"./feed.jsx":183,"./login.jsx":184,"./myboard.jsx":186,"./navbar.jsx":188,"./upload.jsx":189,"react":177,"react-dom":48}],179:[function(require,module,exports){
+},{"./feed.jsx":186,"./login.jsx":188,"./myboard.jsx":190,"./navbar.jsx":191,"./upload.jsx":192,"react":178,"react-dom":49}],180:[function(require,module,exports){
+var React = require('react');
+
+var Carousel = React.createClass({displayName: "Carousel",
+  getInitialState: function () {
+    return {
+      previous: null,
+      current: this.props.current
+    };
+  },
+  componentWillMount: function () {
+    //looking for key down
+    if (this.props.keyboard) {
+      window.addEventListener('keydown', this.handleKeyboardInput);
+    }
+  },
+  componentWillUnmount: function () {
+    if (this.props.keyboard) {
+      window.removeEventListener('keydown', this.handleKeyboardInput); 
+    }
+  },
+  handleKeyboardInput: function (event) {
+    if (event.keyCode === 37) {
+      this.backward();
+    }
+    if (event.keyCode === 39) {
+      this.forward();
+    }
+    if (event.keyCode === 27) {
+      this.props.close();
+    }
+  },
+  getNextIndex: function () {
+    return this.props.pictures.length === this.state.current + 1 ? 0 : this.state.current + 1;
+  },
+  getPreviousIndex: function () {
+    return this.state.current === 0 ? this.props.pictures.length - 1 : this.state.current - 1;
+  },
+  forward: function (event) {
+    //moving forward along images
+    if (event) {
+      event.stopPropagation();
+    }
+    this.setState({
+      previous: this.state.current,
+      current: this.getNextIndex()
+    });
+  },
+  backward: function (event) {
+    //moving backwards
+    if (event) {
+      event.stopPropagation();
+    }
+    this.setState({
+      previous: this.state.current,
+      current: this.getPreviousIndex()
+    });
+  },
+  isForwarding: function () {
+    return this.state.previous === this.getPreviousIndex();
+  },
+  createInitialPictureClass: function (index) {
+    var className = 'react-lightbox-carousel-image';
+    if (index === this.getPreviousIndex()) {
+      return className += ' react-lightbox-carousel-image-backward';
+    }
+    if (index === this.state.current) {
+      return className;
+    }
+    if (index === this.getNextIndex()) {
+      return className += ' react-lightbox-carousel-image-forward';
+    }
+  },
+  createPictureClass: function (index) {
+    var className = 'react-lightbox-carousel-image';
+
+    // Set correct classes based on current index
+    if (this.state.previous === null) {
+      return this.createInitialPictureClass(index);
+    }
+
+    // Normal backword behavior
+    if (index === this.state.previous && !this.isForwarding()) {
+      return className += ' react-lightbox-carousel-image-forward';
+    }
+
+    if (index === this.state.current) {
+      return className;
+    }
+
+    // Reverse with forward behavior
+    if (index === this.state.previous && this.isForwarding()) {
+      return className += ' react-lightbox-carousel-image-backward';
+    }
+    if (this.isForwarding()) {
+      return className += ' react-lightbox-carousel-image-forward';
+    }
+
+    return className += ' react-lightbox-carousel-image-backward';
+  },
+  renderPictures: function () {
+    return this.props.pictures.map(function (picture, index) {
+
+      if (typeof picture === 'string') {
+        // return DOM.div({
+        //   key: index,
+        //   className: this.createPictureClass(index),
+        //   style: {
+        //     backgroundImage: 'url(' + picture + ')',
+        //     visibility: this.state.previous === index || this.state.current === index ? 'visible' : 'hidden'
+        //   }
+        // });
+
+    // style: {backgroundImage: 'url(' + picture + ')',
+    //         visibility: this.state.previous === index || this.state.current === index ? 'visible' : 'hidden'
+        
+        return (
+          React.createElement("div", {key: index, className: this.createPictureClass(index)}
+          ) 
+        );
+        
+      } else {
+        // return DOM.div({
+        //   key: index,
+        //   className: this.createPictureClass(index),
+        //   style: {
+        //     visibility: this.state.previous === index || this.state.current === index ? 'visible' : 'hidden'
+        //   }
+        // }, picture);
+
+        return (
+          React.createElement("div", {key: index, className: this.createPictureClass(index)}, 
+            "picture"
+          ) 
+        );
+      }
+    }, this);
+  },
+  // renderControls: function () {
+  //   if (this.props.controls) {
+  //     return React.createFactory(this.props.controls)({
+  //       backward: this.backward,
+  //       forward: this.forward
+  //     });
+
+  //     return  
+  //   }
+  // },
+  render: function () {
+    var blah = this.renderPictures();
+    return (
+      React.createElement("div", {className: "react-lightbox-carousel"}, 
+        blah
+      )
+      )
+  }
+});
+
+module.exports = Carousel; 
+},{"react":178}],181:[function(require,module,exports){
 /* Carousel Component with opening imaging functionality, deleting image from user's list of saved images
 and onhover display different things*/
 
@@ -23894,11 +24123,6 @@ var Carousel = React.createClass({displayName: "Carousel",
         return {__html: e}
     },
 
-    openImage: function (imagehref) {
-        //open imagehref
-        window.open(imagehref);
-    },
-
     componentWillMount: function () {
         this.depot = Depot(this.getInitialState(), this.props, this.setState.bind(this));
         this.onRotate = this.depot.onRotate.bind(this);
@@ -23922,6 +24146,7 @@ var Carousel = React.createClass({displayName: "Carousel",
 
             return (React.createElement("figure", {key: i, style: Util.figureStyle(d)}, 
                 React.createElement("div", {className: "imagedashdiv"}, 
+                    React.createElement("a", {className: "boxclose", id: "boxclose", onClick: root.props.deleteInspir.bind(null,d.all_info,root.props.boardtype)}), 
                     React.createElement("div", {className: "imagedash", dangerouslySetInnerHTML: root.rawMarkup(d.all_info.src)})
                 )
             ));
@@ -23952,7 +24177,7 @@ var Carousel = React.createClass({displayName: "Carousel",
     }
 });
 module.exports = Carousel;
-},{"./depot":180,"./layout":181,"./util":182,"react":177}],180:[function(require,module,exports){
+},{"./depot":182,"./layout":183,"./util":184,"react":178}],182:[function(require,module,exports){
 var Ease = require('ease-functions');
 var Layout = require('./layout');
 var Util = require('./util');
@@ -24093,7 +24318,7 @@ function endFrame(now, then) {
         : Util.merge(then, {present: true, opacity: 1});
 }
 
-},{"./layout":181,"./util":182,"ease-functions":6}],181:[function(require,module,exports){
+},{"./layout":183,"./util":184,"ease-functions":1}],183:[function(require,module,exports){
 var Util = require('./util');
 
 var exports = module.exports = {};
@@ -24123,7 +24348,7 @@ exports.classic = {
 };
 
 
-},{"./util":182}],182:[function(require,module,exports){
+},{"./util":184}],184:[function(require,module,exports){
 var exports = module.exports = {};
 
 
@@ -24201,25 +24426,128 @@ exports.mapObj = function mapObj(fn,obj){
     }
     return res;
 };
-},{}],183:[function(require,module,exports){
+},{}],185:[function(require,module,exports){
+/* DashboardHistory Component that holds the Carousel*/
+
 var React = require('react');
-var ReactDOM = require('react-dom');
+var Carousel = require('./carouselstuff/carousel.jsx');
+var Ease = require('ease-functions');
+
+var DashboardHistory = React.createClass({displayName: "DashboardHistory",
+    propTypes: {
+
+    },
+
+    getInitialState: function () {
+        return {
+            width: 400,
+            layout: 'classic',
+            ease: 'linear',
+            duration: 400
+        };
+    },
+
+    componentWillMount: function () {
+        this.onSides = function (event) {
+            this.setState( {images: this.state.all_info.slice(0, event.target.value) });
+        }.bind(this);
+        this.onLayout = function (event) {
+            this.setState({layout: event.target.value});
+        }.bind(this);
+        this.onDuration = function (event) {
+            this.setState({duration: parseInt(event.target.value) });
+        }.bind(this);
+        this.onEase = function (event) {
+            this.setState({ease:  event.target.value});
+        }.bind(this);
+    },
+
+    render: function () {
+        return (
+            React.createElement("div", {className: "carouselhistory"}, 
+                React.createElement("div", null, 
+                React.createElement(Carousel, {all_info: this.props.uploadslist, 
+                		  width: this.state.width, 
+                          ease: this.state.ease, 
+                          duration: this.state.duration, 
+                          layout: this.state.layout, 
+                          deleteInspir: this.props.deleteInspir, 
+                          boardtype: this.props.boardtype})
+                )
+            )
+        );
+    }
+});
+
+module.exports = DashboardHistory; 
+},{"./carouselstuff/carousel.jsx":181,"ease-functions":1,"react":178}],186:[function(require,module,exports){
+var React = require('react');
+// var ReactDOM = require('react-dom');
+
 var dir = require('node-dir'); 
 var path = require('path'); 
 var fs = require('fs');
 
+var Lightbox = require('./lightbox.jsx');
+
 var Masonry = require('./masonry.jsx');
+
+// var Lightbox = require('./react-lightbox.jsx'); 
 
 var masonryOptions = {
     transitionDuration: 0
 };
 
-
 var Feed = React.createClass({displayName: "Feed", 
+	whiteContentStyles: {
+        position: 'fixed',
+        top: '25%',
+        left: '20%',
+        right: '50%',
+        width: '60vw',
+        backgroundColor: '#fff',
+        color: '#7F7F7F',
+        padding: '20px',
+        border: '2px solid #ccc',
+        borderRadius: '20px',
+        boxShadow: '0 1px 5px #333',
+        zIndex:'101'
+    },
+
+    blackOverlayStyles: {
+        background: 'gray',
+        opacity: '.8',
+        position: 'fixed',
+        top: '0px',
+        bottom: '0px',
+        left: '0px',
+        right: '0px',
+        zIndex: '100'
+    },
+
+    closeTagStyles: {
+        float: 'right',
+        marginTop: '-30px',
+        marginRight: '-30px',
+        cursor: 'pointer',
+        color: '#fff',
+        border: '1px solid #AEAEAE',
+        borderRadius: '30px',
+        background: '#605F61',
+        fontSize: '31px',
+        fontWeight: 'bold',
+        display: 'inline-block',
+        lineHeight: '0px',
+        padding: '11px 3px',
+        textDecoration: 'none'
+    },
 
 	getInitialState: function(){ 
 		return{
+			lightboxMode: false,
 			images: this.props.feedObjects,
+			display: false, 
+			tree: {}
 		};
 	}, 
 
@@ -24233,55 +24561,212 @@ var Feed = React.createClass({displayName: "Feed",
 		return false; 
 	},
 
-	handleClick: function(item){ 
+	handleClickToAddInspiration: function(item){ 
 		console.log("you've clicked this item", item)
 		this.props.addInspir(item)
 	},
 
+	openLightbox: function(item){ 
+		var parent = this; 
+		var pieceTree; 
+		this.props.getPiece(item, function(tree){ 
+			parent.setState({tree: tree})
+			parent.setState({display: true});
+		});
+	},
+
+	closeLightbox: function(){
+		this.setState({tree : {}})
+        this.setState({display: false});
+    },
 	rawMarkup: function(e){ 
 		return {__html: e}
 	},
 
-	render: function(){ 
+	componentDidMount: function(){
+        document.addEventListener("keydown", function (e) {
+            if ( (this.props.display) && (e.keyCode === 27) ){
+                this.props.closeLightbox();
+            }
+        }.bind(this));
+    }, 
 
-
-
-		var parent = this; 
-        var childElements = this.state.images.map(function(element, i){
-			var pinButton; 
-			if(parent.checkIfInInspirations(element, parent.props.userInspirations)){ 
+    pinnedButton: function(item){ 
+    	var pinButton; 
+			if(this.checkIfInInspirations(item, this.props.userInspirations)){ 
 				pinButton = React.createElement("button", {className: "button add", disabled: true}, " Already Pinned ")
 			}
 			else{ 
-				pinButton = React.createElement("button", {className: "button add", onClick: parent.handleClick.bind(null, element)}, " + Add Inspiration ")
+				pinButton = React.createElement("button", {className: "button add", onClick: this.handleClickToAddInspiration.bind(null, item)}, " + Add Inspiration ")
 			}
+			return pinButton
+    },
+
+	render: function(){ 
+		var parent = this; 
+        var childElements = this.state.images.map(function(element, i){
+			var pinButton = parent.pinnedButton(element)
+
            return (
            		React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
 	                React.createElement("div", {dangerouslySetInnerHTML: parent.rawMarkup(element.src)}), 
 	            	React.createElement("p", null, element.title), 
-	            	pinButton
+	            	pinButton, 
+	            	React.createElement("button", {className: "button expand", onClick: parent.openLightbox.bind(null, element)}, " View ")
 	            )
             );
         });
 
+        if (this.state.display){
 
-		return(
-			React.createElement("div", {id: "feed"}, 
-				React.createElement(Masonry, {
-	                className: 'my-gallery-class', 
-	                elementType: 'div', 
-	                disableImagesLoaded: false
-	            }, 
-	                childElements
-	            )
-			)
-		); 
+            return (
+            	React.createElement("div", null, 
+            	React.createElement("div", {id: "feed"}, 
+					React.createElement(Masonry, {
+		                className: 'my-gallery-class', 
+		                elementType: 'div', 
+		                disableImagesLoaded: false
+		            }, 
+		            childElements
+		            )
+				), 
+                React.createElement("div", null, 
+                    React.createElement("div", {style: this.blackOverlayStyles, onClick: this.closeLightbox}), 
+                    React.createElement("div", {style: this.whiteContentStyles}, 
+                        React.createElement("a", {style: this.closeTagStyles, onClick: this.closeLightbox}, "×"), 
+                        React.createElement("div", {className: "upclose", dangerouslySetInnerHTML: this.rawMarkup(this.state.tree.src)}), 
+                        React.createElement("div", null, " ", this.pinnedButton(this.state.tree))
+                    )
+            	)
+            	)
+            );React.createElement("div", {dangerouslySetInnerHTML: this.rawMarkup(this.state.tree.src)})
+        } else {
+            return(
+				React.createElement("div", {id: "feed"}, 
+					React.createElement(Masonry, {
+		                className: 'my-gallery-class', 
+		                elementType: 'div', 
+		                disableImagesLoaded: false
+		            }, 
+		            childElements
+		            )
+				)
+			); 
+        }
 	}
 
 }); 
 
 module.exports = Feed; 
-},{"./masonry.jsx":185,"fs":3,"node-dir":39,"path":46,"react":177,"react-dom":48}],184:[function(require,module,exports){
+},{"./lightbox.jsx":187,"./masonry.jsx":189,"fs":29,"node-dir":41,"path":30,"react":178}],187:[function(require,module,exports){
+var React = require('react');
+var Carousel = require('./carousel_overlay.jsx')
+
+var Lightbox = React.createClass({displayName: "Lightbox",
+  componentDidMount: function () {
+    this.overlay = document.createElement('div');
+    this.overlay.className = 'react-lightbox-overlay';
+    this.overlay.addEventListener('webkitTransitionEnd', this.handleOverlayMounting);
+  },
+  componentWillUnmount: function () {
+    this.overlay.removeEventListener('webkitTransitionEnd', this.handleOverlayMounting);
+  },
+  handleOverlayMounting: function () {
+    if (!this.overlay.classList.contains('react-lightbox-overlay-open')) {
+      React.unmountComponentAtNode(this.overlay);
+      document.body.removeChild(this.overlay);
+      window.removeEventListener('click', this.closeCarousel);
+    }
+  },
+  // openCarousel: function (index) {
+  //   this.overlay.innerHMTL = '';
+  //   this.overlay.className = 'react-lightbox-overlay';
+  //   document.body.appendChild(this.overlay);
+  //   React.render(Carousel({
+  //     pictures: this.props.pictures,
+  //     current: index,
+  //     keyboard: this.props.keyboard,
+  //     controls: this.props.controls,
+  //     close: this.closeCarousel
+  //   }), this.overlay);
+  //   requestAnimationFrame(function () {
+  //     this.overlay.classList.add('react-lightbox-overlay-open');
+  //     window.addEventListener('click', this.closeCarousel);
+  //   }.bind(this));
+  // },
+  closeCarousel: function () {
+    this.overlay.classList.remove('react-lightbox-overlay-open');
+  },
+  // renderPictures: function (picture, index) {
+
+  //   if (typeof picture === 'string') {
+  //     return DOM.div({
+  //       key: index,
+  //       className: 'react-lightbox-image',
+  //       onClick: this.openCarousel.bind(this, index),
+  //       style: {
+  //         backgroundImage: 'url(' + picture + ')'
+  //       }
+  //     });
+  //   } else {
+  //     return DOM.div({
+  //       key: index,
+  //       className: 'react-lightbox-image',
+  //       onClick: this.openCarousel.bind(this, index)
+  //     }, picture);
+  //   }
+
+  // },
+  // render: function () {
+  //   return DOM.div({
+  //     className: 'react-lightbox'
+  //   }, (this.props.previews || this.props.pictures || []).map(this.renderPictures));
+  // }
+
+
+  // render: function(picture, index){ 
+  //   if (typeof picture === 'string') {
+  //     var thing = <div key: {index} className: 'react-lightbox-image' onClick: this.openCarousel.bind(this, index) style: {
+  //         backgroundImage: 'url(' + picture + ')'
+  //       }> 
+  //       </div>
+  //   } 
+  //   else{ 
+  //     var thing = <div key: {index} className:'react-lightbox-image' onClick: this.openCarousel.bind(this, index)> 
+  //       picture </div> 
+  //   }
+
+  //   return(
+  //     <div className: 'react-lightbox'> 
+  //       (this.props.previews || this.props.pictures || []).map(thing); 
+  //     </div> 
+  //   ); 
+  // })
+
+  render: function(){ 
+    // this.overlay.innerHMTL = '';
+    // this.overlay.className = 'react-lightbox-overlay';
+    // document.body.appendChild(this.overlay);
+    return (
+      React.createElement(Carousel, {pictures: this.props.pictures, current: this.props.index, keyboard: this.props.keyboard, controls: this.props.controls, close: this.closeCarousel})
+    );
+  }
+}); 
+
+    // React.render(Carousel({
+    //   pictures: this.props.pictures,
+    //   current: this.props.index,
+    //   keyboard: this.props.keyboard,
+    //   controls: this.props.controls,
+    //   close: this.closeCarousel
+    // }), this.overlay);
+    // requestAnimationFrame(function () {
+    //   this.overlay.classList.add('react-lightbox-overlay-open');
+    //   window.addEventListener('click', this.closeCarousel);
+    // }.bind(this));
+
+module.exports = Lightbox;
+},{"./carousel_overlay.jsx":180,"react":178}],188:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
 
@@ -24348,7 +24833,7 @@ var loginPage = React.createClass({displayName: "loginPage",
 });
 
 module.exports = loginPage;
-},{"react":177,"react-dom":48}],185:[function(require,module,exports){
+},{"react":178,"react-dom":49}],189:[function(require,module,exports){
 var isBrowser = (typeof window !== 'undefined');
 var Masonry = isBrowser ? window.Masonry || require('masonry-layout') : null;
 var imagesloaded = isBrowser ? require('imagesloaded') : null;
@@ -24544,10 +25029,10 @@ var MasonryComponent = React.createClass({
 });
 
 module.exports = MasonryComponent;
-},{"imagesloaded":37,"masonry-layout":38,"react":177}],186:[function(require,module,exports){
+},{"imagesloaded":32,"masonry-layout":34,"react":178}],190:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
-var UploadsDasboard = require('./myuploads.jsx');
+var Dashboard = require('./dashboard.jsx');
 
 var MyBoard = React.createClass({displayName: "MyBoard",
 
@@ -24562,12 +25047,12 @@ var MyBoard = React.createClass({displayName: "MyBoard",
             var subpage = React.createElement("div", null, React.createElement("div", {className: "centering-div"}, 
                    React.createElement("h1", null, "My Uploads")
                 ), 
-                React.createElement(UploadsDasboard, {uploadslist: this.props.uploads}))
+                React.createElement(Dashboard, {boardtype: this.props.subpage, uploadslist: this.props.uploads, deleteInspir: this.props.deleteInspir}))
         } else if (this.props.subpage === "inspirations") {
             var subpage = React.createElement("div", null, React.createElement("div", {className: "centering-div"}, 
                    React.createElement("h1", null, "My Inspirations")
                 ), 
-                React.createElement(UploadsDasboard, {uploadslist: this.props.inspirations}))
+                React.createElement(Dashboard, {boardtype: this.props.subpage, uploadslist: this.props.inspirations, deleteInspir: this.props.deleteInspir}))
         } else {
             var subpage = React.createElement("div", {className: "centering-div"}, 
                    React.createElement("h1", null, "Profile Page...")
@@ -24583,59 +25068,7 @@ var MyBoard = React.createClass({displayName: "MyBoard",
 });
 
 module.exports = MyBoard;
-},{"./myuploads.jsx":187,"react":177,"react-dom":48}],187:[function(require,module,exports){
-/* DashboardHistory Component that holds the Carousel*/
-
-var React = require('react');
-var Carousel = require('./carouselstuff/carousel.jsx');
-var Ease = require('ease-functions');
-
-var DashboardHistory = React.createClass({displayName: "DashboardHistory",
-    propTypes: {
-
-    },
-
-    getInitialState: function () {
-        return {
-            width: 400,
-            layout: 'classic',
-            ease: 'linear',
-            duration: 400
-        };
-    },
-
-    componentWillMount: function () {
-        this.onSides = function (event) {
-            this.setState( {images: this.state.all_info.slice(0, event.target.value) });
-        }.bind(this);
-        this.onLayout = function (event) {
-            this.setState({layout: event.target.value});
-        }.bind(this);
-        this.onDuration = function (event) {
-            this.setState({duration: parseInt(event.target.value) });
-        }.bind(this);
-        this.onEase = function (event) {
-            this.setState({ease:  event.target.value});
-        }.bind(this);
-    },
-
-    render: function () {
-        return (
-            React.createElement("div", {className: "carouselhistory"}, 
-                React.createElement("div", null, 
-                React.createElement(Carousel, {all_info: this.props.uploadslist, 
-                		  width: this.state.width, 
-                          ease: this.state.ease, 
-                          duration: this.state.duration, 
-                          layout: this.state.layout})
-                )
-            )
-        );
-    }
-});
-
-module.exports = DashboardHistory; 
-},{"./carouselstuff/carousel.jsx":179,"ease-functions":6,"react":177}],188:[function(require,module,exports){
+},{"./dashboard.jsx":185,"react":178,"react-dom":49}],191:[function(require,module,exports){
 // Navigation/header bar on the top of the page. Holds login and search bar
 var React = require('react');
 var ReactDOM = require('react-dom');
@@ -24669,22 +25102,75 @@ var Navbar = React.createClass({displayName: "Navbar",
 });
 
 module.exports = Navbar;
-},{"react":177,"react-dom":48}],189:[function(require,module,exports){
+},{"react":178,"react-dom":49}],192:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
+var Masonry = require('./masonry.jsx');
 
 var Upload = React.createClass({displayName: "Upload",
 
 	getInitialState: function() {
 	    return {
 	    	title: '',
-	     	embedcode: ''
+	     	embedcode: '',
+	     	checkedInspirations: [],
 	    };
 	},
 
+    convertMedia: function(html){
+        var pattern1 = /(?:http?s?:\/\/)?(?:www\.)?(?:vimeo\.com)\/?(.+)/g;
+        var pattern2 = /(?:http?s?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/g;
+        var pattern3 = /([-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?(?:jpg|jpeg|gif|png))/gi;
+        
+        if(pattern1.test(html)){
+           	var replacement = '<iframe width="560" height="315" src="//player.vimeo.com/video/$1" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>';
+			var html = html.replace(pattern1, replacement);
+        }
+
+
+        if(pattern2.test(html)){
+			var replacement = '<iframe width="560" height="315" src="http://www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe>';
+			var html = html.replace(pattern2, replacement);
+        } 
+
+
+        if(pattern3.test(html)){
+            var replacement = '<a href="$1" target="_blank"><img class="sml" src="$1" /></a><br />';
+            var html = html.replace(pattern3, replacement);
+        }
+
+        return html;
+    },
+
+	// makeIframe: function(link) {
+	// 	if (link !== "") {
+	// 		function getId(url) {
+	// 		    var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+	// 		    var match = url.match(regExp);
+
+	// 		    if (match && match[2].length == 11) {
+	// 		        return match[2];
+	// 		    } else {
+	// 		        return 'error';
+	// 		    }
+	// 		}
+
+	// 		var myId = getId(link);
+
+	// 		var myCode = '<iframe width="560" height="315" src="//www.youtube.com/embed/' 
+	// 		    + myId + '" frameborder="0" allowfullscreen></iframe>';
+	// 	} else {
+	// 		var myCode = "";
+	// 	}
+
+	// 	return myCode
+	// },
+
 	handleEmbedChange: function(ev) {
+		console.log(ev.target.value);
+		console.log(this.convertMedia(ev.target.value));
 		this.setState({
-			embedcode: ev.target.value,
+			embedcode: this.convertMedia(ev.target.value),
 		});
 	},
 
@@ -24694,11 +25180,38 @@ var Upload = React.createClass({displayName: "Upload",
 		});
 	},
 
+	handleCheckedInspir: function(elem_id) {
+		if ((this.state.checkedInspirations).indexOf(elem_id) === -1){
+			var updatedinspirations = this.state.checkedInspirations.concat([elem_id]);
+		} else {
+			var updatedinspirations = this.state.checkedInspirations.filter(function(id) { return id != elem_id });
+		}
+		console.log(updatedinspirations);
+		this.setState({
+			checkedInspirations: updatedinspirations,
+		});
+	},
+
 	rawMarkup: function() {
     	return { __html: this.state.embedcode };
   	},
 
+  	embedCodeRawMarkup: function(e) {
+		return {__html: e}
+  	},
+
     render: function(){
+    	var parent = this;
+        var childElements = this.props.inspirations.map(function(element, i){
+           return (
+           		React.createElement("div", {key: 'div'+i, className: "inspirations-div-class"}, 
+	                React.createElement("div", {dangerouslySetInnerHTML: parent.embedCodeRawMarkup(element.src)}), 
+	            	React.createElement("p", null, element.title), 
+	            	React.createElement("input", {type: "checkbox", onChange: parent.handleCheckedInspir.bind(null, element._id), value: "inpiration"}), React.createElement("br", null)
+	            )
+            );
+        });
+
         return (
         	React.createElement("div", null, 
 	        	React.createElement("h1", null, "Upload"), 
@@ -24716,6 +25229,20 @@ var Upload = React.createClass({displayName: "Upload",
 					React.createElement("div", {id: "embed-background-grid"}, 
 						React.createElement("div", {className: "embedplayer", dangerouslySetInnerHTML: this.rawMarkup()})
 					), 
+					React.createElement("br", null), 
+					React.createElement("div", null, 
+						React.createElement("h2", null, " Choose Inspirations "), 
+						React.createElement("div", {id: "inspirationslist"}, 
+							React.createElement(Masonry, {
+				                className: 'my-gallery-class', 
+				                elementType: 'div', 
+				                disableImagesLoaded: false
+				            }, 
+				                childElements
+				            )
+				        )
+					), 
+					React.createElement("br", null), 
 					React.createElement("div", {className: "embed-button"}, 
 						React.createElement("button", {id: "embed-upload", onClick: this.props.uploadCode.bind(null,this.state)}, "Upload")
 					)
@@ -24726,4 +25253,4 @@ var Upload = React.createClass({displayName: "Upload",
 });
 
 module.exports = Upload;
-},{"react":177,"react-dom":48}]},{},[178]);
+},{"./masonry.jsx":189,"react":178,"react-dom":49}]},{},[179]);

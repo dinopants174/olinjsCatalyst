@@ -22,8 +22,24 @@ var CatalystBox = React.createClass({
             display: DisplayEnum.DISPLAY_LOGIN,
             displayName: '', 
             feed: [],
-            subpage: ''
+            subpage: '', 
+            piece: {}
         };
+    },
+
+    testGetPiece: function(){
+        $.ajax({
+            url: '/api/pieces/getPiece/570ac1c99816a4771a95a866',
+            dataType: 'json',
+            cache: false,
+            type: 'GET',
+            success: function(res){
+                console.log("Here is the data I will need for the tree: ", res);
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error('/api/pieces/getPiece', status, err.toString());
+            }.bind(this)
+        });
     },
 
     handleUploadCode: function(uploadcode) {
@@ -32,12 +48,13 @@ var CatalystBox = React.createClass({
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {src: uploadcode.embedcode, title: uploadcode.title},
+            data: {src: uploadcode.embedcode, title: uploadcode.title, inspirations: uploadcode.checkedInspirations},
             success: function(user) {
-                this.setState({
-                    display: DisplayEnum.DISPLAY_MYBOARD, 
-                    user: user,
-                });
+                // this.setState({
+                //     display: DisplayEnum.DISPLAY_HOME, 
+                //     user: user,
+                // });
+                this.handleFeed({user : user}); 
             }.bind(this),
             error: function(xhr, status, err) {
                 console.error('/api/user/postUpload', status, err.toString());
@@ -47,7 +64,7 @@ var CatalystBox = React.createClass({
 
     handleFeed: function(object){ 
         $.ajax({ 
-            url: '/api/user/feed',
+            url: '/api/pieces/feed',
             dataType: 'json', 
             type: 'GET', 
             success: function(feedItems){ 
@@ -58,7 +75,7 @@ var CatalystBox = React.createClass({
 
             }.bind(this), 
             error: function(xhr, status, err){ 
-                console.log("cannot get feed, '/api/user/feed'", status, err.toString()); 
+                console.log("cannot get feed, '/api/pieces/feed'", status, err.toString()); 
             }.bind(this)
         })
     },
@@ -116,7 +133,7 @@ var CatalystBox = React.createClass({
 
     addInspiration: function(item){ 
         console.log("you're about to add this inspiration", item)
-
+        console.log("what is this id", item._id)
         $.ajax({ 
             url: '/api/user/postInspiration',
             dataType: 'json',
@@ -124,10 +141,8 @@ var CatalystBox = React.createClass({
             type: 'POST',
             data: {srcId: item._id}, 
             success: function(userObject){ 
-                console.log("alleged user object", userObject)
-
                 userObject.inspirations.forEach(function(i){ 
-                    console.log(i)
+                    console.log("inspiraaation", i)
                 })
                 
                 this.setState({user: userObject}); 
@@ -138,8 +153,52 @@ var CatalystBox = React.createClass({
 
             }.bind(this)
         })
-
     }, 
+
+    getPieceAndTree: function(item, callback){ 
+        console.log("You're about to get this item", item)
+        $.ajax({ 
+            url: '/api/pieces/getPiece/'+ item._id, 
+            dataType: 'json', 
+            type: 'GET', 
+            success: function(piece){ 
+                return callback(piece)
+            }.bind(this), 
+            error: function(xhr, status, err) {
+                console.log("error displaying piece")
+            }.bind(this)
+        })
+    }, 
+
+    deleteInspiration: function(item, boardtype) {
+        console.log(boardtype, item);
+
+        if (boardtype==="uploads"){
+            console.log(boardtype, item);
+        } else {
+            $.ajax({ 
+                url: '/api/user/deleteInspiration',
+                dataType: 'json',
+                cache: false,
+                type: 'POST',
+                data: {srcId: item._id}, 
+                success: function(userObject){ 
+                    console.log("alleged user object", userObject)
+
+                    userObject.inspirations.forEach(function(i){ 
+                        console.log(i)
+                    })
+                    
+                    this.setState({user: userObject}); 
+                }.bind(this), 
+                error: function(xhr, status, err){ 
+                    console.log("there has been an error")
+                    console.error('/api/user/postInspiration', status, err.toString())
+
+                }.bind(this)
+            }) 
+        }
+    },
 
     render: function() {
         var page;
@@ -151,7 +210,7 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
-                        <Upload uploadCode = {this.handleUploadCode} />
+                        <Upload uploadCode = {this.handleUploadCode} inspirations={this.state.user.inspirations}/>
                     </div>
                 );
                 break;
@@ -161,9 +220,10 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
-                        <button onClick={this.showMyBoardUploads} className="button">My Uploads</button>
-                        <button onClick={this.showMyBoardInspirations} className="button">My Inspirations</button>
-                        <MyBoard subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations}/>
+                        <button onClick={this.showMyBoardUploads} className="button board">My Uploads</button>
+                        <button onClick={this.showMyBoardInspirations} className="button board">My Inspirations</button>
+                        <br/>
+                        <MyBoard subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations} deleteInspir={this.deleteInspiration}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
@@ -174,7 +234,7 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
-                        <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations}/>
+                        <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations} getPiece = {this.getPieceAndTree}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
