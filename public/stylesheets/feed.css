@@ -274,3 +274,23 @@ button::-moz-focus-inner
 .upclose iframe {
   width: 55vw;
 }
+
+/*For the tree*/
+text {
+  font-family: "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.name {
+  font-weight: bold;
+}
+
+.about {
+  fill: #777;
+  font-size: smaller;
+}
+
+.link {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}

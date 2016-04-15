@@ -8,7 +8,7 @@ var fs = require('fs');
 var Lightbox = require('./lightbox.jsx');
 
 var Masonry = require('./masonry.jsx');
-
+var Barchart = require('./d3Chart.jsx');
 // var Lightbox = require('./react-lightbox.jsx'); 
 
 var masonryOptions = {
@@ -18,7 +18,7 @@ var masonryOptions = {
 var Feed = React.createClass({ 
 	whiteContentStyles: {
         position: 'fixed',
-        top: '25%',
+        top: '20%',
         left: '20%',
         right: '50%',
         width: '60vw',
@@ -133,42 +133,32 @@ var Feed = React.createClass({
             );
         });
 
-        if (this.state.display){
-
             return (
             	<div> 
-            	<div id="feed"> 
-					<Masonry
-		                className={'my-gallery-class'}
-		                elementType={'div'}
-		                disableImagesLoaded={false}
-		            >  
-		            {childElements}
-		            </Masonry>
-				</div>
-                <div>
-                    <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
-                    <div style={this.whiteContentStyles}>
-                        <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
-                        <div className = 'upclose' dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
-                        <div> {this.pinnedButton(this.state.tree)}</div>
-                    </div> 
+                	<div id="feed"> 
+    					<Masonry
+    		                className={'my-gallery-class'}
+    		                elementType={'div'}
+    		                disableImagesLoaded={false}
+    		            >  
+    		            {childElements}
+    		            </Masonry>
+    				</div>
+                      {this.state.display ? (
+                        <div className="overlay">
+                            <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
+                            <div style={this.whiteContentStyles}>
+                                <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
+                                <div className = 'upclose'>
+                                    <Barchart data={[this.state.tree]} title={this.state.tree.title} />
+                                </div>
+                                <div> {this.pinnedButton(this.state.tree)}</div>
+                            </div> 
+                        </div>
+                      ) : 
+                      null} 
             	</div>
-            	</div>
-            );<div dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
-        } else {
-            return(
-				<div id="feed"> 
-					<Masonry
-		                className={'my-gallery-class'}
-		                elementType={'div'}
-		                disableImagesLoaded={false}
-		            >  
-		            {childElements}
-		            </Masonry>
-				</div>
-			); 
-        }
+            );
 	}
 
 }); 
