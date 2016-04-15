@@ -26,6 +26,37 @@ var CatalystBox = React.createClass({
         };
     },
 
+    testGetPiece: function(){
+        $.ajax({
+            url: '/api/pieces/getPiece/570ac21d9816a4771a95a867',
+            dataType: 'json',
+            cache: false,
+            type: 'GET',
+            success: function(res){
+                console.log("Here is the data I will need for the tree: ", res);
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error('/api/pieces/getPiece', status, err.toString());
+            }.bind(this)
+        });
+    },
+
+    testDeletePiece: function(){
+        $.ajax({
+            url: '/api/user/deleteUpload',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {srcId: '570ac1c99816a4771a95a866'},
+            success: function(user) {
+                console.log("Updated user: ", user);
+            }.bind(this),
+            error: function(xhr, status, err){
+                console.error('/api/user/deleteUpload', status, err.toString());
+            }.bind(this)   
+        });
+    },
+
     handleUploadCode: function(uploadcode) {
         $.ajax({
             url: '/api/user/postUpload/',
@@ -176,6 +207,7 @@ var CatalystBox = React.createClass({
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
                         <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
+                        <input type="button" onClick={this.testDeletePiece} value="Delete horrible people in <3"/>
                     </div>
                 );
                 break;
