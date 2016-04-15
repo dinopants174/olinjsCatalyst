@@ -23701,7 +23701,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
 
     testGetPiece: function(){
         $.ajax({
-            url: '/api/pieces/getPiece/570ac1c99816a4771a95a866',
+            url: '/api/pieces/getPiece/570ac21d9816a4771a95a867',
             dataType: 'json',
             cache: false,
             type: 'GET',
@@ -23711,6 +23711,22 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             error: function(xhr, status, err) {
                 console.error('/api/pieces/getPiece', status, err.toString());
             }.bind(this)
+        });
+    },
+
+    testDeletePiece: function(){
+        $.ajax({
+            url: '/api/user/deleteUpload',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {srcId: '570ac1c99816a4771a95a866'},
+            success: function(user) {
+                console.log("Updated user: ", user);
+            }.bind(this),
+            error: function(xhr, status, err){
+                console.error('/api/user/deleteUpload', status, err.toString());
+            }.bind(this)   
         });
     },
 
@@ -23843,10 +23859,27 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
     }, 
 
     deleteInspiration: function(item, boardtype) {
-        console.log(boardtype, item);
 
         if (boardtype==="uploads"){
-            console.log(boardtype, item);
+            $.ajax({
+                url: '/api/user/deleteUpload',
+                dataType: 'json',
+                cache: false,
+                type: 'POST',
+                data: {srcId: item._id},
+                success: function(userObject) {
+                    console.log("alleged user object", userObject)
+
+                    userObject.inspirations.forEach(function(i){ 
+                        console.log(i)
+                    })
+                    
+                    this.handleFeed({user : userObject}); 
+                }.bind(this),
+                error: function(xhr, status, err){
+                    console.error('/api/user/deleteUpload', status, err.toString());
+                }.bind(this)   
+            });
         } else {
             $.ajax({ 
                 url: '/api/user/deleteInspiration',
