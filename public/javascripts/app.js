@@ -24529,17 +24529,17 @@ function createChart(dom, props, chart_type){
       .text(function(d) { return d.title; });
 
 
-  node.append('foreignObject')
-        .attr("x", function (d) { return d.x; })
-        .attr("y", function (d) { return d.y; })
-        .attr("width", 50)
-        .attr("height", 50)   
-        .append("iframe")
-        .attr("src", function(d) {
-            return "https://www.youtube.com/watch?v=hQ7aBnDZXjY";  //src for each frame
-        })
-        .attr("width", 50)
-        .attr("height", 50);
+  // node.append('foreignObject')
+  //       .attr("x", function (d) { return d.x; })
+  //       .attr("y", function (d) { return d.y; })
+  //       .attr("width", 50)
+  //       .attr("height", 50)   
+  //       .append("iframe")
+  //       .attr("src", function(d) {
+  //           return "https://www.youtube.com/watch?v=hQ7aBnDZXjY";  //src for each frame
+  //       })
+  //       .attr("width", 50)
+  //       .attr("height", 50);
 };
 
 var PieChart = React.createClass({displayName: "PieChart",
