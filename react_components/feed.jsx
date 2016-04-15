@@ -95,6 +95,7 @@ var Feed = React.createClass({
 		this.setState({tree : {}})
         this.setState({display: false});
     },
+    
 	rawMarkup: function(e){ 
 		return {__html: e}
 	},
