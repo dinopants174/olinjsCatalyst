@@ -23720,7 +23720,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {srcId: '570ac1c99816a4771a95a866'},
+            data: {srcId: '57106c6503938c922bd3751b'},
             success: function(user) {
                 console.log("Updated user: ", user);
             }.bind(this),
@@ -23874,7 +23874,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                         console.log(i)
                     })
                     
-                    this.handleFeed({user : userObject}); 
+                    this.setState({user: userObject}); 
                 }.bind(this),
                 error: function(xhr, status, err){
                     console.error('/api/user/deleteUpload', status, err.toString());

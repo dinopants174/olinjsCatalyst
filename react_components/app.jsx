@@ -202,7 +202,7 @@ var CatalystBox = React.createClass({
                         console.log(i)
                     })
                     
-                    this.handleFeed({user : userObject}); 
+                    this.setState({user: userObject}); 
                 }.bind(this),
                 error: function(xhr, status, err){
                     console.error('/api/user/deleteUpload', status, err.toString());
