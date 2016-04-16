@@ -47,7 +47,7 @@ var CatalystBox = React.createClass({
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {srcId: '57106c6503938c922bd3751b'},
+            data: {srcId: '5712c5032eef20e13588d409'},
             success: function(user) {
                 console.log("Updated user: ", user);
             }.bind(this),
@@ -207,7 +207,7 @@ var CatalystBox = React.createClass({
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
                         <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
-                        <input type="button" onClick={this.testDeletePiece} value="Delete horrible people in <3"/>
+                        <input type="button" onClick={this.testDeletePiece} value="Delete"/>
                     </div>
                 );
                 break;

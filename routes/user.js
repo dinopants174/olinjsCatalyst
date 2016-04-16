@@ -90,7 +90,7 @@ router.post('/postUpload', ensureAuthenticated, function(req, res){
 });
 
 router.post('/deleteUpload', ensureAuthenticated, function(req, res){
-	User.findOneAndUpdate({fbId: req.user.id}, {$pull: {uploads: req.body.srcId}}, {new: true}).populate('inspirations uploads').exec(function (err, user){
+	User.findOneAndUpdate({fbId: req.user.id}, {$pull: {uploads: req.body.srcId, inspirations: req.body.srcId}}, {new: true}).populate('inspirations uploads').exec(function (err, user){
 		if (err){
 			console.log("Error: ", err);
 		} else {
