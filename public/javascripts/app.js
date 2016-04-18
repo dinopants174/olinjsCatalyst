@@ -23720,7 +23720,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {srcId: '57106c6503938c922bd3751b'},
+            data: {srcId: '5712c5032eef20e13588d409'},
             success: function(user) {
                 console.log("Updated user: ", user);
             }.bind(this),
@@ -23966,166 +23966,7 @@ ReactDOM.render(
   React.createElement(CatalystBox, null),
   document.getElementById('content')
 );
-},{"./feed.jsx":186,"./login.jsx":188,"./myboard.jsx":190,"./navbar.jsx":191,"./upload.jsx":192,"react":177,"react-dom":48}],179:[function(require,module,exports){
-var React = require('react');
-
-var Carousel = React.createClass({displayName: "Carousel",
-  getInitialState: function () {
-    return {
-      previous: null,
-      current: this.props.current
-    };
-  },
-  componentWillMount: function () {
-    //looking for key down
-    if (this.props.keyboard) {
-      window.addEventListener('keydown', this.handleKeyboardInput);
-    }
-  },
-  componentWillUnmount: function () {
-    if (this.props.keyboard) {
-      window.removeEventListener('keydown', this.handleKeyboardInput); 
-    }
-  },
-  handleKeyboardInput: function (event) {
-    if (event.keyCode === 37) {
-      this.backward();
-    }
-    if (event.keyCode === 39) {
-      this.forward();
-    }
-    if (event.keyCode === 27) {
-      this.props.close();
-    }
-  },
-  getNextIndex: function () {
-    return this.props.pictures.length === this.state.current + 1 ? 0 : this.state.current + 1;
-  },
-  getPreviousIndex: function () {
-    return this.state.current === 0 ? this.props.pictures.length - 1 : this.state.current - 1;
-  },
-  forward: function (event) {
-    //moving forward along images
-    if (event) {
-      event.stopPropagation();
-    }
-    this.setState({
-      previous: this.state.current,
-      current: this.getNextIndex()
-    });
-  },
-  backward: function (event) {
-    //moving backwards
-    if (event) {
-      event.stopPropagation();
-    }
-    this.setState({
-      previous: this.state.current,
-      current: this.getPreviousIndex()
-    });
-  },
-  isForwarding: function () {
-    return this.state.previous === this.getPreviousIndex();
-  },
-  createInitialPictureClass: function (index) {
-    var className = 'react-lightbox-carousel-image';
-    if (index === this.getPreviousIndex()) {
-      return className += ' react-lightbox-carousel-image-backward';
-    }
-    if (index === this.state.current) {
-      return className;
-    }
-    if (index === this.getNextIndex()) {
-      return className += ' react-lightbox-carousel-image-forward';
-    }
-  },
-  createPictureClass: function (index) {
-    var className = 'react-lightbox-carousel-image';
-
-    // Set correct classes based on current index
-    if (this.state.previous === null) {
-      return this.createInitialPictureClass(index);
-    }
-
-    // Normal backword behavior
-    if (index === this.state.previous && !this.isForwarding()) {
-      return className += ' react-lightbox-carousel-image-forward';
-    }
-
-    if (index === this.state.current) {
-      return className;
-    }
-
-    // Reverse with forward behavior
-    if (index === this.state.previous && this.isForwarding()) {
-      return className += ' react-lightbox-carousel-image-backward';
-    }
-    if (this.isForwarding()) {
-      return className += ' react-lightbox-carousel-image-forward';
-    }
-
-    return className += ' react-lightbox-carousel-image-backward';
-  },
-  renderPictures: function () {
-    return this.props.pictures.map(function (picture, index) {
-
-      if (typeof picture === 'string') {
-        // return DOM.div({
-        //   key: index,
-        //   className: this.createPictureClass(index),
-        //   style: {
-        //     backgroundImage: 'url(' + picture + ')',
-        //     visibility: this.state.previous === index || this.state.current === index ? 'visible' : 'hidden'
-        //   }
-        // });
-
-    // style: {backgroundImage: 'url(' + picture + ')',
-    //         visibility: this.state.previous === index || this.state.current === index ? 'visible' : 'hidden'
-        
-        return (
-          React.createElement("div", {key: index, className: this.createPictureClass(index)}
-          ) 
-        );
-        
-      } else {
-        // return DOM.div({
-        //   key: index,
-        //   className: this.createPictureClass(index),
-        //   style: {
-        //     visibility: this.state.previous === index || this.state.current === index ? 'visible' : 'hidden'
-        //   }
-        // }, picture);
-
-        return (
-          React.createElement("div", {key: index, className: this.createPictureClass(index)}, 
-            "picture"
-          ) 
-        );
-      }
-    }, this);
-  },
-  // renderControls: function () {
-  //   if (this.props.controls) {
-  //     return React.createFactory(this.props.controls)({
-  //       backward: this.backward,
-  //       forward: this.forward
-  //     });
-
-  //     return  
-  //   }
-  // },
-  render: function () {
-    var blah = this.renderPictures();
-    return (
-      React.createElement("div", {className: "react-lightbox-carousel"}, 
-        blah
-      )
-      )
-  }
-});
-
-module.exports = Carousel; 
-},{"react":177}],180:[function(require,module,exports){
+},{"./feed.jsx":185,"./login.jsx":186,"./myboard.jsx":188,"./navbar.jsx":189,"./upload.jsx":190,"react":177,"react-dom":48}],179:[function(require,module,exports){
 /* Carousel Component with opening imaging functionality, deleting image from user's list of saved images
 and onhover display different things*/
 
@@ -24205,7 +24046,7 @@ var Carousel = React.createClass({displayName: "Carousel",
     }
 });
 module.exports = Carousel;
-},{"./depot":181,"./layout":182,"./util":183,"react":177}],181:[function(require,module,exports){
+},{"./depot":180,"./layout":181,"./util":182,"react":177}],180:[function(require,module,exports){
 var Ease = require('ease-functions');
 var Layout = require('./layout');
 var Util = require('./util');
@@ -24346,7 +24187,7 @@ function endFrame(now, then) {
         : Util.merge(then, {present: true, opacity: 1});
 }
 
-},{"./layout":182,"./util":183,"ease-functions":6}],182:[function(require,module,exports){
+},{"./layout":181,"./util":182,"ease-functions":6}],181:[function(require,module,exports){
 var Util = require('./util');
 
 var exports = module.exports = {};
@@ -24376,7 +24217,7 @@ exports.classic = {
 };
 
 
-},{"./util":183}],183:[function(require,module,exports){
+},{"./util":182}],182:[function(require,module,exports){
 var exports = module.exports = {};
 
 
@@ -24454,7 +24295,7 @@ exports.mapObj = function mapObj(fn,obj){
     }
     return res;
 };
-},{}],184:[function(require,module,exports){
+},{}],183:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
 
@@ -24595,7 +24436,7 @@ var PieChart = React.createClass({displayName: "PieChart",
 });
 
 module.exports = PieChart;
-},{"react":177,"react-dom":48}],185:[function(require,module,exports){
+},{"react":177,"react-dom":48}],184:[function(require,module,exports){
 /* DashboardHistory Component that holds the Carousel*/
 
 var React = require('react');
@@ -24649,15 +24490,13 @@ var DashboardHistory = React.createClass({displayName: "DashboardHistory",
 });
 
 module.exports = DashboardHistory; 
-},{"./carouselstuff/carousel.jsx":180,"ease-functions":6,"react":177}],186:[function(require,module,exports){
+},{"./carouselstuff/carousel.jsx":179,"ease-functions":6,"react":177}],185:[function(require,module,exports){
 var React = require('react');
 // var ReactDOM = require('react-dom');
 
 var dir = require('node-dir'); 
 var path = require('path'); 
 var fs = require('fs');
-
-var Lightbox = require('./lightbox.jsx');
 
 var Masonry = require('./masonry.jsx');
 var Barchart = require('./d3Chart.jsx');
@@ -24817,115 +24656,7 @@ var Feed = React.createClass({displayName: "Feed",
 }); 
 
 module.exports = Feed; 
-},{"./d3Chart.jsx":184,"./lightbox.jsx":187,"./masonry.jsx":189,"fs":3,"node-dir":39,"path":46,"react":177}],187:[function(require,module,exports){
-var React = require('react');
-var Carousel = require('./carousel_overlay.jsx')
-
-var Lightbox = React.createClass({displayName: "Lightbox",
-  componentDidMount: function () {
-    this.overlay = document.createElement('div');
-    this.overlay.className = 'react-lightbox-overlay';
-    this.overlay.addEventListener('webkitTransitionEnd', this.handleOverlayMounting);
-  },
-  componentWillUnmount: function () {
-    this.overlay.removeEventListener('webkitTransitionEnd', this.handleOverlayMounting);
-  },
-  handleOverlayMounting: function () {
-    if (!this.overlay.classList.contains('react-lightbox-overlay-open')) {
-      React.unmountComponentAtNode(this.overlay);
-      document.body.removeChild(this.overlay);
-      window.removeEventListener('click', this.closeCarousel);
-    }
-  },
-  // openCarousel: function (index) {
-  //   this.overlay.innerHMTL = '';
-  //   this.overlay.className = 'react-lightbox-overlay';
-  //   document.body.appendChild(this.overlay);
-  //   React.render(Carousel({
-  //     pictures: this.props.pictures,
-  //     current: index,
-  //     keyboard: this.props.keyboard,
-  //     controls: this.props.controls,
-  //     close: this.closeCarousel
-  //   }), this.overlay);
-  //   requestAnimationFrame(function () {
-  //     this.overlay.classList.add('react-lightbox-overlay-open');
-  //     window.addEventListener('click', this.closeCarousel);
-  //   }.bind(this));
-  // },
-  closeCarousel: function () {
-    this.overlay.classList.remove('react-lightbox-overlay-open');
-  },
-  // renderPictures: function (picture, index) {
-
-  //   if (typeof picture === 'string') {
-  //     return DOM.div({
-  //       key: index,
-  //       className: 'react-lightbox-image',
-  //       onClick: this.openCarousel.bind(this, index),
-  //       style: {
-  //         backgroundImage: 'url(' + picture + ')'
-  //       }
-  //     });
-  //   } else {
-  //     return DOM.div({
-  //       key: index,
-  //       className: 'react-lightbox-image',
-  //       onClick: this.openCarousel.bind(this, index)
-  //     }, picture);
-  //   }
-
-  // },
-  // render: function () {
-  //   return DOM.div({
-  //     className: 'react-lightbox'
-  //   }, (this.props.previews || this.props.pictures || []).map(this.renderPictures));
-  // }
-
-
-  // render: function(picture, index){ 
-  //   if (typeof picture === 'string') {
-  //     var thing = <div key: {index} className: 'react-lightbox-image' onClick: this.openCarousel.bind(this, index) style: {
-  //         backgroundImage: 'url(' + picture + ')'
-  //       }> 
-  //       </div>
-  //   } 
-  //   else{ 
-  //     var thing = <div key: {index} className:'react-lightbox-image' onClick: this.openCarousel.bind(this, index)> 
-  //       picture </div> 
-  //   }
-
-  //   return(
-  //     <div className: 'react-lightbox'> 
-  //       (this.props.previews || this.props.pictures || []).map(thing); 
-  //     </div> 
-  //   ); 
-  // })
-
-  render: function(){ 
-    // this.overlay.innerHMTL = '';
-    // this.overlay.className = 'react-lightbox-overlay';
-    // document.body.appendChild(this.overlay);
-    return (
-      React.createElement(Carousel, {pictures: this.props.pictures, current: this.props.index, keyboard: this.props.keyboard, controls: this.props.controls, close: this.closeCarousel})
-    );
-  }
-}); 
-
-    // React.render(Carousel({
-    //   pictures: this.props.pictures,
-    //   current: this.props.index,
-    //   keyboard: this.props.keyboard,
-    //   controls: this.props.controls,
-    //   close: this.closeCarousel
-    // }), this.overlay);
-    // requestAnimationFrame(function () {
-    //   this.overlay.classList.add('react-lightbox-overlay-open');
-    //   window.addEventListener('click', this.closeCarousel);
-    // }.bind(this));
-
-module.exports = Lightbox;
-},{"./carousel_overlay.jsx":179,"react":177}],188:[function(require,module,exports){
+},{"./d3Chart.jsx":183,"./masonry.jsx":187,"fs":3,"node-dir":39,"path":46,"react":177}],186:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
 
@@ -24992,7 +24723,7 @@ var loginPage = React.createClass({displayName: "loginPage",
 });
 
 module.exports = loginPage;
-},{"react":177,"react-dom":48}],189:[function(require,module,exports){
+},{"react":177,"react-dom":48}],187:[function(require,module,exports){
 var isBrowser = (typeof window !== 'undefined');
 var Masonry = isBrowser ? window.Masonry || require('masonry-layout') : null;
 var imagesloaded = isBrowser ? require('imagesloaded') : null;
@@ -25188,7 +24919,7 @@ var MasonryComponent = React.createClass({
 });
 
 module.exports = MasonryComponent;
-},{"imagesloaded":37,"masonry-layout":38,"react":177}],190:[function(require,module,exports){
+},{"imagesloaded":37,"masonry-layout":38,"react":177}],188:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
 var Dashboard = require('./dashboard.jsx');
@@ -25227,7 +24958,7 @@ var MyBoard = React.createClass({displayName: "MyBoard",
 });
 
 module.exports = MyBoard;
-},{"./dashboard.jsx":185,"react":177,"react-dom":48}],191:[function(require,module,exports){
+},{"./dashboard.jsx":184,"react":177,"react-dom":48}],189:[function(require,module,exports){
 // Navigation/header bar on the top of the page. Holds login and search bar
 var React = require('react');
 var ReactDOM = require('react-dom');
@@ -25261,7 +24992,7 @@ var Navbar = React.createClass({displayName: "Navbar",
 });
 
 module.exports = Navbar;
-},{"react":177,"react-dom":48}],192:[function(require,module,exports){
+},{"react":177,"react-dom":48}],190:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
 var Masonry = require('./masonry.jsx');
@@ -25388,4 +25119,4 @@ var Upload = React.createClass({displayName: "Upload",
 });
 
 module.exports = Upload;
-},{"./masonry.jsx":189,"react":177,"react-dom":48}]},{},[178]);
+},{"./masonry.jsx":187,"react":177,"react-dom":48}]},{},[178]);

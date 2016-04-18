@@ -5,8 +5,6 @@ var dir = require('node-dir');
 var path = require('path'); 
 var fs = require('fs');
 
-var Lightbox = require('./lightbox.jsx');
-
 var Masonry = require('./masonry.jsx');
 var Barchart = require('./d3Chart.jsx');
 // var Lightbox = require('./react-lightbox.jsx'); 
