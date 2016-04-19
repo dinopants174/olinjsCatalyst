@@ -25037,7 +25037,7 @@ var Upload = React.createClass({displayName: "Upload",
 
 
         if(pattern2.test(html)){
-			var replacement = '<iframe width="560" height="315" src="https://www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe>';
+			var replacement = '<iframe width="560" height="315" src="https://www.youtube.com/v/$1" frameborder="0" allowfullscreen></iframe>';
 			var html = html.replace(pattern2, replacement);
         } 
 
