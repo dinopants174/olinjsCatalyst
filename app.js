@@ -16,9 +16,9 @@ var user = require('./routes/user');
 var pieces = require('./routes/pieces');
 
 passport.use(new FacebookStrategy({
-    clientID: ENV["FACEBOOK_APP_ID"] || auth.facebook.clientID,
-    clientSecret: ENV["FACEBOOK_SECRET"] || auth.facebook.clientSecret,
-    callbackURL: url("/auth/facebook/callback"),
+    clientID: process.env.FACEBOOK_APP_ID || auth.facebook.clientID,
+    clientSecret: process.env.FACEBOOK_SECRET || auth.facebook.clientSecret,
+    callbackURL: process.env.FACEBOOK_CALLBACKURL || auth.facebook.callbackURL,
     profileFields: ['id', 'displayName', 'name', 'gender', 'picture.type(large)']
   },
   function(accessToken, refreshToken, profile, done) {
