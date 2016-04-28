@@ -23758,7 +23758,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
             success: function(feedItems){ 
                 object.display= DisplayEnum.DISPLAY_HOME;
                 object.feed = feedItems;
-                console.log(object); 
+                // console.log(object); 
                 this.setState(object); 
 
             }.bind(this), 
@@ -23858,9 +23858,10 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
         })
     }, 
 
-    deleteInspiration: function(item, boardtype) {
+    deleteElement: function(item, boardtype) {
 
         if (boardtype==="uploads"){
+            console.log("here");
             $.ajax({
                 url: '/api/user/deleteUpload',
                 dataType: 'json',
@@ -23925,10 +23926,8 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                     React.createElement("div", null, 
                         React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchMyBoardInspirations: this.showMyBoardInspirations, 
                         switchMyBoardUploads: this.showMyBoardUploads, displayName: this.state.displayName || '', proPic: this.state.user.proPic}), 
-                        React.createElement("button", {onClick: this.showMyBoardUploads, className: "button board"}, "My Uploads"), 
-                        React.createElement("button", {onClick: this.showMyBoardInspirations, className: "button board"}, "My Inspirations"), 
                         React.createElement("br", null), 
-                        React.createElement(MyBoard, {subpage: this.state.subpage, uploads: this.state.user.uploads, inspirations: this.state.user.inspirations, deleteInspir: this.deleteInspiration}), 
+                        React.createElement(MyBoard, {switchMyBoard: this.showMyBoard, switchUploads: this.showMyBoardUploads, switchInspirations: this.showMyBoardInspirations, user: this.state.user, subpage: this.state.subpage, uploads: this.state.user.uploads, inspirations: this.state.user.inspirations, deleteElement: this.deleteElement}), 
                         React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )
                 );
@@ -24015,7 +24014,7 @@ var Carousel = React.createClass({displayName: "Carousel",
 
             return (React.createElement("figure", {key: i, style: Util.figureStyle(d)}, 
                 React.createElement("div", {className: "imagedashdiv"}, 
-                    React.createElement("a", {className: "boxclose", id: "boxclose", onClick: root.props.deleteInspir.bind(null,d.all_info,root.props.boardtype)}), 
+                    React.createElement("a", {className: "boxclose", id: "boxclose", onClick: root.props.deleteElement.bind(null,d.all_info,root.props.boardtype)}), 
                     React.createElement("div", {className: "imagedash", dangerouslySetInnerHTML: root.rawMarkup(d.all_info.src)})
                 )
             ));
@@ -24480,7 +24479,7 @@ var DashboardHistory = React.createClass({displayName: "DashboardHistory",
                           ease: this.state.ease, 
                           duration: this.state.duration, 
                           layout: this.state.layout, 
-                          deleteInspir: this.props.deleteInspir, 
+                          deleteElement: this.props.deleteElement, 
                           boardtype: this.props.boardtype})
                 )
             )
@@ -24942,6 +24941,12 @@ var React = require('react');
 var ReactDOM = require('react-dom');
 var Dashboard = require('./dashboard.jsx');
 
+var Masonry = require('./masonry.jsx');
+
+var masonryOptions = {
+    transitionDuration: 0
+};
+
 var MyBoard = React.createClass({displayName: "MyBoard",
 
 	rawMarkup: function(elem) {
@@ -24950,20 +24955,70 @@ var MyBoard = React.createClass({displayName: "MyBoard",
 
     render: function(){
         var parent = this; 
+        var uploadsElements = this.props.uploads.map(function(element, i){
+
+           return (
+                React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
+                    React.createElement("p", {id: "title"}, element.title), 
+                    React.createElement("div", {dangerouslySetInnerHTML: parent.rawMarkup(element.src)}), 
+                    React.createElement("button", {className: "button expand", onClick: parent.props.deleteElement.bind(null, element, "uploads")}, React.createElement("i", {className: "fa fa-trash-o", "aria-hidden": "true"}))
+                )
+            );
+        });
+
+        var inspirationsElements = this.props.inspirations.map(function(element, i){
+
+           return (
+                React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
+                    React.createElement("p", {id: "title"}, element.title), 
+                    React.createElement("div", {dangerouslySetInnerHTML: parent.rawMarkup(element.src)}), 
+                    React.createElement("button", {className: "button expand", onClick: parent.props.deleteElement.bind(null, element, "inspirations")}, React.createElement("i", {className: "fa fa-times", "aria-hidden": "true"}))
+                )
+            );
+        });
 
         if (this.props.subpage === "uploads") {
             var subpage = React.createElement("div", null, React.createElement("div", {className: "centering-div"}, 
-                   React.createElement("h1", null, "My Uploads")
+                   React.createElement("h1", null, "My Uploads"), 
+                    React.createElement("button", {onClick: this.props.switchMyBoard, className: "button board"}, React.createElement("i", {className: "fa fa-arrow-left", "aria-hidden": "true"}))
                 ), 
-                React.createElement(Dashboard, {boardtype: this.props.subpage, uploadslist: this.props.uploads, deleteInspir: this.props.deleteInspir}))
+                React.createElement(Dashboard, {boardtype: this.props.subpage, uploadslist: this.props.uploads, deleteElement: this.props.deleteElement}))
         } else if (this.props.subpage === "inspirations") {
             var subpage = React.createElement("div", null, React.createElement("div", {className: "centering-div"}, 
-                   React.createElement("h1", null, "My Inspirations")
+                   React.createElement("h1", null, "My Inspirations"), 
+                    React.createElement("button", {onClick: this.props.switchMyBoard, className: "button board"}, React.createElement("i", {className: "fa fa-arrow-left", "aria-hidden": "true"}))
                 ), 
-                React.createElement(Dashboard, {boardtype: this.props.subpage, uploadslist: this.props.inspirations, deleteInspir: this.props.deleteInspir}))
+                React.createElement(Dashboard, {boardtype: this.props.subpage, uploadslist: this.props.inspirations, deleteElement: this.props.deleteElement}))
         } else {
             var subpage = React.createElement("div", {className: "centering-div"}, 
-                   React.createElement("h1", null, "Profile Page...")
+                    React.createElement("div", {className: "twitter-widget"}, 
+                        React.createElement("div", {className: "header cf"}, 
+                          React.createElement("a", {target: "_blank", className: "avatar"}, React.createElement("img", {src: this.props.user.proPic})), 
+                                React.createElement("h2", null, this.props.user.name)
+                        ), 
+                        React.createElement("div", {className: "centering-div"}, 
+                           React.createElement("h1", null, "My Inspirations"), 
+                            React.createElement("button", {onClick: this.props.switchInspirations, className: "button board"}, "Carousel View"), 
+                           React.createElement(Masonry, {
+                            className: 'my-gallery-class', 
+                            elementType: 'div', 
+                            disableImagesLoaded: false
+                            }, 
+                            inspirationsElements
+                            )
+                        ), 
+                        React.createElement("div", {className: "centering-div"}, 
+                           React.createElement("h1", null, "My Uploads"), 
+                            React.createElement("button", {onClick: this.props.switchUploads, className: "button board"}, "Carousel View"), 
+                           React.createElement(Masonry, {
+                            className: 'my-gallery-class', 
+                            elementType: 'div', 
+                            disableImagesLoaded: false
+                            }, 
+                            uploadsElements
+                            )
+                        )
+                    )
                 )
         }
 
@@ -24976,7 +25031,7 @@ var MyBoard = React.createClass({displayName: "MyBoard",
 });
 
 module.exports = MyBoard;
-},{"./dashboard.jsx":184,"react":177,"react-dom":48}],189:[function(require,module,exports){
+},{"./dashboard.jsx":184,"./masonry.jsx":187,"react":177,"react-dom":48}],189:[function(require,module,exports){
 // Navigation/header bar on the top of the page. Holds login and search bar
 var React = require('react');
 var ReactDOM = require('react-dom');

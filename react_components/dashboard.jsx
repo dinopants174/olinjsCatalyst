@@ -42,7 +42,7 @@ var DashboardHistory = React.createClass({
                           ease={this.state.ease}
                           duration={this.state.duration}
                           layout={this.state.layout}
-                          deleteInspir={this.props.deleteInspir}
+                          deleteElement={this.props.deleteElement}
                           boardtype={this.props.boardtype}/>
                 </div>
             </div>

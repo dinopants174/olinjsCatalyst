@@ -41,6 +41,7 @@ div.image-div-class a img{
 
 
 .image-div-class {
+  width: 300px;
   position: relative;
   display: inline-block;
   vertical-align: top;
