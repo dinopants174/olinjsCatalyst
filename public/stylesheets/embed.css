@@ -2,7 +2,7 @@
   position: fixed;
   bottom: 7%;
   right: 7%;
-  background: #72bfb7;
+  background: #333;
     transition: background-color .2s ease-in-out;
    -moz-transition: background-color .2s ease-in-out;
    -webkit-transition: background-color .2s ease-in-out;
@@ -14,18 +14,18 @@
   text-align: center;
   text-decoration: bold;
   color: #fff;
-  text-shadow: 2px 2px #72bfb7;
-  box-shadow: 5px 5px 10px #cccccc;
+  text-shadow: 2px 2px #333;
+  box-shadow: 5px 5px 10px #333;
 }
 
 .add-article:hover {
-  background-color: #bf727a;
-  text-shadow: 2px 2px #bf727a;
+  background-color: #428F89;
+  text-shadow: 2px 2px #428F89;
 }
 
 .add-article:active {
-  background-color: #72bf91;
-  text-shadow: 2px 2px #72bf91;
+  background-color: #428F89;
+  text-shadow: 2px 2px #428F89;
 }
 
 

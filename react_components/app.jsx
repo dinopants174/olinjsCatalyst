@@ -242,7 +242,7 @@ var CatalystBox = React.createClass({
                 page = (
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
-                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <Upload uploadCode = {this.handleUploadCode} inspirations={this.state.user.inspirations}/>
                     </div>
                 );
@@ -252,7 +252,7 @@ var CatalystBox = React.createClass({
                 page = (
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
-                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <button onClick={this.showMyBoardUploads} className="button board">My Uploads</button>
                         <button onClick={this.showMyBoardInspirations} className="button board">My Inspirations</button>
                         <br/>
@@ -266,7 +266,7 @@ var CatalystBox = React.createClass({
                 page = (
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
-                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations} getPiece = {this.getPieceAndTree}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
