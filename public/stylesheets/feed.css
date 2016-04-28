@@ -255,3 +255,19 @@ text {
   stroke: #000;
   shape-rendering: crispEdges;
 }
+
+div#search{  
+  text-align: center;
+  width: 100%;
+}
+
+div#searchbar{ 
+  width: 100%;
+  text-align: center;
+
+}
+
+
+.react-search__menu-items{ 
+  display: none; 
+}

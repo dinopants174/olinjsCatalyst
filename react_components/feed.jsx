@@ -64,16 +64,12 @@ var Feed = React.createClass({
 			lightboxMode: false,
 			images: this.props.feedObjects,
 			display: false, 
-<<<<<<< Updated upstream
 			tree: {},
             expandBoolean: false,
-            treeBoolean: false,
-=======
-			tree: {}, 
+            treeBoolean: false, 
             keys:[{'author':['fbId', 'name', 'proPic', 'inspirations', 'inspirations', 'uploads']}, 'src', 'date', 'title', 'inspirations', 'inspired'], 
             key:'title',
             searchResults: [],
->>>>>>> Stashed changes
 		};
 	}, 
 
@@ -149,8 +145,7 @@ var Feed = React.createClass({
 	render: function(){ 
 		var parent = this; 
         var childElements = this.state.images.map(function(element, i){
-		  var pinButton = parent.pinnedButton(element)
-
+		   var pinButton = parent.pinnedButton(element)
            return (
            		<div key={'div'+i} className="image-div-class">
                     <p id="title">{element.title} by {element.author.name}</p>
@@ -162,58 +157,44 @@ var Feed = React.createClass({
             );
         });
 
-<<<<<<< Updated upstream
+        var results = this.state.searchResults.map(function(result, i){
+            var pinButton = parent.pinnedButton(result);  
             return (
-            	<div> 
-                	<div id="feed"> 
-    					<Masonry
-    		                className={'my-gallery-class'}
-    		                elementType={'div'}
-    		                disableImagesLoaded={false}
-    		            >  
-    		            {childElements}
-    		            </Masonry>
-    				</div>
-                      {this.state.display ? (
-                        <div className="overlay">
-                            <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
-                            <div style={this.whiteContentStyles}>
-                                <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
-                                {this.state.expandBoolean ? (
-                                    <div id = "upclose" dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
-                                    ): null}
-                                {this.state.treeBoolean ? (
-                                    <div className = 'upclose'>
-                                        <Barchart data={[this.state.tree]} title={this.state.tree.title} />
-                                    </div>
-                                    ): null}
-                                <div> {this.pinnedButton(this.state.tree)}</div>
-                            </div> 
-                        </div>
-                      ) : 
-                      null} 
-            	</div>
-            );
-=======
-        var results = this.state.searchResults.map(function(result){ 
-            return (<div dangerouslySetInnerHTML={parent.rawMarkup(result.src)}/>); 
+                <div key={'div'+i} className="image-div-class">
+                    <p id="title">{result.title} by {result.author.name}</p>
+                    <div dangerouslySetInnerHTML={parent.rawMarkup(result.src)}/>
+                    {pinButton}
+                    <button className = "button expand" onClick = {parent.openLightbox.bind(null, result, 'tree')}> <i className="fa fa-tree" aria-hidden="true"></i> </button>
+                    <button className = "button expand" onClick = {parent.openLightbox.bind(null, result, 'expand')}> <i className="fa fa-expand" aria-hidden="true"></i> </button>
+                </div>
+            ); 
         }); 
 
         return (
         	<div> 
-                <div id = "search">    
-                    <p>what is this? </p>
-                    <Search 
-                        items={this.state.images} 
-                        keys={this.state.keys} 
-                        searchKey={this.state.key}
-                        placeholder = "Search by title"
-                        onChange = {(input, resolve)=> {this.handleSearchResults(input, resolve)}}
-                        ItemElement = {(item) => {console.log("item", item)}}/> 
-                    {results}
+                <div id = "searchbar">   
+                    <div id = "search ">  
+                        <h2>Search for Piece by Title </h2>
+                        <Search 
+                            items={this.state.images} 
+                            keys={this.state.keys} 
+                            searchKey={this.state.key}
+                            placeholder = "Search by title"
+                            onChange = {(input, resolve)=> {this.handleSearchResults(input, resolve)}}
+                            className = "searchcontainer"/> 
+                    </div> 
+                    <div> 
+                        {(this.state.searchResults.length > 0) ? (
+                            <div> 
+                                <p> <b> Search Results: </b></p> 
+                                {results} 
+                            </div>) : 
+                        null}
+                    </div> 
                 </div>
 
             	<div id="feed"> 
+                    <h2> Feed </h2>
 					<Masonry
 		                className={'my-gallery-class'}
 		                elementType={'div'}
@@ -237,7 +218,6 @@ var Feed = React.createClass({
                   null} 
         	</div>
         );
->>>>>>> Stashed changes
 	}
 
 }); 
