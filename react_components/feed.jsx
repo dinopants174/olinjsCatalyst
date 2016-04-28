@@ -1,5 +1,7 @@
 var React = require('react');
-// var ReactDOM = require('react-dom');
+// import SearchInput, {createFilter} from 'react-search-input'
+// var SearchInput = require('react-search-input'); 
+var Search = require('react-search'); 
 
 var dir = require('node-dir'); 
 var path = require('path'); 
@@ -7,7 +9,7 @@ var fs = require('fs');
 
 var Masonry = require('./masonry.jsx');
 var Barchart = require('./d3Chart.jsx');
-// var Lightbox = require('./react-lightbox.jsx'); 
+var DisplayIFrame = require('./displayIFrame.jsx');
 
 var masonryOptions = {
     transitionDuration: 0
@@ -62,9 +64,16 @@ var Feed = React.createClass({
 			lightboxMode: false,
 			images: this.props.feedObjects,
 			display: false, 
+<<<<<<< Updated upstream
 			tree: {},
             expandBoolean: false,
             treeBoolean: false,
+=======
+			tree: {}, 
+            keys:[{'author':['fbId', 'name', 'proPic', 'inspirations', 'inspirations', 'uploads']}, 'src', 'date', 'title', 'inspirations', 'inspired'], 
+            key:'title',
+            searchResults: [],
+>>>>>>> Stashed changes
 		};
 	}, 
 
@@ -130,10 +139,17 @@ var Feed = React.createClass({
 			return pinButton
     },
 
+
+    handleSearchResults: function(input, output){ 
+        console.log("input and output" , input, output)
+        console.log("search results before", this.state.searchResults)
+        this.setState({searchResults: output})
+    }, 
+
 	render: function(){ 
 		var parent = this; 
         var childElements = this.state.images.map(function(element, i){
-			var pinButton = parent.pinnedButton(element)
+		  var pinButton = parent.pinnedButton(element)
 
            return (
            		<div key={'div'+i} className="image-div-class">
@@ -146,6 +162,7 @@ var Feed = React.createClass({
             );
         });
 
+<<<<<<< Updated upstream
             return (
             	<div> 
                 	<div id="feed"> 
@@ -177,6 +194,50 @@ var Feed = React.createClass({
                       null} 
             	</div>
             );
+=======
+        var results = this.state.searchResults.map(function(result){ 
+            return (<div dangerouslySetInnerHTML={parent.rawMarkup(result.src)}/>); 
+        }); 
+
+        return (
+        	<div> 
+                <div id = "search">    
+                    <p>what is this? </p>
+                    <Search 
+                        items={this.state.images} 
+                        keys={this.state.keys} 
+                        searchKey={this.state.key}
+                        placeholder = "Search by title"
+                        onChange = {(input, resolve)=> {this.handleSearchResults(input, resolve)}}
+                        ItemElement = {(item) => {console.log("item", item)}}/> 
+                    {results}
+                </div>
+
+            	<div id="feed"> 
+					<Masonry
+		                className={'my-gallery-class'}
+		                elementType={'div'}
+		                disableImagesLoaded={false}
+		            >  
+		            {childElements}
+		            </Masonry>
+				</div>
+                  {this.state.display ? (
+                    <div className="overlay">
+                        <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
+                        <div style={this.whiteContentStyles}>
+                            <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
+                            <div className = 'upclose'>
+                                <Barchart data={[this.state.tree]} title={this.state.tree.title} />
+                            </div>
+                            <div> {this.pinnedButton(this.state.tree)}</div>
+                        </div> 
+                    </div>
+                  ) : 
+                  null} 
+        	</div>
+        );
+>>>>>>> Stashed changes
 	}
 
 }); 
