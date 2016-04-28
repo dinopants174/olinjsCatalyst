@@ -25061,7 +25061,9 @@ var Navbar = React.createClass({displayName: "Navbar",
                 React.createElement("span", {className: "caret-up"})), 
                 React.createElement("ul", null, 
                   React.createElement("li", null, React.createElement("a", {onClick: this.props.switchMyBoardUploads}, "My Uploads")), 
+                  React.createElement("br", null), 
                   React.createElement("li", null, React.createElement("a", {onClick: this.props.switchMyBoardInspirations}, "My Inspirations")), 
+                  React.createElement("br", null), 
                   React.createElement("li", {className: "last logout"}, React.createElement("a", {href: "/auth/facebook/logout"}, React.createElement("i", {className: "fa fa-facebook"}, "Logout")))
                 )
               )

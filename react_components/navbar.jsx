@@ -27,7 +27,9 @@ var Navbar = React.createClass({
                 <span className="caret-up"></span></a>
                 <ul>
                   <li><a onClick={this.props.switchMyBoardUploads}>My Uploads</a></li>
+                  <br/>
                   <li><a onClick={this.props.switchMyBoardInspirations}>My Inspirations</a></li>
+                  <br/>
                   <li className="last logout"><a href="/auth/facebook/logout"><i className="fa fa-facebook">Logout</i></a></li>
                 </ul>
               </li>  
