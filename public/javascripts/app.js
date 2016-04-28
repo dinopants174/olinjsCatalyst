@@ -23938,7 +23938,7 @@ var CatalystBox = React.createClass({displayName: "CatalystBox",
                     React.createElement("div", null, 
                         React.createElement(Navbar, {switchHome: this.showHome, switchMyBoard: this.showMyBoard, switchMyBoardInspirations: this.showMyBoardInspirations, 
                         switchMyBoardUploads: this.showMyBoardUploads, displayName: this.state.displayName || '', proPic: this.state.user.proPic}), 
-                        React.createElement(Feed, {addInspir: this.addInspiration, feedObjects: this.state.feed, userInspirations: this.state.user.inspirations, getPiece: this.getPieceAndTree}), 
+                        React.createElement(Feed, {deleteElement: this.deleteElement, addInspir: this.addInspiration, feedObjects: this.state.feed, userInspirations: this.state.user.inspirations, getPiece: this.getPieceAndTree}), 
                         React.createElement("input", {className: "add-article", type: "button", onClick: this.handleAdd, value: "+"})
                     )
                 );
@@ -24613,10 +24613,10 @@ var Feed = React.createClass({displayName: "Feed",
     pinnedButton: function(item){ 
     	var pinButton; 
 			if(this.checkIfInInspirations(item, this.props.userInspirations)){ 
-				pinButton = React.createElement("button", {className: "button add", disabled: true}, " ", React.createElement("i", {className: "fa fa-check", "aria-hidden": "true"}), " ")
+				pinButton = React.createElement("button", {className: "button add", onClick: this.props.deleteElement.bind(null, item, "inspirations"), style: {"color":"#999"}}, " ", React.createElement("i", {className: "fa fa-times", "aria-hidden": "true"}), " ")
 			}
 			else{ 
-				pinButton = React.createElement("button", {className: "button add", onClick: this.handleClickToAddInspiration.bind(null, item)}, " ", React.createElement("i", {className: "fa fa-plus", "aria-hidden": "true"}), " ")
+				pinButton = React.createElement("button", {className: "button add", onClick: this.handleClickToAddInspiration.bind(null, item)}, " ", React.createElement("i", {className: "fa fa-star-o", "aria-hidden": "true"}), " ")
 			}
 			return pinButton
     },
@@ -24628,7 +24628,7 @@ var Feed = React.createClass({displayName: "Feed",
 
            return (
            		React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
-                    React.createElement("p", {id: "title"}, element.title), 
+                    React.createElement("p", {id: "title"}, element.title, " by ", element.author.name), 
 	                React.createElement("div", {dangerouslySetInnerHTML: parent.rawMarkup(element.src)}), 
 	            	pinButton, 
 	            	React.createElement("button", {className: "button expand", onClick: parent.openLightbox.bind(null, element, 'tree')}, " ", React.createElement("i", {className: "fa fa-tree", "aria-hidden": "true"}), " "), 
@@ -24961,7 +24961,7 @@ var MyBoard = React.createClass({displayName: "MyBoard",
                 React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
                     React.createElement("p", {id: "title"}, element.title), 
                     React.createElement("div", {dangerouslySetInnerHTML: parent.rawMarkup(element.src)}), 
-                    React.createElement("button", {className: "button expand", onClick: parent.props.deleteElement.bind(null, element, "uploads")}, React.createElement("i", {className: "fa fa-trash-o", "aria-hidden": "true"}))
+                    React.createElement("button", {className: "button expand", onClick: parent.props.deleteElement.bind(null, element, "uploads"), style: {"color":"#999"}}, React.createElement("i", {className: "fa fa-trash-o", "aria-hidden": "true"}))
                 )
             );
         });
@@ -24972,7 +24972,7 @@ var MyBoard = React.createClass({displayName: "MyBoard",
                 React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
                     React.createElement("p", {id: "title"}, element.title), 
                     React.createElement("div", {dangerouslySetInnerHTML: parent.rawMarkup(element.src)}), 
-                    React.createElement("button", {className: "button expand", onClick: parent.props.deleteElement.bind(null, element, "inspirations")}, React.createElement("i", {className: "fa fa-times", "aria-hidden": "true"}))
+                    React.createElement("button", {className: "button expand", onClick: parent.props.deleteElement.bind(null, element, "inspirations"), style: {"color":"#999"}}, React.createElement("i", {className: "fa fa-times", "aria-hidden": "true"}))
                 )
             );
         });

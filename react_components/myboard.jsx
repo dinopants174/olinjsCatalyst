@@ -22,7 +22,7 @@ var MyBoard = React.createClass({
                 <div key={'div'+i} className="image-div-class">
                     <p id="title">{element.title}</p>
                     <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
-                    <button className = "button expand" onClick = {parent.props.deleteElement.bind(null, element, "uploads")}><i className="fa fa-trash-o" aria-hidden="true"></i></button>
+                    <button className = "button expand" onClick = {parent.props.deleteElement.bind(null, element, "uploads")} style={{"color":"#999"}}><i className="fa fa-trash-o" aria-hidden="true"></i></button>
                 </div>
             );
         });
@@ -33,7 +33,7 @@ var MyBoard = React.createClass({
                 <div key={'div'+i} className="image-div-class">
                     <p id="title">{element.title}</p>
                     <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
-                    <button className = "button expand" onClick = {parent.props.deleteElement.bind(null, element, "inspirations")}><i className="fa fa-times" aria-hidden="true"></i></button>
+                    <button className = "button expand" onClick = {parent.props.deleteElement.bind(null, element, "inspirations")} style={{"color":"#999"}}><i className="fa fa-times" aria-hidden="true"></i></button>
                 </div>
             );
         });
