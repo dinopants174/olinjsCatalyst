@@ -75,7 +75,7 @@ var Upload = React.createClass({
     	var parent = this;
         var childElements = this.props.inspirations.map(function(element, i){
            return (
-           		<div key={'div'+i} className="inspirations-div-class">
+           		<div key={'div'+i} className="image-div-class">
 	                <div dangerouslySetInnerHTML={parent.embedCodeRawMarkup(element.src)}/>
 	            	<p>{element.title}</p>
 	            	<input type="checkbox" onChange={parent.handleCheckedInspir.bind(null, element._id)}value="inpiration"/><br/>
@@ -84,9 +84,9 @@ var Upload = React.createClass({
         });
 
         return (
-        	<div>
-	        	<h1>Upload</h1>
+        	<div className='centering-div'>
 				<div id='embed-form'>
+					<h1>Post</h1>
 					<br/>
 					<input className='embed-code'
 								type='text'
@@ -115,7 +115,7 @@ var Upload = React.createClass({
 					</div>
 					<br/>
 					<div className='embed-button'>
-						<button id='embed-upload' onClick={this.props.uploadCode.bind(null,this.state)}>Upload</button>
+						<button id='embed-upload' onClick={this.props.uploadCode.bind(null,this.state)}>Post</button>
 					</div>
 				</div>
 			</div>

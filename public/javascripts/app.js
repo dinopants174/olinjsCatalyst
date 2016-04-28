@@ -25150,7 +25150,7 @@ var Upload = React.createClass({displayName: "Upload",
     	var parent = this;
         var childElements = this.props.inspirations.map(function(element, i){
            return (
-           		React.createElement("div", {key: 'div'+i, className: "inspirations-div-class"}, 
+           		React.createElement("div", {key: 'div'+i, className: "image-div-class"}, 
 	                React.createElement("div", {dangerouslySetInnerHTML: parent.embedCodeRawMarkup(element.src)}), 
 	            	React.createElement("p", null, element.title), 
 	            	React.createElement("input", {type: "checkbox", onChange: parent.handleCheckedInspir.bind(null, element._id), value: "inpiration"}), React.createElement("br", null)
@@ -25159,9 +25159,9 @@ var Upload = React.createClass({displayName: "Upload",
         });
 
         return (
-        	React.createElement("div", null, 
-	        	React.createElement("h1", null, "Upload"), 
+        	React.createElement("div", {className: "centering-div"}, 
 				React.createElement("div", {id: "embed-form"}, 
+					React.createElement("h1", null, "Post"), 
 					React.createElement("br", null), 
 					React.createElement("input", {className: "embed-code", 
 								type: "text", 
@@ -25190,7 +25190,7 @@ var Upload = React.createClass({displayName: "Upload",
 					), 
 					React.createElement("br", null), 
 					React.createElement("div", {className: "embed-button"}, 
-						React.createElement("button", {id: "embed-upload", onClick: this.props.uploadCode.bind(null,this.state)}, "Upload")
+						React.createElement("button", {id: "embed-upload", onClick: this.props.uploadCode.bind(null,this.state)}, "Post")
 					)
 				)
 			)
