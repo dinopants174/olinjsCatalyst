@@ -24,7 +24,7 @@ var Upload = React.createClass({
 
 
         if(pattern2.test(html)){
-			var replacement = '<iframe width="560" height="315" src="https://www.youtube.com/v/$1" frameborder="0" allowfullscreen></iframe>';
+			var replacement = '<iframe width="560" height="315" type="text/html" src="https://www.youtube.com/embed/$1?enablejsapi=1&origin=http://example.com" frameborder="0" allowfullscreen></iframe>';
 			var html = html.replace(pattern2, replacement);
         } 
 
@@ -75,7 +75,7 @@ var Upload = React.createClass({
     	var parent = this;
         var childElements = this.props.inspirations.map(function(element, i){
            return (
-           		<div key={'div'+i} className="inspirations-div-class">
+           		<div key={'div'+i} className="image-div-class">
 	                <div dangerouslySetInnerHTML={parent.embedCodeRawMarkup(element.src)}/>
 	            	<p>{element.title}</p>
 	            	<input type="checkbox" onChange={parent.handleCheckedInspir.bind(null, element._id)}value="inpiration"/><br/>
@@ -84,9 +84,9 @@ var Upload = React.createClass({
         });
 
         return (
-        	<div>
-	        	<h1>Upload</h1>
+        	<div className='centering-div'>
 				<div id='embed-form'>
+					<h1>Post</h1>
 					<br/>
 					<input className='embed-code'
 								type='text'
@@ -115,7 +115,7 @@ var Upload = React.createClass({
 					</div>
 					<br/>
 					<div className='embed-button'>
-						<button id='embed-upload' onClick={this.props.uploadCode.bind(null,this.state)}>Upload</button>
+						<button id='embed-upload' onClick={this.props.uploadCode.bind(null,this.state)}>Post</button>
 					</div>
 				</div>
 			</div>

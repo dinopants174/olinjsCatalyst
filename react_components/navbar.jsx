@@ -7,24 +7,31 @@ var Navbar = React.createClass({
 
   },
   
+  collapse: function(){ 
+    document.getElementsByClassName("navbar")[0].classList.toggle("responsive");
+  },
+
   render: function(){
+    console.log(this.props);
     return (
       <div className="Navbar">
-          <ul className="navbar">
-            
+            <div id="logo">
+                <img className="img-logo" src="http://placehold.it/140x34/000000/428F89/&amp;text=CATALYST" alt=""/>
+            </div>
             <ul className="navbar" style={{float:"right"}}>
               <li className="linav"><a onClick={this.props.switchHome}>Home</a></li>
               <li className="linav dropdown">
-                <a className="dropdown-toggle" onClick={this.props.switchMyBoard}>{this.props.displayName}
-                <span className="caret"></span></a>
+                <a className="dropdown-toggle" onClick={this.props.switchMyBoard}>                
+                <img src={this.props.proPic} className="img-circle special-img"/>
+                  {this.props.displayName}
+                <span className="caret-up"></span></a>
                 <ul>
                   <li><a onClick={this.props.switchMyBoardUploads}>My Uploads</a></li>
                   <li><a onClick={this.props.switchMyBoardInspirations}>My Inspirations</a></li>
+                  <li className="last logout"><a href="/auth/facebook/logout"><i className="fa fa-facebook">Logout</i></a></li>
                 </ul>
               </li>  
-              <li className="linav logout"><a href="/auth/facebook/logout"><i className="fa fa-facebook">Logout</i></a></li>
             </ul>
-          </ul>
       </div>
     );
   }

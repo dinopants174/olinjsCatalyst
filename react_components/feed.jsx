@@ -131,10 +131,10 @@ var Feed = React.createClass({
     pinnedButton: function(item){ 
     	var pinButton; 
 			if(this.checkIfInInspirations(item, this.props.userInspirations)){ 
-				pinButton = <button className="button add" disabled> Already Pinned </button>
+				pinButton = <button className="button add" onClick = {this.props.deleteElement.bind(null, item, "inspirations")} style={{"color":"#999"}}> <i className="fa fa-times" aria-hidden="true"></i> </button>
 			}
 			else{ 
-				pinButton = <button className="button add" onClick = {this.handleClickToAddInspiration.bind(null, item)}> + Add Inspiration </button>
+				pinButton = <button className="button add" onClick = {this.handleClickToAddInspiration.bind(null, item)}> <i className="fa fa-star-o" aria-hidden="true"></i> </button>
 			}
 			return pinButton
     },
@@ -153,11 +153,11 @@ var Feed = React.createClass({
 
            return (
            		<div key={'div'+i} className="image-div-class">
+                    <p id="title">{element.title} by {element.author.name}</p>
 	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
-	            	<p>{element.title}</p>
 	            	{pinButton}
-	            	<button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'tree')}> More Info </button>
-                    <button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'expand')}> Expand </button>
+	            	<button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'tree')}> <i className="fa fa-tree" aria-hidden="true"></i> </button>
+                    <button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'expand')}> <i className="fa fa-expand" aria-hidden="true"></i> </button>
 	            </div>
             );
         });

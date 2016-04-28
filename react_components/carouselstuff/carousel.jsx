@@ -46,7 +46,7 @@ var Carousel = React.createClass({
 
             return (<figure key={i} style={Util.figureStyle(d)}>
                 <div className="imagedashdiv">
-                    <a className="boxclose" id="boxclose" onClick={root.props.deleteInspir.bind(null,d.all_info,root.props.boardtype)}></a>
+                    <a className="boxclose" id="boxclose" onClick={root.props.deleteElement.bind(null,d.all_info,root.props.boardtype)}></a>
                     <div className="imagedash" dangerouslySetInnerHTML={root.rawMarkup(d.all_info.src)}/>
                 </div>
             </figure>);

@@ -86,7 +86,7 @@ var CatalystBox = React.createClass({
             success: function(feedItems){ 
                 object.display= DisplayEnum.DISPLAY_HOME;
                 object.feed = feedItems;
-                console.log(object); 
+                // console.log(object); 
                 this.setState(object); 
 
             }.bind(this), 
@@ -186,9 +186,10 @@ var CatalystBox = React.createClass({
         })
     }, 
 
-    deleteInspiration: function(item, boardtype) {
+    deleteElement: function(item, boardtype) {
 
         if (boardtype==="uploads"){
+            console.log("here");
             $.ajax({
                 url: '/api/user/deleteUpload',
                 dataType: 'json',
@@ -242,7 +243,7 @@ var CatalystBox = React.createClass({
                 page = (
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
-                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <Upload uploadCode = {this.handleUploadCode} inspirations={this.state.user.inspirations}/>
                     </div>
                 );
@@ -252,11 +253,9 @@ var CatalystBox = React.createClass({
                 page = (
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
-                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
-                        <button onClick={this.showMyBoardUploads} className="button board">My Uploads</button>
-                        <button onClick={this.showMyBoardInspirations} className="button board">My Inspirations</button>
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <br/>
-                        <MyBoard subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations} deleteInspir={this.deleteInspiration}/>
+                        <MyBoard switchMyBoard={this.showMyBoard} switchUploads={this.showMyBoardUploads} switchInspirations={this.showMyBoardInspirations} user={this.state.user} subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations} deleteElement={this.deleteElement}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
@@ -266,8 +265,8 @@ var CatalystBox = React.createClass({
                 page = (
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
-                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} />
-                        <Feed addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations} getPiece = {this.getPieceAndTree}/>
+                        switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
+                        <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations} getPiece = {this.getPieceAndTree}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
