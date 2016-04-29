@@ -20,7 +20,7 @@ router.get('/', ensureAuthenticated, function(req, res){
 						if (err){
 							console.log("Error: ", err);
 						} else {
-							var newBoard = new Board({author: user.id, title: 'My Inspirations', dateCreated: new Date()})
+							var newBoard = new Board({author: user.id, title: 'My Inspirations', dateCreated: new Date()});
 							console.log("New Board: ", newBoard);
 							newBoard.save(function(err, board){
 								if (err){
@@ -168,6 +168,38 @@ router.post('/deleteUpload', ensureAuthenticated, function(req, res){
 						});
 					}
 				});
+			});
+		}
+	});
+});
+
+router.post('/postBoard', ensureAuthenticated, function(req, res){
+	User.findOne({fbId: req.user.id}, function(err, user){
+		if (err){
+			console.log("Error: ", err);
+		} else {
+			var newBoard = new Board({author: user.id, title: req.body.boardTitle, dateCreated: new Date()});
+			newBoard.save(function(err, board){
+				if (err){
+					console.log("Error: ", err);
+				} else {
+					console.log("Here is your new board: ", board);
+					user.myBoards.push(board.id);
+					user.save(function(err, user){
+						if (err){
+							console.log("Error: ", err);
+						} else {
+							User.populate(user, {path: 'uploads myBoards', populate: {path: 'pieces'}}, function(err, user){
+								if (err){
+									console.log("Error: ", err);
+								} else {
+									console.log("Here is your new user: ", user);
+									res.json(user);
+								}
+							});
+						}
+					});
+				}
 			});
 		}
 	});
