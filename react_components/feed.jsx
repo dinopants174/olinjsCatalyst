@@ -1,5 +1,7 @@
 var React = require('react');
-// var ReactDOM = require('react-dom');
+// import SearchInput, {createFilter} from 'react-search-input'
+// var SearchInput = require('react-search-input'); 
+var SearchBar = require('./search.jsx'); 
 
 var dir = require('node-dir'); 
 var path = require('path'); 
@@ -7,7 +9,6 @@ var fs = require('fs');
 
 var Masonry = require('./masonry.jsx');
 var Barchart = require('./d3Chart.jsx');
-// var Lightbox = require('./react-lightbox.jsx'); 
 
 var masonryOptions = {
     transitionDuration: 0
@@ -64,7 +65,7 @@ var Feed = React.createClass({
 			display: false, 
 			tree: {},
             expandBoolean: false,
-            treeBoolean: false,
+            treeBoolean: false, 
 		};
 	}, 
 
@@ -132,9 +133,11 @@ var Feed = React.createClass({
 
 	render: function(){ 
 		var parent = this; 
-        var childElements = this.state.images.map(function(element, i){
-			var pinButton = parent.pinnedButton(element)
+        console.log("images", this.state.images)
+        if (this.state.images > 0){ 
 
+        var childElements = this.state.images.map(function(element, i){
+		   var pinButton = parent.pinnedButton(element)
            return (
            		<div key={'div'+i} className="image-div-class">
                     <p id="title">{element.title} by {element.author.name}</p>
@@ -146,37 +149,42 @@ var Feed = React.createClass({
             );
         });
 
-            return (
-            	<div> 
-                	<div id="feed"> 
-    					<Masonry
-    		                className={'my-gallery-class'}
-    		                elementType={'div'}
-    		                disableImagesLoaded={false}
-    		            >  
-    		            {childElements}
-    		            </Masonry>
-    				</div>
-                      {this.state.display ? (
-                        <div className="overlay">
-                            <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
-                            <div style={this.whiteContentStyles}>
-                                <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
-                                {this.state.expandBoolean ? (
-                                    <div id = "upclose" dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
-                                    ): null}
-                                {this.state.treeBoolean ? (
-                                    <div className = 'upclose'>
-                                        <Barchart data={[this.state.tree]} title={this.state.tree.title} />
-                                    </div>
-                                    ): null}
-                                <div> {this.pinnedButton(this.state.tree)}</div>
-                            </div> 
-                        </div>
-                      ) : 
-                      null} 
-            	</div>
-            );
+        return (
+        	<div>
+                <SearchBar pieces = {this.state.images} pinnedButton = {this.pinnedButton} openLightbox = {this.openLightbox}/>
+
+            	<div id="feed"> 
+                    <h2> Feed </h2>
+					<Masonry
+		                className={'my-gallery-class'}
+		                elementType={'div'}
+		                disableImagesLoaded={false}
+		            >  
+		            {childElements}
+		            </Masonry>
+				</div>
+                  {this.state.display ? (
+                    <div className="overlay">
+                        <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
+                        <div style={this.whiteContentStyles}>
+                            <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
+                            <div className = 'upclose'>
+                                <Barchart data={[this.state.tree]} title={this.state.tree.title} />
+                            </div>
+                            <div> {this.pinnedButton(this.state.tree)}</div>
+                        </div> 
+                    </div>
+                  ) : 
+                  null} 
+        	</div>
+        );
+        } 
+        else{ 
+            return( 
+                <h4> No feed posts yet! Welcome to our site! </h4>
+            )
+
+        }
 	}
 
 }); 

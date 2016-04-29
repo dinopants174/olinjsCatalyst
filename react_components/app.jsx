@@ -85,8 +85,9 @@ var CatalystBox = React.createClass({
             type: 'GET', 
             success: function(feedItems){ 
                 object.display= DisplayEnum.DISPLAY_HOME;
+                console.log('feed items', feedItems)
                 object.feed = feedItems;
-                // console.log(object); 
+                console.log("object", object); 
                 this.setState(object); 
 
             }.bind(this), 
