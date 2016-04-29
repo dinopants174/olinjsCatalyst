@@ -1,12 +1,13 @@
 var express = require('express');
 var User = require('../models/userModel');
+var Board = require('../models/boardModel');
 var Piece = require('../models/pieceModel');
 var router = express.Router();
 
 router.get('/', ensureAuthenticated, function(req, res){
 	console.log("PROFILE FROM SERVER", req.user);
 	if (req.user){
-		User.findOne({fbId: req.user.id}).populate('inspirations uploads').exec(function (err, user){
+		User.findOne({fbId: req.user.id}).populate({path: 'uploads myBoards', populate:{path: 'pieces'}}).exec(function (err, user){
 			if (err){
 				console.log("Error: ", err);
 			} else {
@@ -19,7 +20,23 @@ router.get('/', ensureAuthenticated, function(req, res){
 						if (err){
 							console.log("Error: ", err);
 						} else {
-							res.json(user);	//user will have an empty inspirations and uploads array
+							var newBoard = new Board({author: user.id, title: 'My Inspirations', dateCreated: Date.now()})
+							console.log("New Board: ", newBoard);
+							newBoard.save(function(err, board){
+								if (err){
+									console.log("Error: ", err);
+								} else {
+									user.myBoards = [board.id]
+									user.save(function(err, user){
+										if (err){
+											console.log("Error: ", err);
+										} else {
+											console.log("USER WITH NEW BOARD: ", user);
+											res.json(user);	//you have a new board and its empty and so is uploads
+										}
+									})
+								}
+							});
 						}
 					});
 				}
@@ -29,6 +46,7 @@ router.get('/', ensureAuthenticated, function(req, res){
 });
 
 router.post('/postInspiration', ensureAuthenticated, function(req, res){
+	Board.findOneAndUpdate()
 	User.findOneAndUpdate({fbId: req.user.id}, {$push: {inspirations: req.body.srcId}}, {new: true}).populate('inspirations uploads').exec(function (err, user){
 		if (err){
 			console.log("Error: ", err);
