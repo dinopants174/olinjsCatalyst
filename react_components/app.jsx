@@ -151,6 +151,8 @@ var CatalystBox = React.createClass({
     addInspiration: function(item){ 
         console.log("you're about to add this inspiration", item)
         console.log("what is this id", item._id)
+
+        /*Need to send board._id, as well as item._id*/
         $.ajax({ 
             url: '/api/user/postInspiration',
             dataType: 'json',
@@ -158,10 +160,7 @@ var CatalystBox = React.createClass({
             type: 'POST',
             data: {srcId: item._id}, 
             success: function(userObject){ 
-                userObject.inspirations.forEach(function(i){ 
-                    console.log("inspiraaation", i)
-                })
-                
+                console.log(userObject)
                 this.setState({user: userObject}); 
             }.bind(this), 
             error: function(xhr, status, err){ 
@@ -198,11 +197,6 @@ var CatalystBox = React.createClass({
                 type: 'POST',
                 data: {srcId: item._id},
                 success: function(userObject) {
-                    console.log("alleged user object", userObject)
-
-                    userObject.inspirations.forEach(function(i){ 
-                        console.log(i)
-                    })
                     
                     this.setState({user: userObject}); 
                 }.bind(this),
