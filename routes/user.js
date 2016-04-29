@@ -205,6 +205,23 @@ router.post('/postBoard', ensureAuthenticated, function(req, res){
 	});
 });
 
+router.post('/deleteBoard', ensureAuthenticated, function(req, res){
+	Board.findByIdAndRemove(req.body.boardId, function(err, board){
+		if (err){
+			console.log("Error: ", err);
+		} else {
+			User.findOneAndUpdate({fbId: req.user.id}, {$pull: {myBoards: req.body.boardId}}, {new: true}).populate({path: 'uploads myBoards', populate: {path: 'pieces'}}).exec(function (err, user){
+				if (err){
+					console.log("Error: ", err);
+				} else {
+					console.log("Here is your new user: ", user);
+					res.json(user);
+				}
+			});
+		}
+	});
+});
+
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) { 
   	return next(); 
