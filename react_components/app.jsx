@@ -245,7 +245,7 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
-                        <Upload uploadCode = {this.handleUploadCode} inspirations={this.state.user.inspirations}/>
+                        <Upload uploadCode = {this.handleUploadCode} inspirations={this.state.user.inspirations || []}/>
                     </div>
                 );
                 break;
@@ -256,7 +256,7 @@ var CatalystBox = React.createClass({
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <br/>
-                        <MyBoard switchMyBoard={this.showMyBoard} switchUploads={this.showMyBoardUploads} switchInspirations={this.showMyBoardInspirations} user={this.state.user} subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations} deleteElement={this.deleteElement}/>
+                        <MyBoard switchMyBoard={this.showMyBoard} switchUploads={this.showMyBoardUploads} switchInspirations={this.showMyBoardInspirations} user={this.state.user} subpage={this.state.subpage} uploads={this.state.user.uploads || []} inspirations={this.state.user.inspirations || []} deleteElement={this.deleteElement}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
@@ -267,7 +267,7 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
-                        <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations} getPiece = {this.getPieceAndTree}/>
+                        <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations || []} getPiece = {this.getPieceAndTree}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );

@@ -40,7 +40,7 @@ var SearchBar = React.createClass({
 				<div id = "searchbar">   
                     <div id = "search ">  
                         <h2>Search for Piece by Title </h2>
-                        <Search 
+                        <Search
                             items={this.props.pieces} 
                             keys={this.state.keys} 
                             searchKey={this.state.key}

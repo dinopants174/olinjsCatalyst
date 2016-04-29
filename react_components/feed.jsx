@@ -71,7 +71,7 @@ var Feed = React.createClass({
 
 	checkIfInInspirations: function(object, inspirations){ 
 		var i; 
-		for(i = 0; i < inspirations.length; i++){ 
+        for(i = 0; i < inspirations.length; i++){ 
 			if(inspirations[i]._id === object._id){ 
 				return true;
 			}
@@ -133,51 +133,51 @@ var Feed = React.createClass({
 
 	render: function(){ 
 		var parent = this; 
-        console.log("images", this.state.images)
-        if (this.state.images > 0){ 
+        var length_images = this.state.images.length;
+        if (length_images > 0){ 
 
-        var childElements = this.state.images.map(function(element, i){
-		   var pinButton = parent.pinnedButton(element)
-           return (
-           		<div key={'div'+i} className="image-div-class">
-                    <p id="title">{element.title} by {element.author.name}</p>
-	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
-	            	{pinButton}
-	            	<button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'tree')}> <i className="fa fa-tree" aria-hidden="true"></i> </button>
-                    <button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'expand')}> <i className="fa fa-expand" aria-hidden="true"></i> </button>
-	            </div>
+            var childElements = this.state.images.map(function(element, i){
+    		   var pinButton = parent.pinnedButton(element)
+               return (
+               		<div key={'div'+i} className="image-div-class">
+                        <p id="title">{element.title} by {element.author.name}</p>
+    	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
+    	            	{pinButton}
+    	            	<button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'tree')}> <i className="fa fa-tree" aria-hidden="true"></i> </button>
+                        <button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'expand')}> <i className="fa fa-expand" aria-hidden="true"></i> </button>
+    	            </div>
+                );
+            });
+
+            return (
+            	<div>
+                    <SearchBar pieces = {this.state.images} pinnedButton = {this.pinnedButton} openLightbox = {this.openLightbox}/>
+
+                	<div id="feed"> 
+                        <h2> Feed </h2>
+    					<Masonry
+    		                className={'my-gallery-class'}
+    		                elementType={'div'}
+    		                disableImagesLoaded={false}
+    		            >  
+    		            {childElements}
+    		            </Masonry>
+    				</div>
+                      {this.state.display ? (
+                        <div className="overlay">
+                            <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
+                            <div style={this.whiteContentStyles}>
+                                <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
+                                <div className = 'upclose'>
+                                    <Barchart data={[this.state.tree]} title={this.state.tree.title} />
+                                </div>
+                                <div> {this.pinnedButton(this.state.tree)}</div>
+                            </div> 
+                        </div>
+                      ) : 
+                      null} 
+            	</div>
             );
-        });
-
-        return (
-        	<div>
-                <SearchBar pieces = {this.state.images} pinnedButton = {this.pinnedButton} openLightbox = {this.openLightbox}/>
-
-            	<div id="feed"> 
-                    <h2> Feed </h2>
-					<Masonry
-		                className={'my-gallery-class'}
-		                elementType={'div'}
-		                disableImagesLoaded={false}
-		            >  
-		            {childElements}
-		            </Masonry>
-				</div>
-                  {this.state.display ? (
-                    <div className="overlay">
-                        <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
-                        <div style={this.whiteContentStyles}>
-                            <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
-                            <div className = 'upclose'>
-                                <Barchart data={[this.state.tree]} title={this.state.tree.title} />
-                            </div>
-                            <div> {this.pinnedButton(this.state.tree)}</div>
-                        </div> 
-                    </div>
-                  ) : 
-                  null} 
-        	</div>
-        );
         } 
         else{ 
             return( 

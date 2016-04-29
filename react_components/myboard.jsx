@@ -16,6 +16,8 @@ var MyBoard = React.createClass({
 
     render: function(){
         var parent = this; 
+        console.log("this.props.uploads",this.props.uploads);
+        console.log("this.props.inspirations",this.props.inspirations);
         var uploadsElements = this.props.uploads.map(function(element, i){
 
            return (
