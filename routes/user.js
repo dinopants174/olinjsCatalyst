@@ -20,7 +20,7 @@ router.get('/', ensureAuthenticated, function(req, res){
 						if (err){
 							console.log("Error: ", err);
 						} else {
-							var newBoard = new Board({author: user.id, title: 'My Inspirations', dateCreated: Date.now()})
+							var newBoard = new Board({author: user.id, title: 'My Inspirations', dateCreated: new Date()})
 							console.log("New Board: ", newBoard);
 							newBoard.save(function(err, board){
 								if (err){
@@ -46,22 +46,35 @@ router.get('/', ensureAuthenticated, function(req, res){
 });
 
 router.post('/postInspiration', ensureAuthenticated, function(req, res){
-	Board.findOneAndUpdate()
-	User.findOneAndUpdate({fbId: req.user.id}, {$push: {inspirations: req.body.srcId}}, {new: true}).populate('inspirations uploads').exec(function (err, user){
+	Board.findByIdAndUpdate(req.body.boardId, {$push: {pieces: req.body.srcId}}, function(err, board){
 		if (err){
 			console.log("Error: ", err);
 		} else {
-			res.json(user);
+			User.findOneAndUpdate({fbId: req.user.id}).populate({path: 'uploads myBoards', populate: {path: 'pieces'}}).exec(function (err, user){
+				if (err){
+					console.log("Error: ", err);
+				} else {
+					console.log("USER WITH UPDATED BOARD: ", user);
+					res.json(user);
+				}
+			});
 		}
 	});
 });
 
 router.post('/deleteInspiration', ensureAuthenticated, function(req, res){
-	User.findOneAndUpdate({fbId: req.user.id}, {$pull: {inspirations: req.body.srcId}}, {new: true}).populate('inspirations uploads').exec(function (err, user){
+	Board.findByIdAndUpdate(req.body.boardId, {$pull: {pieces: req.body.srcId}}, function(err, board){
 		if (err){
 			console.log("Error: ", err);
 		} else {
-			res.json(user);
+			User.findOneAndUpdate({fbId: req.user.id}).populate({path: 'uploads myBoards', populate: {path: 'pieces'}}).exec(function (err, user){
+				if (err){
+					console.log("Error: ", err);
+				} else {
+					console.log("USER WITH UPDATED BOARD: ", user);
+					res.json(user);
+				}
+			});
 		}
 	});
 });
@@ -92,7 +105,7 @@ router.post('/postUpload', ensureAuthenticated, function(req, res){
 					if (err){
 						console.log("Error: ", err);
 					} else {
-						User.populate(user, 'inspirations uploads', function(err, user){
+						User.populate(user, {path: 'uploads myBoards', populate: {path: 'pieces'}}, function(err, user){
 							if (err){
 								console.log("Error: ", err);
 							} else {
@@ -108,15 +121,25 @@ router.post('/postUpload', ensureAuthenticated, function(req, res){
 });
 
 router.post('/deleteUpload', ensureAuthenticated, function(req, res){
-	User.findOneAndUpdate({fbId: req.user.id}, {$pull: {uploads: req.body.srcId, inspirations: req.body.srcId}}, {new: true}).populate('inspirations uploads').exec(function (err, user){
+	Board.find({pieces: req.body.srcId}, function(err, boards){
 		if (err){
 			console.log("Error: ", err);
 		} else {
+			boards.forEach(function(board, index){
+				board.pieces = board.pieces.filter(function (id){
+					return id != req.body.srcId;
+				});
+				board.save(function(err){
+					if (err){
+						console.log("Error: ", err);
+					}
+				});
+			});
 			Piece.findById(req.body.srcId, function(err, piece){
 				piece.inspirations.forEach(function(item, index){
 					Piece.findByIdAndUpdate(item, {$pull: {inspired: piece.id}}, {new: true}, function(err, inspiration){
 						if (err){
-							console.log("Error: ", err)
+							console.log("Error: ", err);
 						} else {
 							console.log("Here is the updated parent: ", inspiration);
 						}
@@ -125,33 +148,24 @@ router.post('/deleteUpload', ensureAuthenticated, function(req, res){
 				piece.inspired.forEach(function(item, index){
 					Piece.findByIdAndUpdate(item, {$pull: {inspirations: piece.id}}, {new: true}, function(err, inspired){
 						if (err){
-							console.log("Error: ", err)
+							console.log("Error: ", err);
 						} else {
 							console.log("Here is the updated child: ", inspired);
 						}
 					});
 				});
-				User.find({inspirations: req.body.srcId}, function(err, inspiredUsers){
-					console.log("Here are the users I found: ", inspiredUsers);
-					if (inspiredUsers.length > 0){
-						inspiredUsers.forEach(function(inspiredUser, index, inspiredUsers){
-							inspiredUser.inspirations = inspiredUser.inspirations.filter(function(id){
-								return id != req.body.srcId;
-							});
-							inspiredUser.save(function(err){
-								if (err){
-									console.log("Error: ", err);
-								} else if (index === inspiredUsers.length - 1){
-									piece.remove();
-									console.log("FINAL PRODUCT: ", user);
-									res.json(user);
-								}
-							});
-						});
+				piece.remove(function(err, piece){
+					if (err){
+						console.log("Error: ", err);
 					} else {
-						piece.remove();
-						console.log("FINAL PRODUCT: ", user);
-						res.json(user);
+						User.findOneAndUpdate({fbId: req.user.id}, {$pull: {uploads: req.body.srcId}}, {new: true}).populate({path: 'uploads myBoards', populate: {path: 'pieces'}}).exec(function (err, user){
+							if (err){
+								console.log("Error: ", err);
+							} else {
+								console.log("HERE IS THE FINAL USER: ", user);
+								res.json(user);
+							}
+						});
 					}
 				});
 			});
