@@ -16,11 +16,11 @@
 --------------------------------------------------------------*/
 .twitter-widget {
     color: #428F89;
-    left:12.5%;
+    left:10%;
     margin: -125px 0 0 0;
     position: absolute;
     top:25%;
-    width:75%;
+    width:80%;
     box-shadow: 1px 1px 16px rgba(0,0,0,.58);
     border-radius:2px;
 }
