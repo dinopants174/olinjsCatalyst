@@ -1,7 +1,7 @@
 var React = require('react');
 // import SearchInput, {createFilter} from 'react-search-input'
 // var SearchInput = require('react-search-input'); 
-var Search = require('react-search'); 
+var SearchBar = require('./search.jsx'); 
 
 var dir = require('node-dir'); 
 var path = require('path'); 
@@ -9,7 +9,6 @@ var fs = require('fs');
 
 var Masonry = require('./masonry.jsx');
 var Barchart = require('./d3Chart.jsx');
-var DisplayIFrame = require('./displayIFrame.jsx');
 
 var masonryOptions = {
     transitionDuration: 0
@@ -67,9 +66,6 @@ var Feed = React.createClass({
 			tree: {},
             expandBoolean: false,
             treeBoolean: false, 
-            keys:[{'author':['fbId', 'name', 'proPic', 'inspirations', 'inspirations', 'uploads']}, 'src', 'date', 'title', 'inspirations', 'inspired'], 
-            key:'title',
-            searchResults: [],
 		};
 	}, 
 
@@ -135,15 +131,11 @@ var Feed = React.createClass({
 			return pinButton
     },
 
-
-    handleSearchResults: function(input, output){ 
-        console.log("input and output" , input, output)
-        console.log("search results before", this.state.searchResults)
-        this.setState({searchResults: output})
-    }, 
-
 	render: function(){ 
 		var parent = this; 
+        console.log("images", this.state.images)
+        if (this.state.images > 0){ 
+
         var childElements = this.state.images.map(function(element, i){
 		   var pinButton = parent.pinnedButton(element)
            return (
@@ -157,41 +149,9 @@ var Feed = React.createClass({
             );
         });
 
-        var results = this.state.searchResults.map(function(result, i){
-            var pinButton = parent.pinnedButton(result);  
-            return (
-                <div key={'div'+i} className="image-div-class">
-                    <p id="title">{result.title} by {result.author.name}</p>
-                    <div dangerouslySetInnerHTML={parent.rawMarkup(result.src)}/>
-                    {pinButton}
-                    <button className = "button expand" onClick = {parent.openLightbox.bind(null, result, 'tree')}> <i className="fa fa-tree" aria-hidden="true"></i> </button>
-                    <button className = "button expand" onClick = {parent.openLightbox.bind(null, result, 'expand')}> <i className="fa fa-expand" aria-hidden="true"></i> </button>
-                </div>
-            ); 
-        }); 
-
         return (
-        	<div> 
-                <div id = "searchbar">   
-                    <div id = "search ">  
-                        <h2>Search for Piece by Title </h2>
-                        <Search 
-                            items={this.state.images} 
-                            keys={this.state.keys} 
-                            searchKey={this.state.key}
-                            placeholder = "Search by title"
-                            onChange = {(input, resolve)=> {this.handleSearchResults(input, resolve)}}
-                            className = "searchcontainer"/> 
-                    </div> 
-                    <div> 
-                        {(this.state.searchResults.length > 0) ? (
-                            <div> 
-                                <p> <b> Search Results: </b></p> 
-                                {results} 
-                            </div>) : 
-                        null}
-                    </div> 
-                </div>
+        	<div>
+                <SearchBar pieces = {this.state.images} pinnedButton = {this.pinnedButton} openLightbox = {this.openLightbox}/>
 
             	<div id="feed"> 
                     <h2> Feed </h2>
@@ -218,6 +178,13 @@ var Feed = React.createClass({
                   null} 
         	</div>
         );
+        } 
+        else{ 
+            return( 
+                <h4> No feed posts yet! Welcome to our site! </h4>
+            )
+
+        }
 	}
 
 }); 

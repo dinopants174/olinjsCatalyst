@@ -73,15 +73,34 @@ var Upload = React.createClass({
 
     render: function(){
     	var parent = this;
-        var childElements = this.props.inspirations.map(function(element, i){
-           return (
-           		<div key={'div'+i} className="image-div-class">
-	                <div dangerouslySetInnerHTML={parent.embedCodeRawMarkup(element.src)}/>
-	            	<p>{element.title}</p>
-	            	<input type="checkbox" onChange={parent.handleCheckedInspir.bind(null, element._id)}value="inpiration"/><br/>
-	            </div>
-            );
-        });
+
+    	var stuff = function(){ 
+    		if(parent.props.inspirations === undefined){ 
+    			return(<h4> You have no inpirations, bitch. Go make some </h4>)
+    		}
+    		else{ 
+    			var childElements = parent.props.inspirations.map(function(element, i){
+		           return (
+		           		<div key={'div'+i} className="image-div-class">
+			                <div dangerouslySetInnerHTML={parent.embedCodeRawMarkup(element.src)}/>
+			            	<p>{element.title}</p>
+			            	<input type="checkbox" onChange={parent.handleCheckedInspir.bind(null, element._id)}value="inpiration"/><br/>
+			            </div>
+		            );
+		        });
+
+		        return(
+			        <Masonry
+		                className={'my-gallery-class'}
+		                elementType={'div'}
+		                disableImagesLoaded={false}
+		            >
+		                {childElements}
+		            </Masonry>
+	            )
+    		}
+
+    	}
 
         return (
         	<div className='centering-div'>
@@ -104,13 +123,7 @@ var Upload = React.createClass({
 					<div>
 						<h2> Choose Inspirations </h2>
 						<div id="inspirationslist">
-							<Masonry
-				                className={'my-gallery-class'}
-				                elementType={'div'}
-				                disableImagesLoaded={false}
-				            >
-				                {childElements}
-				            </Masonry>
+							{stuff()}
 				        </div>
 					</div>
 					<br/>
