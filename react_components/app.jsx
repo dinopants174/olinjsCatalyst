@@ -151,6 +151,8 @@ var CatalystBox = React.createClass({
     addInspiration: function(item){ 
         console.log("you're about to add this inspiration", item)
         console.log("what is this id", item._id)
+
+        /*Need to send board._id, as well as item._id*/
         $.ajax({ 
             url: '/api/user/postInspiration',
             dataType: 'json',
@@ -158,10 +160,7 @@ var CatalystBox = React.createClass({
             type: 'POST',
             data: {srcId: item._id}, 
             success: function(userObject){ 
-                userObject.inspirations.forEach(function(i){ 
-                    console.log("inspiraaation", i)
-                })
-                
+                console.log(userObject)
                 this.setState({user: userObject}); 
             }.bind(this), 
             error: function(xhr, status, err){ 
@@ -198,11 +197,6 @@ var CatalystBox = React.createClass({
                 type: 'POST',
                 data: {srcId: item._id},
                 success: function(userObject) {
-                    console.log("alleged user object", userObject)
-
-                    userObject.inspirations.forEach(function(i){ 
-                        console.log(i)
-                    })
                     
                     this.setState({user: userObject}); 
                 }.bind(this),
@@ -245,7 +239,7 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
-                        <Upload uploadCode = {this.handleUploadCode} inspirations={this.state.user.inspirations}/>
+                        <Upload uploadCode = {this.handleUploadCode} inspirations={this.state.user.inspirations || []}/>
                     </div>
                 );
                 break;
@@ -256,7 +250,7 @@ var CatalystBox = React.createClass({
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <br/>
-                        <MyBoard switchMyBoard={this.showMyBoard} switchUploads={this.showMyBoardUploads} switchInspirations={this.showMyBoardInspirations} user={this.state.user} subpage={this.state.subpage} uploads={this.state.user.uploads} inspirations={this.state.user.inspirations} deleteElement={this.deleteElement}/>
+                        <MyBoard switchMyBoard={this.showMyBoard} switchUploads={this.showMyBoardUploads} switchInspirations={this.showMyBoardInspirations} user={this.state.user} subpage={this.state.subpage} uploads={this.state.user.uploads || []} inspirations={this.state.user.inspirations || []} deleteElement={this.deleteElement}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
@@ -267,7 +261,7 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
-                        <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations} getPiece = {this.getPieceAndTree}/>
+                        <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations || []} getPiece = {this.getPieceAndTree}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );

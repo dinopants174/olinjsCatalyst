@@ -75,7 +75,7 @@ var Upload = React.createClass({
     	var parent = this;
 
     	var stuff = function(){ 
-    		if(parent.props.inspirations === undefined){ 
+    		if(parent.props.inspirations.length === 0){ 
     			return(<h4> You have no inpirations, bitch. Go make some </h4>)
     		}
     		else{ 
