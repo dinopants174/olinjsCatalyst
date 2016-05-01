@@ -24404,28 +24404,27 @@ var PieChart = React.createClass({displayName: "PieChart",
     console.log(document.getElementById("toggle"));
     if(document.getElementById("toggle").value=="Show Inspired"){
       document.getElementById("toggle").value="Show Inspirations";
+      $('#type_inspir').text('Inspired')
       var dom =  ReactDOM.findDOMNode(this);
       createChart(dom, this.props, 'inspired');
     }
 
     else if(document.getElementById("toggle").value=="Show Inspirations"){
       document.getElementById("toggle").value="Show Inspired";
+      $('#type_inspir').text('Inspirations')
       var dom =  ReactDOM.findDOMNode(this);
       createChart(dom, this.props, 'inspirations');
     }
   },
 
 
-  // showInspiredTree: function() {
-  //   var dom =  ReactDOM.findDOMNode(this);
-  //   createChart(dom, this.props, 'inspired');
-  // },
-
   render: function() {
     return (
       React.createElement("div", null, 
         React.createElement("h4", null, " ", this.props.title, " "), 
-        React.createElement("input", {type: "button", id: "toggle", onClick: this.toggleTree, value: "Show Inspired"})
+        React.createElement("input", {type: "button", id: "toggle", onClick: this.toggleTree, value: "Show Inspired"}), 
+        React.createElement("br", null), 
+        React.createElement("h4", {style: {'font-size':'50px'}, id: "type_inspir"}, " Inspirations ")
       )
     );
   },
@@ -24555,7 +24554,9 @@ var Feed = React.createClass({displayName: "Feed",
 			lightboxMode: false,
 			images: this.props.feedObjects,
 			display: false, 
-			tree: {}
+			tree: {},
+            expandBoolean: false,
+            treeBoolean: false,
 		};
 	}, 
 
@@ -24573,18 +24574,29 @@ var Feed = React.createClass({displayName: "Feed",
 		this.props.addInspir(item)
 	},
 
-	openLightbox: function(item){ 
+	openLightbox: function(item, lightboxType){ 
 		var parent = this; 
 		var pieceTree; 
-		this.props.getPiece(item, function(tree){ 
-			parent.setState({tree: tree})
-			parent.setState({display: true});
-		});
+        if (lightboxType === 'expand') {
+            this.props.getPiece(item, function(tree){ 
+                parent.setState({tree: tree})
+                parent.setState({display: true})
+                parent.setState({expandBoolean: true});
+            });
+        } else {
+            this.props.getPiece(item, function(tree){ 
+                parent.setState({tree: tree})
+                parent.setState({display: true})
+                parent.setState({treeBoolean: true});
+            });  
+        }
 	},
 
 	closeLightbox: function(){
 		this.setState({tree : {}})
-        this.setState({display: false});
+        this.setState({display: false})
+        this.setState({expandBoolean: false})
+        this.setState({treeBoolean: false});
     },
     
 	rawMarkup: function(e){ 
@@ -24620,7 +24632,8 @@ var Feed = React.createClass({displayName: "Feed",
 	                React.createElement("div", {dangerouslySetInnerHTML: parent.rawMarkup(element.src)}), 
 	            	React.createElement("p", null, element.title), 
 	            	pinButton, 
-	            	React.createElement("button", {className: "button expand", onClick: parent.openLightbox.bind(null, element)}, " View ")
+	            	React.createElement("button", {className: "button expand", onClick: parent.openLightbox.bind(null, element, 'tree')}, " More Info "), 
+                    React.createElement("button", {className: "button expand", onClick: parent.openLightbox.bind(null, element, 'expand')}, " Expand ")
 	            )
             );
         });
@@ -24641,9 +24654,14 @@ var Feed = React.createClass({displayName: "Feed",
                             React.createElement("div", {style: this.blackOverlayStyles, onClick: this.closeLightbox}), 
                             React.createElement("div", {style: this.whiteContentStyles}, 
                                 React.createElement("a", {style: this.closeTagStyles, onClick: this.closeLightbox}, "×"), 
-                                React.createElement("div", {className: "upclose"}, 
-                                    React.createElement(Barchart, {data: [this.state.tree], title: this.state.tree.title})
-                                ), 
+                                this.state.expandBoolean ? (
+                                    React.createElement("div", {id: "upclose", dangerouslySetInnerHTML: this.rawMarkup(this.state.tree.src)})
+                                    ): null, 
+                                this.state.treeBoolean ? (
+                                    React.createElement("div", {className: "upclose"}, 
+                                        React.createElement(Barchart, {data: [this.state.tree], title: this.state.tree.title})
+                                    )
+                                    ): null, 
                                 React.createElement("div", null, " ", this.pinnedButton(this.state.tree))
                             )
                         )
@@ -25019,7 +25037,7 @@ var Upload = React.createClass({displayName: "Upload",
 
 
         if(pattern2.test(html)){
-			var replacement = '<iframe width="560" height="315" src="http://www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe>';
+			var replacement = '<iframe width="560" height="315" src="https://www.youtube.com/v/$1" frameborder="0" allowfullscreen></iframe>';
 			var html = html.replace(pattern2, replacement);
         } 
 

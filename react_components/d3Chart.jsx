@@ -106,28 +106,27 @@ var PieChart = React.createClass({
     console.log(document.getElementById("toggle"));
     if(document.getElementById("toggle").value=="Show Inspired"){
       document.getElementById("toggle").value="Show Inspirations";
+      $('#type_inspir').text('Inspired')
       var dom =  ReactDOM.findDOMNode(this);
       createChart(dom, this.props, 'inspired');
     }
 
     else if(document.getElementById("toggle").value=="Show Inspirations"){
       document.getElementById("toggle").value="Show Inspired";
+      $('#type_inspir').text('Inspirations')
       var dom =  ReactDOM.findDOMNode(this);
       createChart(dom, this.props, 'inspirations');
     }
   },
 
 
-  // showInspiredTree: function() {
-  //   var dom =  ReactDOM.findDOMNode(this);
-  //   createChart(dom, this.props, 'inspired');
-  // },
-
   render: function() {
     return (
       <div>
         <h4> {this.props.title} </h4>
         <input type="button" id="toggle" onClick={this.toggleTree} value="Show Inspired"/>
+        <br/>
+        <h4 style={{'font-size':'50px'}} id="type_inspir"> Inspirations </h4>
       </div>
     );
   },

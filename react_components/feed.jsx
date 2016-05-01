@@ -62,7 +62,9 @@ var Feed = React.createClass({
 			lightboxMode: false,
 			images: this.props.feedObjects,
 			display: false, 
-			tree: {}
+			tree: {},
+            expandBoolean: false,
+            treeBoolean: false,
 		};
 	}, 
 
@@ -80,18 +82,29 @@ var Feed = React.createClass({
 		this.props.addInspir(item)
 	},
 
-	openLightbox: function(item){ 
+	openLightbox: function(item, lightboxType){ 
 		var parent = this; 
 		var pieceTree; 
-		this.props.getPiece(item, function(tree){ 
-			parent.setState({tree: tree})
-			parent.setState({display: true});
-		});
+        if (lightboxType === 'expand') {
+            this.props.getPiece(item, function(tree){ 
+                parent.setState({tree: tree})
+                parent.setState({display: true})
+                parent.setState({expandBoolean: true});
+            });
+        } else {
+            this.props.getPiece(item, function(tree){ 
+                parent.setState({tree: tree})
+                parent.setState({display: true})
+                parent.setState({treeBoolean: true});
+            });  
+        }
 	},
 
 	closeLightbox: function(){
 		this.setState({tree : {}})
-        this.setState({display: false});
+        this.setState({display: false})
+        this.setState({expandBoolean: false})
+        this.setState({treeBoolean: false});
     },
     
 	rawMarkup: function(e){ 
@@ -127,7 +140,8 @@ var Feed = React.createClass({
 	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
 	            	<p>{element.title}</p>
 	            	{pinButton}
-	            	<button className = "button expand" onClick = {parent.openLightbox.bind(null, element)}> View </button>
+	            	<button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'tree')}> More Info </button>
+                    <button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'expand')}> Expand </button>
 	            </div>
             );
         });
@@ -148,9 +162,14 @@ var Feed = React.createClass({
                             <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
                             <div style={this.whiteContentStyles}>
                                 <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
-                                <div className = 'upclose'>
-                                    <Barchart data={[this.state.tree]} title={this.state.tree.title} />
-                                </div>
+                                {this.state.expandBoolean ? (
+                                    <div id = "upclose" dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
+                                    ): null}
+                                {this.state.treeBoolean ? (
+                                    <div className = 'upclose'>
+                                        <Barchart data={[this.state.tree]} title={this.state.tree.title} />
+                                    </div>
+                                    ): null}
                                 <div> {this.pinnedButton(this.state.tree)}</div>
                             </div> 
                         </div>
