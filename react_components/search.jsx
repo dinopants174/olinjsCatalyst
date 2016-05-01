@@ -46,7 +46,7 @@ var SearchBar = React.createClass({
                             searchKey={this.state.key}
                             placeholder = "Search by title"
                             onChange = {(input, resolve)=> {this.handleSearchResults(input, resolve)}}
-                            className = "searchcontainer"/> 
+                            value = "searchcontainer"/> 
                     </div> 
                     <div> 
                         {(this.state.searchResults.length > 0) ? (

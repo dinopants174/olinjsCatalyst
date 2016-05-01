@@ -40,6 +40,8 @@ var MyBoard = React.createClass({
             );
         });
 
+
+
         if (this.props.subpage === "uploads") {
             var subpage = <div><div className='centering-div'>
                    <h1>My Uploads</h1>

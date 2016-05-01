@@ -61,6 +61,7 @@ div#embed-form {
 
 div.embed-button {
 	display: inline-block;
+  width: 100%;
 }
 
 button#embed-upload {
@@ -136,4 +137,84 @@ div.inspirations-div-class a img{
     padding-top: 5px;
     margin-left: 10px;
   width: 300px;
+}
+
+.panel-piece {
+  cursor: pointer;
+  height: 50px;
+  width: 100%;
+
+  margin: 0;
+  padding:10px;
+
+  color: #000;
+  font-size:1em;
+}
+
+.piece {
+  border: 2px solid rgba(51,51,51,0.7);
+  padding: 0;
+  background-color: rgba(204,204,204,0.7);
+  border-radius: 25px;
+  box-shadow: 4px 4px 10px 2px rgba(66,143,137,0.3);
+
+}
+
+.panel-title {
+  text-align: left;
+  padding: 15px;
+}
+
+.my-gallery-class-hidden {
+  visibility: hidden;
+}
+
+#maincontent {
+    float: right;
+    width: 100%;
+}
+
+#menuleftcontent {
+    float: left;
+    width: 200px;
+    margin-left: -200px;
+    background-color: #CCCCCC;
+}
+
+.arrow-down {
+  margin-right: 40px;
+background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAAHwAAAB8ARUP7eQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjAuNWWFMmUAAACISURBVChTvc+xCoNAEIThDXkQH8FCYhGwsRLEgJ2lEN81VQg2toIW2qVK7z9RREEtHfjg7liWOTslIZzxeJhgYhU+uOmykwQd3rpEaNEg1cMiFzyh4Rc82BU5fqjxf5xS4AstUwMtmJNBm0r4eKCHhtViMzFUTzSsGkd/W9XbrLGXO9zxeG7MBoKmGaM1wCzfAAAAAElFTkSuQmCC) no-repeat right;
+}
+
+.arrow-up {
+  margin-right: 40px;
+background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAMCAYAAABr5z2BAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAbrQAAG60BIeRSlQAAABh0RVh0U29mdHdhcmUAcGFpbnQubmV0IDQuMC41ZYUyZQAAANpJREFUOE9jGJzAwsJCyM7OztPMzIwPKkQ8sLe353F2dl7v6ur6BEjPBmI1qBRxAGgAh6OjY4m7u/t/oCF/gQacBtJuUGmiAQvQC7YuLi5fgZr/Ozk5fQCyC6ByxANLS0sxoAsuAzX/dXNz+w9kzwKGDydUmijADPSSA9AVv4CG/Ae5CIhjoXL4gY2NjSjQxlKghtdQb5wGGhYClcYPgBotgQG5BqjxN9TpM4CaNaDS+AEoDQA13ABpBNr+G2hQkpWVFS9UmijABDTAEGj7DqAhIFuZIMLYAAMDAPuUQ9EUeG3QAAAAAElFTkSuQmCC) no-repeat right;
+}
+
+
+input[value="board"] {
+  cursor: pointer;
+
+  width:20px;
+  height:20px;
+
+  top: -30px;
+  left: -15px;
+  position: relative;
+  z-index: 1;
+  float: right; 
+}
+
+
+input[value="board"]:checked:before {
+  -webkit-transform: rotate(-45deg);
+  -moz-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+  height: .5rem;
+  border-color: #009688;
+  color:rgba(66,143,137,0.8);
+  border-top-style: none;
+  border-right-style: none;
 }
