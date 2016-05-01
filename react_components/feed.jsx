@@ -188,6 +188,7 @@ var Feed = React.createClass({
             )
 
         }
+
 	}
 
 }); 
