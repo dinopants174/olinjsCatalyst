@@ -37,6 +37,7 @@ div.image-div-class a img{
 	padding-left: 6vw;
 	margin-top: 10px;
 	width: 100%;
+  height: auto;
 }
 
 
@@ -333,7 +334,7 @@ input {
   outline: none;
 }
 
-input[type=text] {
+.searchcontainer {
   -webkit-appearance: textfield;
   -webkit-box-sizing: content-box;
   font-family: inherit;
@@ -344,7 +345,7 @@ input::-webkit-search-cancel-button {
   display: none; 
 }
 
-input[type=text] {
+.react-search__input {
   background: #ededed url(http://static.tumblr.com/ftv85bp/MIXmud4tx/search-icon.png) no-repeat 9px center;
   border: solid 1px #ccc;
   padding: 9px 10px 9px 32px;
@@ -359,7 +360,7 @@ input[type=text] {
   -moz-transition: all .5s;
   transition: all .5s;
 }
-input[type=text]:focus {
+.react-search__input:focus {
   width: 300px;
   background-color: #fff;
   border-color: #66CC75;

@@ -152,7 +152,6 @@ var Feed = React.createClass({
             return (
             	<div>
                     <SearchBar pieces = {this.state.images} pinnedButton = {this.pinnedButton} openLightbox = {this.openLightbox}/>
-
                 	<div id="feed"> 
                         <h2> Feed </h2>
     					<Masonry
@@ -168,9 +167,14 @@ var Feed = React.createClass({
                             <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
                             <div style={this.whiteContentStyles}>
                                 <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
-                                <div className = 'upclose'>
-                                    <Barchart data={[this.state.tree]} title={this.state.tree.title} />
-                                </div>
+                                    {this.state.expandBoolean ? (
+                                        <div id = "upclose" dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
+                                        ): null}
+                                    {this.state.treeBoolean ? (
+                                        <div className = 'upclose'>
+                                            <Barchart data={[this.state.tree]} title={this.state.tree.title} />
+                                        </div>
+                                        ): null}                                
                                 <div> {this.pinnedButton(this.state.tree)}</div>
                             </div> 
                         </div>

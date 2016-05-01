@@ -27,17 +27,34 @@ var CatalystBox = React.createClass({
         };
     },
 
-    testGetPiece: function(){
+    testAddInspiration: function(){
         $.ajax({
-            url: '/api/pieces/getPiece/570ac21d9816a4771a95a867',
+            url: '/api/user/postInspiration',
             dataType: 'json',
             cache: false,
-            type: 'GET',
+            type: 'POST',
+            data: {srcId: '57253346f40d81a96d0d4271',boardId: '5723c80d1a3e5556251be663'},
             success: function(res){
-                console.log("Here is the data I will need for the tree: ", res);
+                console.log("Here is the testaddinspiration: ", res);
             }.bind(this),
             error: function(xhr, status, err) {
-                console.error('/api/pieces/getPiece', status, err.toString());
+                console.error('/api/user/postInspiration', status, err.toString());
+            }.bind(this)
+        });
+    },
+
+    testAddBoard: function(){
+        $.ajax({
+            url: '/api/user/postBoard',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {boardTitle: 'Milk'},
+            success: function(res){
+                console.log("Here is the testaddinspiration: ", res);
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error('/api/user/postInspiration', status, err.toString());
             }.bind(this)
         });
     },
@@ -239,7 +256,7 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
-                        <Upload uploadCode = {this.handleUploadCode} inspirations={this.state.user.inspirations || []}/>
+                        <Upload uploadCode = {this.handleUploadCode} myBoardsInspirations={this.state.user.myBoards || []}/>
                     </div>
                 );
                 break;
@@ -263,6 +280,7 @@ var CatalystBox = React.createClass({
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations || []} getPiece = {this.getPieceAndTree}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
+                        <button onClick={this.testAddBoard}>Add Board</button> 
                     </div>
                 );
                 break;
