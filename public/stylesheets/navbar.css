@@ -10,9 +10,13 @@
 #logo { 
     width: 5%;
     margin-left: 5%;
-    padding: 8px;
+    padding: 5px;
     float: left;
  }
+
+.img-logo {
+  width: 45px;
+}
 
 .caret-up {
     width: 0; 
@@ -192,4 +196,9 @@
     display: block;
     text-align: left;
   }
+}
+
+div#inspirationslist-myboard {
+  text-align: center;
+  width: 100%;
 }

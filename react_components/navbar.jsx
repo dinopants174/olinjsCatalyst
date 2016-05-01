@@ -16,7 +16,7 @@ var Navbar = React.createClass({
     return (
       <div className="Navbar">
             <div id="logo">
-                <img className="img-logo" src="http://placehold.it/140x34/000000/428F89/&amp;text=CATALYST" alt=""/>
+                <img className="img-logo" src="/img/logo_iter1.png" alt=""/>
             </div>
             <ul className="navbar" style={{float:"right"}}>
               <li className="linav"><a onClick={this.props.switchHome}>Home</a></li>

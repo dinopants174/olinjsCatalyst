@@ -153,3 +153,19 @@
     .menu a:hover {
         opacity:.75
     }
+
+
+div#inspirationslist-myboard {
+  text-align: center;
+  width: 50%;
+}
+
+.piece2 {
+    width: 50%;
+  border: 2px solid rgba(51,51,51,0.7);
+  padding: 0;
+  background-color: rgba(204,204,204,0.7);
+  border-radius: 25px;
+  box-shadow: 4px 4px 10px 2px rgba(66,143,137,0.3);
+
+}
