@@ -66,6 +66,12 @@ var Feed = React.createClass({
 			tree: {},
             expandBoolean: false,
             treeBoolean: false, 
+<<<<<<< Updated upstream
+=======
+            keys:[{'author':['fbId', 'name', 'proPic', 'inspirations', 'inspirations', 'uploads']}, 'src', 'date', 'title', 'inspirations', 'inspired'], 
+            key:'title',
+            searchResults: [],
+>>>>>>> Stashed changes
 		};
 	}, 
 
@@ -149,6 +155,13 @@ var Feed = React.createClass({
             );
         });
 
+<<<<<<< Updated upstream
+=======
+        var results = this.state.searchResults.map(function(result){ 
+            return (<div dangerouslySetInnerHTML={parent.rawMarkup(result.src)}/>); 
+        }); 
+
+>>>>>>> Stashed changes
         return (
         	<div>
                 <SearchBar pieces = {this.state.images} pinnedButton = {this.pinnedButton} openLightbox = {this.openLightbox}/>
@@ -178,6 +191,7 @@ var Feed = React.createClass({
                   null} 
         	</div>
         );
+<<<<<<< Updated upstream
         } 
         else{ 
             return( 
@@ -185,6 +199,8 @@ var Feed = React.createClass({
             )
 
         }
+=======
+>>>>>>> Stashed changes
 	}
 
 }); 
