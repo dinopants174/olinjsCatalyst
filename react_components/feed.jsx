@@ -80,15 +80,10 @@ var Feed = React.createClass({
 
     componentWillReceiveProps: function() {
         this.setState({tree : {}})
-        this.setState({display: false})
         this.setState({expandBoolean: false})
         this.setState({treeBoolean: false})
-        this.setState({dropdownBoolean: false})
-        this.setState({favItem: {}})
         this.setState({newBoard: false})
-        this.setState({newBoardName: ''}),
-        this.setState({boardsADD: []})
-        this.setState({boardsDELETE: []});
+        this.setState({newBoardName: ''});    
     },
 
     /* This should be updated to check if it's in any board*/
@@ -369,9 +364,16 @@ var Feed = React.createClass({
                                                         <button className="btn btn-default pull-right" onClick = {this.makeANewBoard}> Cancel </button>
                                                         <div className="clearfix"></div>
                                                         <div id='embed-form' className = "panel-body"> 
-                                                            <p className = "panel-body"> New Board Name </p> 
-                                                            <input type="text" className='embed-code' placeholder="Your name" 
-                                                                value={this.state.text} onChange={this.handleBoardNameChange}/> 
+                                                            <div className="container embed-text">
+                                                                <p className="input_wrapper2">
+                                                                    <input type='text'
+                                                                            name="title-name"
+                                                                            id ="title-name"
+                                                                            value={this.state.text}
+                                                                            onChange={this.handleBoardNameChange}/>
+                                                                    <label htmlFor="title-name">New Board Name</label>
+                                                                </p>
+                                                            </div>
                                                             <button onClick = {this.saveNewBoard} className="btn btn-default pull-right"> Make New Board </button> 
                                                         </div>
                                                         </div> 

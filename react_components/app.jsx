@@ -188,6 +188,7 @@ var CatalystBox = React.createClass({
             data: {srcId: piece._id, boardIds: boards}, 
             success: function(user){ 
                 console.log("user upon add inspiration", user)
+                alert('You Have Added the Inspiration');
                 this.setState({user: user}); 
             }.bind(this), 
             error: function(xhr, status, err){ 
