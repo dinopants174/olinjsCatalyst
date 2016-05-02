@@ -211,7 +211,7 @@ var CatalystBox = React.createClass({
             }.bind(this)
         })
     }, 
-    
+
     deleteBoard: function(item_id){
         $.ajax({
             url: '/api/user/deleteBoard',
@@ -260,7 +260,7 @@ var CatalystBox = React.createClass({
                 }.bind(this), 
                 error: function(xhr, status, err){ 
                     console.log("there has been an error")
-                    console.error('/api/user/postInspiration', status, err.toString())
+                    console.error('/api/user/deleteInspiration', status, err.toString())
 
                 }.bind(this)
             }) 

@@ -114,10 +114,11 @@ router.post('/deleteInspiration', ensureAuthenticated, function(req, res){
 	console.log("Here is req.body", req.body);
 
 	var boardIds = req.body['boardIds[]'];
-		if(typeof(boardIds) === 'string'){ 
+	if(typeof(boardIds) === 'string'){ 
 		var something = [boardIds]
 		boardIds = something; 
 	}
+
 	boardIds.forEach(function(id, index, boardIds){
 		Board.findByIdAndUpdate(id, {$pull: {pieces: req.body.srcId}}, function(err, board){
 			if (err){

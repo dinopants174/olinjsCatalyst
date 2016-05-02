@@ -43,10 +43,10 @@ var Carousel = React.createClass({
             if (headline.length > 55) {
                 font_size = "2.5vw";
             };
-
+            console.log('rootprops',root.props.boardIdd);
             return (<figure key={i} style={Util.figureStyle(d)}>
                 <div className="imagedashdiv">
-                    <a className="boxclose" id="boxclose" onClick={root.props.deleteElement.bind(null,d.all_info,root.props.boardId,root.props.boardtype)}></a>
+                    <a className="boxclose" id="boxclose" onClick={root.props.deleteElement.bind(null,d.all_info,root.props.boardtype,[root.props.boardIdd])}></a>
                     <div className="imagedash" dangerouslySetInnerHTML={root.rawMarkup(d.all_info.src)}/>
                 </div>
             </figure>);

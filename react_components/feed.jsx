@@ -78,6 +78,19 @@ var Feed = React.createClass({
 		};
 	}, 
 
+    componentWillReceiveProps: function() {
+        this.setState({tree : {}})
+        this.setState({display: false})
+        this.setState({expandBoolean: false})
+        this.setState({treeBoolean: false})
+        this.setState({dropdownBoolean: false})
+        this.setState({favItem: {}})
+        this.setState({newBoard: false})
+        this.setState({newBoardName: ''}),
+        this.setState({boardsADD: []})
+        this.setState({boardsDELETE: []});
+    },
+
     /* This should be updated to check if it's in any board*/
 	checkIfInInspirations: function(object, boards, string){ 
 		var i; 

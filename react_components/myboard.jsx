@@ -15,7 +15,8 @@ var MyBoard = React.createClass({
             subpage: this.props.subpage,
             elementnum: [], 
             pieces:[],
-            inspirations:[]
+            inspirations:[],
+            boardId: ''
         };
     },
 
@@ -28,14 +29,16 @@ var MyBoard = React.createClass({
                 subpage: this.props.subpage,
                 elementnum: [], 
                 pieces: [],
-                inspirations: []
+                inspirations: [],
+                boardId: ''
             });
     },
 
-    switchInspirations: function(listInspirations) {
-
+    switchInspirations: function(listInspirations, boardId) {
+        console.log('this is boardid!!!',boardId);
             this.setState({
                 subpage: 'inspirations',
+                boardId: boardId,
                 inspirations: listInspirations
             });
     },
@@ -48,7 +51,7 @@ var MyBoard = React.createClass({
                 <div key={'div'+j} className="image-div-class">
                     <strong><p id="title">{piece.title}</p></strong>
                     <div dangerouslySetInnerHTML={parent.rawMarkup(piece.src)}/>
-                    <button className = "button expand" onClick = {parent.props.deleteElement.bind(null, piece, element_id, "inspirations")} style={{"color":"#999"}}><i className="fa fa-times" aria-hidden="true"></i></button>
+                    <button className = "button expand" onClick = {parent.props.deleteElement.bind(null, piece, "inspirations",[element_id])} style={{"color":"#999"}}><i className="fa fa-times" aria-hidden="true"></i></button>
                 </div>
             );
         });
@@ -94,7 +97,7 @@ var MyBoard = React.createClass({
                 <div key={'div'+i} className="image-div-class">
                     <p id="title">{element.title}</p>
                     <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
-                    <button className = "button expand" onClick = {parent.props.deleteElement.bind(null, element, 'none', "uploads")} style={{"color":"#999"}}><i className="fa fa-trash-o" aria-hidden="true"></i></button>
+                    <button className = "button expand" onClick = {parent.props.deleteElement.bind(null, element, "uploads",'none')} style={{"color":"#999"}}><i className="fa fa-trash-o" aria-hidden="true"></i></button>
                 </div>
             );
         });
@@ -113,7 +116,7 @@ var MyBoard = React.createClass({
                                     </h4>
                                 <button className="deleteBoard" onClick={parent.props.deleteBoard.bind(null,element._id)}><i className="fa fa-trash-o" aria-hidden="true"></i></button>
                                 </div>
-                                <button onClick={parent.switchInspirations.bind(null,element.pieces)} className="button board">Carousel View</button>
+                                <button onClick={parent.switchInspirations.bind(null,element.pieces,element._id)} className="button board">Carousel View</button>
                                 <Masonry
                                     className={'my-gallery-class'}
                                     elementType={'div'}
@@ -158,7 +161,7 @@ var MyBoard = React.createClass({
                    <h1>My Uploads</h1>
                     <button onClick={this.props.switchMyBoard} className="button board"><i className="fa fa-arrow-left" aria-hidden="true"></i></button>
                 </div>
-                <Dashboard boardtype={this.state.subpage} boardId="none" uploadslist={this.props.uploads} deleteElement={this.props.deleteElement}/></div>
+                <Dashboard boardtype={this.state.subpage} boardIdd="none" uploadslist={this.props.uploads} deleteElement={this.props.deleteElement}/></div>
         } else if (this.state.subpage === "inspirations") {
             console.log("at inspirations");
 
@@ -166,7 +169,7 @@ var MyBoard = React.createClass({
                 <h1>My Inspirations</h1>
                     <button onClick={this.props.switchMyBoard} className="button board"><i className="fa fa-arrow-left" aria-hidden="true"></i></button>
                 </div>
-                <Dashboard boardtype={this.state.subpage} boardId={this.state.boardId} uploadslist={this.state.inspirations} deleteElement={this.props.deleteElement}/></div>
+                <Dashboard boardtype={this.state.subpage} boardIdd={this.state.boardId} uploadslist={this.state.inspirations} deleteElement={this.props.deleteElement}/></div>
         } else {
             var subpage = <div className='centering-div'>
                     <div className="twitter-widget">

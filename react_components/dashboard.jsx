@@ -43,7 +43,8 @@ var DashboardHistory = React.createClass({
                           duration={this.state.duration}
                           layout={this.state.layout}
                           deleteElement={this.props.deleteElement}
-                          boardtype={this.props.boardtype}/>
+                          boardtype={this.props.boardtype}
+                          boardIdd={this.props.boardIdd}/>
                 </div>
             </div>
         );
