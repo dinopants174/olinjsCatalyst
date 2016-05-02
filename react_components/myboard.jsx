@@ -111,6 +111,7 @@ var MyBoard = React.createClass({
                                     <h4 id={"title"+i} className="panel-title arrow-down">
                                           {element.title}
                                     </h4>
+                                <button className="deleteBoard" onClick={parent.props.deleteBoard.bind(null,element._id)}><i className="fa fa-trash-o" aria-hidden="true"></i></button>
                                 </div>
                                 <button onClick={parent.switchInspirations.bind(null,element.pieces)} className="button board">Carousel View</button>
                                 <Masonry
@@ -129,6 +130,7 @@ var MyBoard = React.createClass({
                                     <h4 id={"title"+i} className="panel-title arrow-down">
                                           {element.title}
                                     </h4>
+                                <button className="deleteBoard" onClick={parent.props.deleteBoard.bind(null,element._id)}><i className="fa fa-trash-o" aria-hidden="true"></i></button>
                                 </div>
                                 <div></div>
                             </div>
@@ -141,6 +143,7 @@ var MyBoard = React.createClass({
                                 <h4 id={"title"+i} className="panel-title arrow-down">
                                       {element.title}
                                 </h4>
+                            <button className="deleteBoard" onClick={parent.props.deleteBoard.bind(null,element._id)}><i className="fa fa-trash-o" aria-hidden="true"></i></button>
                             </div>
                             <div></div>
                         </div>

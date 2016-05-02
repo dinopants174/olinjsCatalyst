@@ -184,3 +184,16 @@ div#inspirationslist-myboard {
   color: #000;
   font-size:1em;
 }
+
+.deleteBoard {
+    cursor: pointer;
+
+  width:20px;
+  height:20px;
+
+  top: -30px;
+  left: -15px;
+  position: relative;
+  z-index: 2;
+  float: right; 
+}

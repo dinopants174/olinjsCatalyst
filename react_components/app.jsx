@@ -196,6 +196,23 @@ var CatalystBox = React.createClass({
         })
     }, 
 
+    deleteBoard: function(item_id){
+        $.ajax({
+            url: '/api/user/deleteBoard',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {boardId: item_id},
+            success: function(userObject) {
+                
+                this.setState({user: userObject}); 
+            }.bind(this),
+            error: function(xhr, status, err){
+                console.error('/api/user/deleteBoard', status, err.toString());
+            }.bind(this)   
+        });
+    },
+
     deleteElement: function(item, boardID, boardtype) {
 
         console.log("deleting element");
@@ -258,7 +275,7 @@ var CatalystBox = React.createClass({
                         <br/>
                         <MyBoard switchMyBoard={this.showMyBoard} switchUploads={this.showMyBoardUploads}
                         user={this.state.user} subpage={this.state.subpage} uploads={this.state.user.uploads || []} myBoardsInspirations={this.state.user.myBoards || []} 
-                        deleteElement={this.deleteElement}/>
+                        deleteElement={this.deleteElement} deleteBoard={this.deleteBoard}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>
                 );
@@ -271,7 +288,7 @@ var CatalystBox = React.createClass({
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations || []} getPiece = {this.getPieceAndTree}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
-                        <button onClick={this.testAddInspiration}>Add Inspiration</button> 
+                        <button onClick={this.testAddBoard}>Add Board</button> 
                     </div>
                 );
                 break;
