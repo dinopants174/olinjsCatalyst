@@ -16,7 +16,7 @@ var Navbar = React.createClass({
     return (
       <div className="Navbar">
             <div id="logo">
-                <img className="img-logo" src="/img/logo_iter1.png" alt=""/>
+                <p id="img-title"><img className="img-logo" src="/img/logo_iter2.png" alt=""/>Catalyst</p>
             </div>
             <ul className="navbar" style={{float:"right"}}>
               <li className="linav"><a onClick={this.props.switchHome}>Home</a></li>
@@ -27,8 +27,6 @@ var Navbar = React.createClass({
                 <span className="caret-up"></span></a>
                 <ul>
                   <li><a onClick={this.props.switchMyBoardUploads}>My Uploads</a></li>
-                  <br/>
-                  <li><a onClick={this.props.switchMyBoardInspirations}>My Inspirations</a></li>
                   <br/>
                   <li className="last logout"><a href="/auth/facebook/logout"><i className="fa fa-facebook">Logout</i></a></li>
                 </ul>

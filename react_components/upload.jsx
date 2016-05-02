@@ -40,8 +40,6 @@ var Upload = React.createClass({
     },
 
 	handleEmbedChange: function(ev) {
-		console.log(ev.target.value);
-		console.log(this.convertMedia(ev.target.value));
 		this.setState({
 			embedcode: this.convertMedia(ev.target.value),
 		});
@@ -64,7 +62,6 @@ var Upload = React.createClass({
         	var updatedinspirations = this.state.checkedInspirations.filter(function(id) { return id != elem_id });
         }
 
-		console.log(this.state.checkedInspirations, updatedinspirations);
 		this.setState({
 			checkedInspirations: updatedinspirations,
 		});
@@ -110,7 +107,7 @@ var Upload = React.createClass({
   		var masonryPieces = board_pieces.map(function(piece, j){
 			return (
 	       		<div key={'div'+j} className="image-div-class">
-	            	<p id="title">{piece.title}</p>
+	            	<strong><p id="title">{piece.title}</p></strong>
 					<div dangerouslySetInnerHTML={parent.embedCodeRawMarkup(piece.src)}/>
 	            </div>
 			);
@@ -127,25 +124,18 @@ var Upload = React.createClass({
 	  		var updatePieces = this.state.pieces;
 	  		updatePieces.splice(elementIndex,1);
 
-	  		console.log(updateElementnum);
-	  		console.log(updatePieces);
-
   			this.setState({
 				elementnum: updateElementnum, 
 				pieces: updatePieces
 			});
   		} else {
 	  		$("#title"+element).removeClass('panel-title arrow-down').addClass('panel-title arrow-up');
-	  		// $("#checkbox-board"+element).css({'display':'none'});
 
 	  		var updateElementnum = this.state.elementnum;
 	  		updateElementnum.push(element);
 
 	  		var updatePieces = this.state.pieces;
 	  		updatePieces.push(masonryPieces);
-
-	  		console.log(updateElementnum);
-	  		console.log(updatePieces);
 
   			this.setState({
 				elementnum: updateElementnum, 
@@ -157,12 +147,6 @@ var Upload = React.createClass({
     render: function(){
     	var parent = this;
 
-    	var sidepanel = function() {
-
-    		if(parent.props.myBoardsInspirations.length === 0){ 
-    			return(<h4> You have no inpirations, bitch. Go make some </h4>)
-    		}
-    		else{ 
     			var childElements = parent.props.myBoardsInspirations.map(function(element, i){
     				if (parent.state.pieces.length > 0){
     					var indexOf_elementnum = (parent.state.elementnum).indexOf(i);
@@ -213,14 +197,6 @@ var Upload = React.createClass({
 					}
 		        });
 
-		        return(
-		        	<div>
-		        		{childElements}
-		        	</div>
-	            )
-    		}
-    	}
-
         return (
         	<div className='centering-div'>
 				<div id='embed-form'>
@@ -253,7 +229,7 @@ var Upload = React.createClass({
 					<div>
 						<h2> Choose Inspirations </h2>
 						<div id="inspirationslist">
-							{sidepanel()}
+							{childElements}
 				        </div>
 					</div>
 				</div>

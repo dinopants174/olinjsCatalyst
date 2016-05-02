@@ -132,13 +132,6 @@ var CatalystBox = React.createClass({
         });
     },
 
-    showMyBoardInspirations: function() {
-        this.setState({
-            display: DisplayEnum.DISPLAY_MYBOARD,
-            subpage: 'inspirations',
-        });
-    },
-
     showMyBoardUploads: function() {
         this.setState({
             display: DisplayEnum.DISPLAY_MYBOARD,
@@ -203,8 +196,9 @@ var CatalystBox = React.createClass({
         })
     }, 
 
-    deleteElement: function(item, boardtype) {
+    deleteElement: function(item, boardID, boardtype) {
 
+        console.log("deleting element");
         if (boardtype==="uploads"){
             console.log("here");
             $.ajax({
@@ -227,14 +221,9 @@ var CatalystBox = React.createClass({
                 dataType: 'json',
                 cache: false,
                 type: 'POST',
-                data: {srcId: item._id}, 
+                data: {srcId: item._id, boardId: boardID}, 
                 success: function(userObject){ 
-                    console.log("alleged user object", userObject)
-
-                    userObject.inspirations.forEach(function(i){ 
-                        console.log(i)
-                    })
-                    
+                    console.log("userstuff", userObject);
                     this.setState({user: userObject}); 
                 }.bind(this), 
                 error: function(xhr, status, err){ 
@@ -254,7 +243,7 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_UPLOAD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <Upload uploadCode = {this.handleUploadCode} myBoardsInspirations={this.state.user.myBoards || []}/>
                     </div>
@@ -264,10 +253,10 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_MYBOARD:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <br/>
-                        <MyBoard switchMyBoard={this.showMyBoard} switchUploads={this.showMyBoardUploads} switchInspirations={this.showMyBoardInspirations} 
+                        <MyBoard switchMyBoard={this.showMyBoard} switchUploads={this.showMyBoardUploads}
                         user={this.state.user} subpage={this.state.subpage} uploads={this.state.user.uploads || []} myBoardsInspirations={this.state.user.myBoards || []} 
                         deleteElement={this.deleteElement}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
@@ -278,11 +267,11 @@ var CatalystBox = React.createClass({
             case DisplayEnum.DISPLAY_HOME:
                 page = (
                     <div>
-                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
+                        <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations || []} getPiece = {this.getPieceAndTree}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
-                        <button onClick={this.testAddBoard}>Add Board</button> 
+                        <button onClick={this.testAddInspiration}>Add Inspiration</button> 
                     </div>
                 );
                 break;
