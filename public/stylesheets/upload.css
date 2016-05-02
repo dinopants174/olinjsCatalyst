@@ -108,6 +108,7 @@ div#inspirationslist {
   width: 100%;
 }
 
+
 div.inspirations-div-class iframe {
   width: 300px;
   height: 100px;
@@ -217,4 +218,58 @@ input[value="board"]:checked:before {
   color:rgba(66,143,137,0.8);
   border-top-style: none;
   border-right-style: none;
+}
+
+.input_wrapper {
+  position: relative;
+}
+
+.input_wrapper input[type="text"] {
+  margin-top: 1em;
+  display: block;
+  width: 100%;
+  background: white;
+  border: 1px solid #DADADA;
+  box-shadow: 0 0 1px 0 #E4E4E4;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  padding: 1em;
+  -webkit-transition: all 250ms ease;
+  -moz-transition: all 250ms ease;
+  -ms-transition: all 250ms ease;
+  -o-transition: all 250ms ease;
+  transition: all 250ms ease;
+  color: #5E5E5E;
+  text-indent: 15%;
+}
+.input_wrapper input[type="text"]:focus {
+  background: rgba(51, 51, 51, 0.05);
+  box-shadow: inset 2px 2px 5px 0 #DADADA;
+  outline: none;
+  text-indent: 0;
+}
+.input_wrapper label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: #428F89;
+  color: white;
+  box-sizing: border-box;
+  width: 15%;
+  text-align: center;
+  line-height: 2.8em;
+  -webkit-transition: all 250ms ease;
+  -moz-transition: all 250ms ease;
+  -ms-transition: all 250ms ease;
+  -o-transition: all 250ms ease;
+  transition: all 250ms ease;
+}
+.input_wrapper input[type="text"]:focus + label {
+  left: 85%;
+}
+
+.embed-text {
+  width: 50%;
 }

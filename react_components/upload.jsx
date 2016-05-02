@@ -226,20 +226,25 @@ var Upload = React.createClass({
 				<div id='embed-form'>
 					<h1>Post</h1>
 					<br/>
-					<div class="field name-box">
-					    <input type="text" id="name" placeholder="Who Are You?"/>
-					<input className='embed-code'
-								type='text'
-								onChange={this.handleTitleChange} 
-								placeholder='Title'/>
-						<label for="name">Name</label>
-					    <span class="ss-icon">check</span>
+					<div className="container embed-text">
+						<p className="input_wrapper">
+							<input type='text'
+									name="title-name"
+									id ="title-name"
+									onChange={this.handleTitleChange}/>
+							<label htmlFor="title-name">NAME</label>
+						</p>
 					</div>
-					<h2 className="form-input-text">URL: </h2>
-					<input className='embed-code'
-								type='text'
-								onChange={this.handleEmbedChange} 
-								placeholder='Embed Code'/>
+
+					<div className="container embed-text">
+						<p className="input_wrapper">
+							<input type='text'
+									name="embed-name"
+									id ="embed-name"
+									onChange={this.handleEmbedChange}/>
+							<label htmlFor="embed-name">Embed Code</label>
+						</p>
+					</div>
 					<br/>
 					<div id='embed-background-grid'>
 						<div className="embedplayer" dangerouslySetInnerHTML={this.rawMarkup()} />
