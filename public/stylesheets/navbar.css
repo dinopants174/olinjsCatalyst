@@ -8,11 +8,16 @@
 }
 
 #logo { 
-    width: 5%;
+    width: 10%;
     margin-left: 5%;
     padding: 5px;
     float: left;
  }
+
+#img-title {
+  font-size: 18px;
+  color: #428F89;
+}
 
 .img-logo {
   width: 45px;

@@ -103,6 +103,16 @@ div#embed-background-grid {
   z-index: 0;
 }
 
+div.embedplayer iframe {
+  width: 700px;
+  height: 300px;
+}
+
+div.embedplayer a img{
+  width: 700px;
+  height: 300px;
+}
+
 div#inspirationslist {
   text-align: center;
   width: 100%;
