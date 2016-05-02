@@ -78,14 +78,6 @@ var Feed = React.createClass({
 		};
 	}, 
 
-    componentWillReceiveProps: function() {
-        this.setState({tree : {}})
-        this.setState({expandBoolean: false})
-        this.setState({treeBoolean: false})
-        this.setState({newBoard: false})
-        this.setState({newBoardName: ''});    
-    },
-
     /* This should be updated to check if it's in any board*/
 	checkIfInInspirations: function(object, boards, string){ 
 		var i; 
@@ -225,6 +217,16 @@ var Feed = React.createClass({
             // $("#favButton"+this.state.favItem._id).css({'color' : '#428f89'})
             console.log("about to add" + this.state.favItem.title + "to board" + this.state.boardsADD)
             console.log("boards ADD" + this.state.boardsADD +  "and type:" + typeof(this.state.boardsADD))
+            this.setState({tree : {}})
+            this.setState({display: false})
+            this.setState({expandBoolean: false})
+            this.setState({treeBoolean: false})
+            this.setState({dropdownBoolean: false})
+            this.setState({favItem: {}})
+            this.setState({newBoard: false})
+            this.setState({newBoardName: ''})
+            this.setState({boardsADD: []})
+            this.setState({boardsDELETE: []})
             this.props.addInspir(this.state.favItem, this.state.boardsADD) 
         }
         if(this.state.boardsDELETE.length > 0){ 
