@@ -304,7 +304,6 @@ var CatalystBox = React.createClass({
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} getPiece = {this.getPieceAndTree} saveNewBoard = {this.createNewBoard} boards = {this.state.user.myBoards}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
-                        <button onClick={this.testAddBoard}>Add Board</button> 
                     </div>
                 );
                 break;
