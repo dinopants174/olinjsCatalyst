@@ -184,27 +184,24 @@ var CatalystBox = React.createClass({
         });
     },
 
-    addInspiration: function(item){ 
-        console.log("you're about to add this inspiration", item)
-        console.log("what is this id", item._id)
+    addInspiration: function(piece, boards){ 
+        console.log("you're about to add this inspiration" + piece + "to these boards:" + boards)
 
-        /*Need to send board._id, as well as item._id*/
-        $.ajax({ 
-            url: '/api/user/postInspiration',
-            dataType: 'json',
-            cache: false,
-            type: 'POST',
-            data: {srcId: item._id}, 
-            success: function(userObject){ 
-                console.log(userObject)
-                this.setState({user: userObject}); 
-            }.bind(this), 
-            error: function(xhr, status, err){ 
-                console.log("there has been an error")
-                console.error('/api/user/postInspiration', status, err.toString())
-
-            }.bind(this)
-        })
+        // $.ajax({ 
+        //     url: '/api/user/postInspiration',
+        //     dataType: 'json',
+        //     cache: false,
+        //     type: 'POST',
+        //     data: {srcId: piece._id, boardId: board._id }, 
+        //     success: function(user){ 
+        //         console.log(user)
+        //         this.setState({user: user}); 
+        //     }.bind(this), 
+        //     error: function(xhr, status, err){ 
+        //         console.log("there has been an error")
+        //         console.error('/api/user/postInspiration', status, err.toString())
+        //     }.bind(this)
+        // })
     }, 
 
     getPieceAndTree: function(item, callback){ 
@@ -299,7 +296,7 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
-                        <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations || []} getPiece = {this.getPieceAndTree} saveNewBoard = {this.createNewBoard}/>
+                        <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} getPiece = {this.getPieceAndTree} saveNewBoard = {this.createNewBoard} boards = {this.state.user.myBoards}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                         <button onClick={this.testAddBoard}>Add Board</button> 
                     </div>

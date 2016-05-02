@@ -315,10 +315,6 @@ div.image-div-class a img{
   border-radius: 3px;
 }
 
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 div#search{  
   text-align: center;
   width: 100%;
@@ -338,11 +334,7 @@ input {
   outline: none;
 }
 
-<<<<<<< Updated upstream
 .searchcontainer {
-=======
-input[type=text] {
->>>>>>> Stashed changes
   -webkit-appearance: textfield;
   -webkit-box-sizing: content-box;
   font-family: inherit;
@@ -353,11 +345,7 @@ input::-webkit-search-cancel-button {
   display: none; 
 }
 
-<<<<<<< Updated upstream
 .react-search__input {
-=======
-input[type=text] {
->>>>>>> Stashed changes
   background: #ededed url(http://static.tumblr.com/ftv85bp/MIXmud4tx/search-icon.png) no-repeat 9px center;
   border: solid 1px #ccc;
   padding: 9px 10px 9px 32px;
@@ -372,11 +360,8 @@ input[type=text] {
   -moz-transition: all .5s;
   transition: all .5s;
 }
-<<<<<<< Updated upstream
+
 .react-search__input:focus {
-=======
-input[type=text]:focus {
->>>>>>> Stashed changes
   width: 300px;
   background-color: #fff;
   border-color: #66CC75;
@@ -393,21 +378,3 @@ input:-moz-placeholder {
 input::-webkit-input-placeholder {
   color: #999;
 }
-<<<<<<< Updated upstream
-=======
-
-.dropdown {
-    float: right; 
-    position: relative;
-    display: inline-block;
-}
-
-.dropdownContent {
-    z-index: 2;  
-    position: relative;
-    background-color: gray;
-    top: 10px;
-    left: 50px;
-
-}
->>>>>>> Stashed changes
