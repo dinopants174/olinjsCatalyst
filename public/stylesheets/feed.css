@@ -428,12 +428,14 @@ input::-webkit-input-placeholder {
   left: 0;
   top: 0;
   height: 100%;
+  font-size: 90%;
   background: #428F89;
   color: white;
   box-sizing: border-box;
   width: 35%;
+  padding-top: 5%;
   text-align: center;
-  line-height: 2.8em;
+  line-height: 1em;
   -webkit-transition: all 250ms ease;
   -moz-transition: all 250ms ease;
   -ms-transition: all 250ms ease;
