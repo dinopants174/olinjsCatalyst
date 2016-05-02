@@ -114,6 +114,25 @@ var CatalystBox = React.createClass({
         })
     },
 
+    createNewBoard: function(boardName){ 
+        console.log("about to save this board:", boardName); 
+        $.ajax({
+            url: '/api/user/postBoard',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {user: this.state.user, boardTitle: boardName},
+            success: function(user) {
+                console.log("new user after saving board", user)
+                this.setState({user: user})
+            }.bind(this),
+            error: function(xhr, status, err) {
+                console.error('/api/user/postBoard', status, err.toString());
+            }.bind(this)
+        });  
+
+    },
+
     componentDidMount: function() {
         this.loginFacebook();
         return null;
@@ -280,7 +299,7 @@ var CatalystBox = React.createClass({
                     <div>
                         <Navbar switchHome={this.showHome} switchMyBoard={this.showMyBoard} switchMyBoardInspirations={this.showMyBoardInspirations}
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
-                        <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations || []} getPiece = {this.getPieceAndTree}/>
+                        <Feed deleteElement={this.deleteElement} addInspir = {this.addInspiration} feedObjects = {this.state.feed} userInspirations = {this.state.user.inspirations || []} getPiece = {this.getPieceAndTree} saveNewBoard = {this.createNewBoard}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                         <button onClick={this.testAddBoard}>Add Board</button> 
                     </div>

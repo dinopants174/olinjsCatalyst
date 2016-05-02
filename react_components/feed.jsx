@@ -9,6 +9,7 @@ var fs = require('fs');
 
 var Masonry = require('./masonry.jsx');
 var Barchart = require('./d3Chart.jsx');
+// var Dropdown = require('./dropdown.jsx'); 
 
 var masonryOptions = {
     transitionDuration: 0
@@ -17,7 +18,7 @@ var masonryOptions = {
 var Feed = React.createClass({ 
 	whiteContentStyles: {
         position: 'fixed',
-        top: '20%',
+        top: '10%',
         left: '20%',
         right: '50%',
         width: '60vw',
@@ -65,10 +66,14 @@ var Feed = React.createClass({
 			display: false, 
 			tree: {},
             expandBoolean: false,
-            treeBoolean: false, 
+            treeBoolean: false,
+            dropdownBoolean: false, 
+            favItem: '',
             keys:[{'author':['fbId', 'name', 'proPic', 'inspirations', 'inspirations', 'uploads']}, 'src', 'date', 'title', 'inspirations', 'inspired'], 
             key:'title',
             searchResults: [],
+            newBoard: false,
+            newBoardName: '',
 		};
 	}, 
 
@@ -82,11 +87,21 @@ var Feed = React.createClass({
 		return false; 
 	},
 
-	handleClickToAddInspiration: function(item){ 
-		this.props.addInspir(item)
+	handleClickToAddInspiration: function(item){
+        console.log("in handle click to add inspiration")
+        $("#favButton"+item._id).css({'color' : '#428f89'})
+        // THIS WILL CHANGE: this.props.addInspir(item)
+        this.openLightbox(item, 'dropdown')
 	},
 
-	openLightbox: function(item, lightboxType){ 
+    handleUnclickInspiration: function(item){ 
+        this.setState({dropdownItem: ''})
+        $("#favButton"+item._id).css({'color' : 'black'})
+        this.props.deleteElement.bind(null, item, "inspirations")
+    },
+
+	openLightbox: function(item, lightboxType){
+        console.log('in open lightbox') 
 		var parent = this; 
 		var pieceTree; 
         if (lightboxType === 'expand') {
@@ -95,12 +110,17 @@ var Feed = React.createClass({
                 parent.setState({display: true})
                 parent.setState({expandBoolean: true});
             });
-        } else {
+        } 
+        if (lightboxType === 'tree'){
             this.props.getPiece(item, function(tree){ 
                 parent.setState({tree: tree})
                 parent.setState({display: true})
                 parent.setState({treeBoolean: true});
             });  
+        }
+        if (lightboxType === 'dropdown'){
+            console.log("is it a dropdown?")
+            this.setState({dropdownBoolean: true, favItem: item, display : true, expandBoolean: false, treeBoolean: false, newBoard: false});
         }
 	},
 
@@ -108,7 +128,10 @@ var Feed = React.createClass({
 		this.setState({tree : {}})
         this.setState({display: false})
         this.setState({expandBoolean: false})
-        this.setState({treeBoolean: false});
+        this.setState({treeBoolean: false})
+        this.setState({dropdownBoolean: false})
+        this.setState({favItem: ''})
+        this.setState({newBoard: false});
     },
     
 	rawMarkup: function(e){ 
@@ -126,13 +149,25 @@ var Feed = React.createClass({
     pinnedButton: function(item){ 
     	var pinButton; 
 			if(this.checkIfInInspirations(item, this.props.userInspirations)){ 
-				pinButton = <button className="button add" onClick = {this.props.deleteElement.bind(null, item, "inspirations")} style={{"color":"#999"}}> <i className="fa fa-times" aria-hidden="true"></i> </button>
+				pinButton = <button className="button add" onClick = {this.openLightbox.bind(null, item, 'dropdown')} style={{"color":"#999"}}> <i className="fa fa-times" id = {"favButton"+item._id} aria-hidden="true"></i> </button>
 			}
 			else{ 
-				pinButton = <button className="button add" onClick = {this.handleClickToAddInspiration.bind(null, item)}> <i className="fa fa-star-o" aria-hidden="true"></i> </button>
-			}
+				pinButton = <button className="button add" onClick = {this.openLightbox.bind(null, item, 'dropdown')}> <i className="fa fa-star-o" id = {"favButton"+item._id} aria-hidden="true"></i> </button> 
+
+            }
 			return pinButton
     },
+
+    makeANewBoard: function(){ this.setState({newBoard: true}) }, 
+
+    handleBoardNameChange: function(e) {
+        this.setState({newBoardName: e.target.value});
+    },
+
+    saveNewBoard: function(){ 
+        console.log('this is the name of the board', this.state.newBoardName);
+        this.props.saveNewBoard(this.state.newBoardName);  
+    }, 
 
 	render: function(){ 
 		var parent = this; 
@@ -145,7 +180,9 @@ var Feed = React.createClass({
                		<div key={'div'+i} className="image-div-class">
                         <p id="title">{element.title} by {element.author.name}</p>
     	                <div dangerouslySetInnerHTML={parent.rawMarkup(element.src)}/>
+                        <div className = "dropdown">  
     	            	{pinButton}
+                        </div> 
     	            	<button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'tree')}> <i className="fa fa-tree" aria-hidden="true"></i> </button>
                         <button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'expand')}> <i className="fa fa-expand" aria-hidden="true"></i> </button>
     	            </div>
@@ -163,22 +200,50 @@ var Feed = React.createClass({
     		                disableImagesLoaded={false}
     		            >  
     		            {childElements}
+                        
     		            </Masonry>
     				</div>
-                      {this.state.display ? (
+                        {this.state.display ? (
                         <div className="overlay">
                             <div style={this.blackOverlayStyles} onClick={this.closeLightbox} />
                             <div style={this.whiteContentStyles}>
                                 <a style={this.closeTagStyles} onClick={this.closeLightbox}>&times;</a>
-                                    {this.state.expandBoolean ? (
-                                        <div id = "upclose" dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
-                                        ): null}
-                                    {this.state.treeBoolean ? (
-                                        <div className = 'upclose'>
-                                            <Barchart data={[this.state.tree]} title={this.state.tree.title} />
+                                {this.state.expandBoolean ? (
+                                    <div> 
+                                    <div id = "upclose" dangerouslySetInnerHTML={this.rawMarkup(this.state.tree.src)}/>
+                                    <div> {this.pinnedButton(this.state.tree)}</div>
+                                    </div> 
+                                    ): null}
+                                {this.state.treeBoolean ? (
+                                    <div>
+                                    <div className = 'upclose'>
+                                        <Barchart data={[this.state.tree]} title={this.state.tree.title} />
+                                    </div>
+                                    <div> {this.pinnedButton(this.state.tree)}</div>
+                                    </div>
+                                    ): null}
+                                {this.state.dropdownBoolean ? (
+                                    <div className='centering-div'>
+                                        <h4> Which board do you want to save this piece to? </h4>
+                                        <div className="image-div-class">
+                                            <p id="title">{this.state.favItem.title} by {this.state.favItem.author.name}</p>
+                                            <div dangerouslySetInnerHTML={parent.rawMarkup(this.state.favItem.src)}/>
                                         </div>
-                                        ): null}                                
-                                <div> {this.pinnedButton(this.state.tree)}</div>
+                                        <div> 
+                                            <h4> <b> Boards </b> </h4>
+                                            <div onClick = {this.makeANewBoard}> Make a new Board </div>
+                                            {this.state.newBoard ? (
+                                                <div id='embed-form'> 
+                                                    <p> New Board Name </p> 
+                                                    <input type="text" className='embed-code' placeholder="Your name" 
+                                                        value={this.state.text} onChange={this.handleBoardNameChange}/> 
+                                                    <button onClick = {this.saveNewBoard}> Save </button> 
+
+                                                </div>
+                                            ): null}
+                                        </div> 
+                                    </div> 
+                                    ): null}             
                             </div> 
                         </div>
                       ) : 
