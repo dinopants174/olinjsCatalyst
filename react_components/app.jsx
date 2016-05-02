@@ -185,23 +185,23 @@ var CatalystBox = React.createClass({
     },
 
     addInspiration: function(piece, boards){ 
-        console.log("you're about to add this inspiration" + piece + "to these boards:" + boards)
-
-        // $.ajax({ 
-        //     url: '/api/user/postInspiration',
-        //     dataType: 'json',
-        //     cache: false,
-        //     type: 'POST',
-        //     data: {srcId: piece._id, boardId: board._id }, 
-        //     success: function(user){ 
-        //         console.log(user)
-        //         this.setState({user: user}); 
-        //     }.bind(this), 
-        //     error: function(xhr, status, err){ 
-        //         console.log("there has been an error")
-        //         console.error('/api/user/postInspiration', status, err.toString())
-        //     }.bind(this)
-        // })
+        console.log("you're about to add this inspiration" + piece + "to these boards:" + [boards])
+        console.log("type of boards", Array.isArray(boards))
+        $.ajax({ 
+            url: '/api/user/postInspiration',
+            dataType: 'json',
+            cache: false,
+            type: 'POST',
+            data: {srcId: piece._id, boardIds: boards}, 
+            success: function(user){ 
+                console.log("user upon add inspiration", user)
+                this.setState({user: user}); 
+            }.bind(this), 
+            error: function(xhr, status, err){ 
+                console.log("there has been an error")
+                console.error('/api/user/postInspiration', status, err.toString())
+            }.bind(this)
+        })
     }, 
 
     getPieceAndTree: function(item, callback){ 
@@ -219,8 +219,8 @@ var CatalystBox = React.createClass({
         })
     }, 
 
-    deleteElement: function(item, boardtype) {
-
+    deleteElement: function(item, boardtype, boardIds) {
+        console.log("board ids in delete element", boardIds)
         if (boardtype==="uploads"){
             console.log("here");
             $.ajax({
@@ -243,14 +243,9 @@ var CatalystBox = React.createClass({
                 dataType: 'json',
                 cache: false,
                 type: 'POST',
-                data: {srcId: item._id}, 
+                data: {srcId: item._id, boardIds: boardIds}, 
                 success: function(userObject){ 
-                    console.log("alleged user object", userObject)
-
-                    userObject.inspirations.forEach(function(i){ 
-                        console.log(i)
-                    })
-                    
+                    console.log("user object after deleting piece from multiple boards", userObject)                   
                     this.setState({user: userObject}); 
                 }.bind(this), 
                 error: function(xhr, status, err){ 
@@ -261,6 +256,7 @@ var CatalystBox = React.createClass({
             }) 
         }
     },
+
 
     render: function() {
         var page;

@@ -1,6 +1,4 @@
 var React = require('react');
-// import SearchInput, {createFilter} from 'react-search-input'
-// var SearchInput = require('react-search-input'); 
 var SearchBar = require('./search.jsx'); 
 
 var dir = require('node-dir'); 
@@ -9,7 +7,6 @@ var fs = require('fs');
 
 var Masonry = require('./masonry.jsx');
 var Barchart = require('./d3Chart.jsx');
-// var Dropdown = require('./dropdown.jsx'); 
 
 var masonryOptions = {
     transitionDuration: 0
@@ -18,10 +15,12 @@ var masonryOptions = {
 var Feed = React.createClass({ 
 	whiteContentStyles: {
         position: 'fixed',
+        height: '80%',
         top: '10%',
         left: '20%',
         right: '50%',
         width: '60vw',
+        overflow: 'scroll',
         backgroundColor: '#fff',
         color: '#7F7F7F',
         padding: '20px',
@@ -44,8 +43,8 @@ var Feed = React.createClass({
 
     closeTagStyles: {
         float: 'right',
-        marginTop: '-30px',
-        marginRight: '-30px',
+        marginTop: '-23spx',
+        marginRight: '-17px',
         cursor: 'pointer',
         color: '#fff',
         border: '1px solid #AEAEAE',
@@ -56,7 +55,7 @@ var Feed = React.createClass({
         display: 'inline-block',
         lineHeight: '0px',
         padding: '11px 3px',
-        textDecoration: 'none'
+        textDecoration: 'none', 
     },
 
 	getInitialState: function(){ 
@@ -68,25 +67,43 @@ var Feed = React.createClass({
             expandBoolean: false,
             treeBoolean: false,
             dropdownBoolean: false, 
-            favItem: '',
+            favItem: {},
             keys:[{'author':['fbId', 'name', 'proPic', 'inspirations', 'inspirations', 'uploads']}, 'src', 'date', 'title', 'inspirations', 'inspired'], 
             key:'title',
             searchResults: [],
             newBoard: false,
             newBoardName: '',
-            clickedBoards: [],
+            boardsADD: [],
+            boardsDELETE: []
 		};
 	}, 
 
     /* This should be updated to check if it's in any board*/
-	checkIfInInspirations: function(object, boards){ 
+	checkIfInInspirations: function(object, boards, string){ 
 		var i; 
-        for(i = 0; i < boards.length; i++){ 
-			if(this.checkIfObjectInBoard(object, boards[i].pieces)){ 
-                return true; 
-            }
-		}
-		return false; 
+        switch (string){ 
+            case "check": 
+                for(i = 0; i < boards.length; i++){ 
+                    if(this.checkIfObjectInBoard(object, boards[i].pieces, "check")){ 
+                        return true; 
+                    }
+                }
+                return false;
+                break; 
+            case "getid":
+                var boardsUsed = []; 
+                 for(i = 0; i < boards.length; i++){ 
+                    if(this.checkIfObjectInBoard(object, boards[i].pieces)){
+                        console.log("item" + object.title + "in" + boards[i].title) 
+                        boardsUsed.push(boards[i]._id); 
+                    }
+                }
+                return boardsUsed;
+                break;
+            default: 
+                console.log("wrong string, not accept:", string) 
+        }
+        
 	},
 
     checkIfObjectInBoard: function(piece, boardPieces){ 
@@ -96,24 +113,10 @@ var Feed = React.createClass({
                 return true;
             }
         }
-        return false; 
-    },
-
-	// handleClickToAddInspiration: function(item){
- //        console.log("in handle click to add inspiration")
- //        $("#favButton"+item._id).css({'color' : '#428f89'})
- //        // THIS WILL CHANGE: this.props.addInspir(item)
- //        this.openLightbox(item, 'dropdown')
-	// },
-
-    handleUnclickInspiration: function(item){ 
-        this.setState({dropdownItem: ''})
-        $("#favButton"+item._id).css({'color' : 'black'})
-        this.props.deleteElement.bind(null, item, "inspirations")
+        return false;
     },
 
 	openLightbox: function(item, lightboxType){
-        console.log('in open lightbox') 
 		var parent = this; 
 		var pieceTree; 
         if (lightboxType === 'expand') {
@@ -131,7 +134,6 @@ var Feed = React.createClass({
             });  
         }
         if (lightboxType === 'dropdown'){
-            console.log("is it a dropdown?")
             this.setState({dropdownBoolean: true, favItem: item, display : true, expandBoolean: false, treeBoolean: false, newBoard: false});
         }
 	},
@@ -153,11 +155,11 @@ var Feed = React.createClass({
         this.setState({expandBoolean: false})
         this.setState({treeBoolean: false})
         this.setState({dropdownBoolean: false})
-        this.setState({favItem: ''})
+        this.setState({favItem: {}})
         this.setState({newBoard: false})
         this.setState({newBoardName: ''}),
-        this.setState({clickedBoards: []});
-
+        this.setState({boardsADD: []})
+        this.setState({boardsDELETE: []});
     },
     
 	rawMarkup: function(e){ 
@@ -174,17 +176,19 @@ var Feed = React.createClass({
 
     pinnedButton: function(item){ 
     	var pinButton; 
-			if(this.checkIfInInspirations(item, this.props.boards)){ 
-				pinButton = <button className="button add" style={{"color":"#999"}}> <i className="fa fa-times" id = {"favButton"+item._id} aria-hidden="true"></i> </button>
+			if(this.checkIfInInspirations(item, this.props.boards, "check")){ 
+				pinButton = <button className="button add" style={{"color":"#999"}} onClick = {this.something.bind(null, item)}> <i className="fa fa-times" id = {"favButton"+item._id} aria-hidden="true"></i> </button>
 			}
 			else{ 
 				pinButton = <button className="button add" onClick = {this.openLightbox.bind(null, item, 'dropdown')}> <i className="fa fa-star-o" id = {"favButton"+item._id} aria-hidden="true"></i> </button> 
-
             }
 			return pinButton
     },
 
-    makeANewBoard: function(){ this.setState({newBoard: true}) }, 
+    makeANewBoard: function(){ 
+        if(this.state.newBoard) { this.setState({newBoard: false}) } 
+        else {this.setState({newBoard: true})}
+    }, 
 
     handleBoardNameChange: function(e) {
         this.setState({newBoardName: e.target.value})
@@ -205,29 +209,57 @@ var Feed = React.createClass({
         return reversedBoards;             
     },
 
-    addPieceToBoards : function(){ 
-        console.log("about to add" + this.state.favItem.title + "to board" + this.state.clickedBoards)
-        $("#favButton"+this.state.favItem._id).css({'color' : '#428f89'})
-        this.props.addInspir(this.state.favItem, this.state.clickedBoards); 
+    updateItemInBoards : function(){    
+        console.log("HERE ARE YOU BOARDS", this.state.boardsADD);
+        console.log("HERE IS YOUR TYPE BOARDS", typeof(this.state.boardsADD));
+
+        if(this.state.boardsADD.length > 0){ 
+            // $("#favButton"+this.state.favItem._id).css({'color' : '#428f89'})
+            console.log("about to add" + this.state.favItem.title + "to board" + this.state.boardsADD)
+            console.log("boards ADD" + this.state.boardsADD +  "and type:" + typeof(this.state.boardsADD))
+            this.props.addInspir(this.state.favItem, this.state.boardsADD) 
+        }
+        if(this.state.boardsDELETE.length > 0){ 
+            console.log("boards to delete in updateiteminboards", this.state.boardsDELETE); 
+            this.props.deleteElement(this.state.favItem, "not upload board", this.state.boardsDELETE); 
+        }
     },
 
-    handleBoardClick: function(b){ 
-        var index = this.state.clickedBoards.indexOf(b._id)
-        console.log("index", index)
-        if (index > -1){ 
-            var arrayToSplice = this.state.clickedBoards; 
-            arrayToSplice.splice(index, 1); 
-            this.setState({clickedBoards : arrayToSplice})
+    handleBoardClickCheck: function(piece, b){
+        var index = this.state.boardsADD.indexOf(b._id)
+        if ((index ===-1) && (!this.checkIfObjectInBoard(piece, b.pieces, "check"))){ 
+            var updatedBoard = this.state.boardsADD; 
+            updatedBoard.push(b._id); 
+            this.setState({boardsADD: updatedBoard})
+            console.log("boards aDD", this.state.boardsADD); 
         }
-        else{ 
-            this.setState({clickedBoards: this.state.clickedBoards.concat([b._id])})
-        }  
     }, 
+
+    handleBoardClickUnCheck: function(piece, b){ 
+        var index = this.state.boardsADD.indexOf(b._id)
+
+        if(this.checkIfObjectInBoard(piece, b.pieces, "check")){ 
+            console.log("going to delete this piece from this board, ", piece.title, "board", b.title)
+            var updatedBoardDelete = this.state.boardsDELETE; 
+            updatedBoardDelete.push(b._id); 
+            this.setState({boardsDELETE: updatedBoardDelete})
+        }else if(index > -1){ 
+            var arrayToSplice = this.state.boardsADD; 
+            arrayToSplice.splice(index, 1); 
+            this.setState({boardsADD : arrayToSplice})
+        }
+    },
+
+    something: function(item){ 
+        var boardsWithItem = this.checkIfInInspirations(item, this.props.boards, "getid"); 
+        console.log("type of boards with the item", boardsWithItem)
+        this.props.deleteElement(item, "not uploads", boardsWithItem); 
+    },
 
 	render: function(){ 
 		var parent = this; 
         var length_images = this.state.images.length;
-        console.log("clicked board ids", this.state.clickedBoards); 
+        console.log("clicked board ids", this.state.boardsADD); 
         if (length_images > 0){ 
 
             var childElements = this.state.images.map(function(element, i){
@@ -246,23 +278,21 @@ var Feed = React.createClass({
             });
             console.log("normal", this.props.boards)
             console.log("reversal", this.reverseBoards(this.props.boards))
-            // var reversedBoards = this.reverseBoards(this.props.boards);
-            // first check if element in board already. 
-                        // then display check if clicked and not in board 
+
             var allBoards = this.reverseBoards(this.props.boards).map(function(board){ 
-                    if(parent.checkIfObjectInBoard(parent.state.favItem, board.pieces) || (parent.state.clickedBoards.indexOf(board._id) > -1)){ 
+                    if(parent.checkIfObjectInBoard(parent.state.favItem, board.pieces, "check") || (parent.state.boardsADD.indexOf(board._id) > -1)){ 
                         return (
-                            <div key = {"inboard" + board._id} onClick = {parent.handleBoardClick.bind(null, board)}> 
-                                <div id = {"title" + board._id}> {board.title} <i style={this.closeTagStyles} onClick={this.closeLightbox}>&check;</i> </div>  
+                            <div key = {"inboard" + board._id} className = "panel-body stuff" onClick = {parent.handleBoardClickUnCheck.bind(null, parent.state.favItem, board)}> 
+                                {board.title} <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Check_mark_23x20_02.svg/1081px-Check_mark_23x20_02.svg.png"/> 
                             </div> 
 
                         ); 
 
-                    }else if (!parent.checkIfObjectInBoard(parent.state.favItem, board.pieces) || (parent.state.clickedBoards.indexOf(board._id) < 0 )){ 
+                    }else if (!parent.checkIfObjectInBoard(parent.state.favItem, board.pieces, "check") || (parent.state.boardsADD.indexOf(board._id) < 0 )){ 
                         return (
-                            <div key = {"inboard" + board._id}> 
-                                <div key = {"notinboard" + board._id} onClick = {parent.handleBoardClick.bind(null, board)}>
-                                    <div id = {"title" + board._id}> {board.title} </div> 
+                            <div key = {"inboard" + board._id} className = "panel-body stuff"> 
+                                <div key = {"notinboard" + board._id} onClick = {parent.handleBoardClickCheck.bind(null, parent.state.favItem, board)}>
+                                    <div id = "boardtitle"> {board.title} </div> 
                                 </div>
                             </div> 
                         )
@@ -305,29 +335,42 @@ var Feed = React.createClass({
                                 {this.state.dropdownBoolean ? (
                                     <div className='centering-div'>
                                         <h4> Which board do you want to save this piece to? </h4>
-                                        <div className="image-div-class">
+                                        <div className="image-div-class centering-div">
                                             <p id="title">{this.state.favItem.title} by {this.state.favItem.author.name}</p>
                                             <div dangerouslySetInnerHTML={parent.rawMarkup(this.state.favItem.src)}/>
                                         </div>
-                                        <div> 
-                                            <h4> <b> Boards </b> </h4>
-                                            {!this.state.newBoard ? (
-                                                <div onClick = {this.makeANewBoard}> Make a new Board </div>
-                                            ): (
-                                                <div id='embed-form'> 
-                                                    <p> New Board Name </p> 
-                                                    <input type="text" className='embed-code' placeholder="Your name" 
-                                                        value={this.state.text} onChange={this.handleBoardNameChange}/> 
-                                                    <button onClick = {this.saveNewBoard}> Make New Board </button> 
-                                                </div>
-                                            )}
 
+                                            <div className="panel panel-default">
+                                                <div className="panel-heading">
+                                                     <h3 className="panel-title pull-left"> Boards </h3>
+
+
+                                                    {!this.state.newBoard ? (
+                                                        <div>
+                                                        <button className="btn btn-default pull-right" onClick = {this.makeANewBoard}> New </button>
+                                                        <div className="clearfix"></div>
+                                                        </div>
+
+                                                    ): (
+                                                        <div>
+                                                        <button className="btn btn-default pull-right" onClick = {this.makeANewBoard}> Cancel </button>
+                                                        <div className="clearfix"></div>
+                                                        <div id='embed-form' className = "panel-body"> 
+                                                            <p className = "panel-body"> New Board Name </p> 
+                                                            <input type="text" className='embed-code' placeholder="Your name" 
+                                                                value={this.state.text} onChange={this.handleBoardNameChange}/> 
+                                                            <button onClick = {this.saveNewBoard} className="btn btn-default pull-right"> Make New Board </button> 
+                                                        </div>
+                                                        </div> 
+
+                                                    )}
+                                                </div>
                                             {allBoards}
 
-                                            <button onClick = {this.addPieceToBoards}> Save </button>
+                                            <button onClick = {this.updateItemInBoards} className="btn btn-default pull-right"> Save </button>
                                         </div> 
                                     </div> 
-                                    ): null}
+                                ): null}
                             </div> 
                         </div>
                       ) : 
