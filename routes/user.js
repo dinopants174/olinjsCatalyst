@@ -45,29 +45,50 @@ router.get('/', ensureAuthenticated, function(req, res){
 	}
 });
 
+// router.post('/postInspiration', ensureAuthenticated, function(req, res){
+// 	Board.findByIdAndUpdate(req.body.boardId, {$push: {pieces: req.body.srcId}}, function(err, board){
+// 		if (err){
+// 			console.log("Error: ", err);
+// 		} else {
+// 			User.findOne({fbId: req.user.id}).populate({path: 'uploads myBoards', populate: {path: 'pieces'}}).exec(function (err, user){
+// 				if (err){
+// 					console.log("Error: ", err);
+// 				} else {
+// 					console.log("USER WITH UPDATED BOARD: ", user);
+// 					res.json(user);
+// 				}
+// 			});
+// 		}
+// 	});
+// });
+
 router.post('/postInspiration', ensureAuthenticated, function(req, res){
-	Board.findByIdAndUpdate(req.body.boardId, {$push: {pieces: req.body.srcId}}, function(err, board){
-		if (err){
-			console.log("Error: ", err);
-		} else {
-			User.findOneAndUpdate({fbId: req.user.id}).populate({path: 'uploads myBoards', populate: {path: 'pieces'}}).exec(function (err, user){
-				if (err){
-					console.log("Error: ", err);
-				} else {
-					console.log("USER WITH UPDATED BOARD: ", user);
-					res.json(user);
-				}
-			});
-		}
+	var boardIds = req.body['boardIds[]'];
+	boardIds.forEach(function(id, index, boardIds){
+		Board.findByIdAndUpdate(id, {$push: {pieces: req.body.srcId}}, function(err, board){
+			if (err){
+				console.log("Error: ", err);
+			} else if (index === boardIds.length - 1){
+				User.findOne({fbId: req.user.id}).populate({path: 'uploads myBoards', populate: {path: 'pieces'}}).exec(function (err, user){
+					if (err){
+						console.log("Error: ", err);
+					} else {
+						console.log("USER WITH UPDATED BOARD(s): ", user);
+						res.json(user);
+					}
+				});
+			}
+		});
 	});
 });
+
 
 router.post('/deleteInspiration', ensureAuthenticated, function(req, res){
 	Board.findByIdAndUpdate(req.body.boardId, {$pull: {pieces: req.body.srcId}}, function(err, board){
 		if (err){
 			console.log("Error: ", err);
 		} else {
-			User.findOneAndUpdate({fbId: req.user.id}).populate({path: 'uploads myBoards', populate: {path: 'pieces'}}).exec(function (err, user){
+			User.findOne({fbId: req.user.id}).populate({path: 'uploads myBoards', populate: {path: 'pieces'}}).exec(function (err, user){
 				if (err){
 					console.log("Error: ", err);
 				} else {
