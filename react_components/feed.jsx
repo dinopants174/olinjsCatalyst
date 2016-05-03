@@ -303,7 +303,6 @@ var Feed = React.createClass({
     	            	{pinButton}
                         </div> 
     	            	<button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'tree')}> <i className="fa fa-tree" aria-hidden="true"></i> </button>
-                        <button className = "button expand" onClick = {parent.openLightbox.bind(null, element, 'expand')}> <i className="fa fa-expand" aria-hidden="true"></i> </button>
     	            </div>
                 );
             });

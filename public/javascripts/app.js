@@ -23360,8 +23360,7 @@ var Feed = React.createClass({displayName: "Feed",
                         React.createElement("div", {className: "dropdown"}, 
     	            	pinButton
                         ), 
-    	            	React.createElement("button", {className: "button expand", onClick: parent.openLightbox.bind(null, element, 'tree')}, " ", React.createElement("i", {className: "fa fa-tree", "aria-hidden": "true"}), " "), 
-                        React.createElement("button", {className: "button expand", onClick: parent.openLightbox.bind(null, element, 'expand')}, " ", React.createElement("i", {className: "fa fa-expand", "aria-hidden": "true"}), " ")
+    	            	React.createElement("button", {className: "button expand", onClick: parent.openLightbox.bind(null, element, 'tree')}, " ", React.createElement("i", {className: "fa fa-tree", "aria-hidden": "true"}), " ")
     	            )
                 );
             });
