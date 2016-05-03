@@ -445,3 +445,20 @@ input::-webkit-input-placeholder {
 .input_wrapper2 input[type="text"]:focus + label {
   left: 85%;
 }
+
+.whiteContentStyles: {
+    position: 'fixed',
+    height: '80%',
+    top: '10%',
+    left: '20%',
+    right: '50%',
+    width: '60vw',
+    overflow: 'scroll',
+    backgroundColor: '#fff',
+    color: '#7F7F7F',
+    padding: '20px',
+    border: '2px solid #ccc',
+    borderRadius: '20px',
+    boxShadow: '0 1px 5px #333',
+    zIndex:'101'
+}

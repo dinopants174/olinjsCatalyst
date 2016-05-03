@@ -13,6 +13,34 @@ var masonryOptions = {
 };
 
 var Feed = React.createClass({ 
+
+    getInitialState: function(){ 
+        return{
+            lightboxMode: false,
+            allFeedItems: this.props.feedObjects,
+            display: false, 
+            tree: {},
+            expandBoolean: false,
+            treeBoolean: false,
+            dropdownBoolean: false, 
+            favItem: {},
+            keys:[{'author':['fbId', 'name', 'proPic', 'inspirations', 'inspirations', 'uploads']}, 'src', 'date', 'title', 'inspirations', 'inspired'], 
+            key:'title',
+            searchResults: [],
+            newBoard: false,
+            newBoardName: '',
+            boardsADD: [],
+        };
+    }, 
+
+    rawMarkup: function(e){ 
+        //Input: html code 
+        //Output: html rendered
+        return {__html: e}
+    },
+
+    /*LIGHTBOX CODE STARTS HERE */ 
+    //Lightbox css styles below 
 	whiteContentStyles: {
         position: 'fixed',
         height: '80%',
@@ -58,67 +86,12 @@ var Feed = React.createClass({
         textDecoration: 'none', 
     },
 
-	getInitialState: function(){ 
-		return{
-			lightboxMode: false,
-			images: this.props.feedObjects,
-			display: false, 
-			tree: {},
-            expandBoolean: false,
-            treeBoolean: false,
-            dropdownBoolean: false, 
-            favItem: {},
-            keys:[{'author':['fbId', 'name', 'proPic', 'inspirations', 'inspirations', 'uploads']}, 'src', 'date', 'title', 'inspirations', 'inspired'], 
-            key:'title',
-            searchResults: [],
-            newBoard: false,
-            newBoardName: '',
-            boardsADD: [],
-            boardsDELETE: []
-		};
-	}, 
+    openLightbox: function(item, lightboxType){
+        //Input: item to display in lightbox and boolean for what to display on lightbox
+        //Output: lightbox opens 
 
-    /* This should be updated to check if it's in any board*/
-	checkIfInInspirations: function(object, boards, string){ 
-		var i; 
-        switch (string){ 
-            case "check": 
-                for(i = 0; i < boards.length; i++){ 
-                    if(this.checkIfObjectInBoard(object, boards[i].pieces, "check")){ 
-                        return true; 
-                    }
-                }
-                return false;
-                break; 
-            case "getid":
-                var boardsUsed = []; 
-                 for(i = 0; i < boards.length; i++){ 
-                    if(this.checkIfObjectInBoard(object, boards[i].pieces)){
-                        console.log("item" + object.title + "in" + boards[i].title) 
-                        boardsUsed.push(boards[i]._id); 
-                    }
-                }
-                return boardsUsed;
-                break;
-            default: 
-                console.log("wrong string, not accept:", string) 
-        }
-        
-	},
-
-    checkIfObjectInBoard: function(piece, boardPieces){ 
-        var i; 
-        for(i = 0; i < boardPieces.length; i++){ 
-            if(boardPieces[i]._id === piece._id){ 
-                return true;
-            }
-        }
-        return false;
-    },
-
-	openLightbox: function(item, lightboxType){
-		var parent = this; 
-		var pieceTree; 
+        var parent = this; 
+        var pieceTree; 
         if (lightboxType === 'expand') {
             this.props.getPiece(item, function(tree){ 
                 parent.setState({tree: tree})
@@ -136,21 +109,12 @@ var Feed = React.createClass({
         if (lightboxType === 'dropdown'){
             this.setState({dropdownBoolean: true, favItem: item, display : true, expandBoolean: false, treeBoolean: false, newBoard: false});
         }
-	},
-
-    sortBoardsForMostRecent: function(boards){
-        var most_recent_date = boards[0].dateCreated; 
-        var sorted_array = []; 
-
-        boards.forEach(function(b){ 
-            if (b.dateCreated > most_recent_date){ 
-                sorted_array.push(b)
-            }
-        })
     },
 
-	closeLightbox: function(){
-		this.setState({tree : {}})
+    closeLightbox: function(){
+        //Input: --
+        //Output: reset all the boolean states 
+        this.setState({tree : {}})
         this.setState({display: false})
         this.setState({expandBoolean: false})
         this.setState({treeBoolean: false})
@@ -159,49 +123,93 @@ var Feed = React.createClass({
         this.setState({newBoard: false})
         this.setState({newBoardName: ''}),
         this.setState({boardsADD: []})
-        this.setState({boardsDELETE: []});
     },
-    
-	rawMarkup: function(e){ 
-		return {__html: e}
-	},
 
-	componentDidMount: function(){
+    componentDidMount: function(){
+        //Input: --
+        //Output: listen for key click on outside of white box on gray 
         document.addEventListener("keydown", function (e) {
             if ( (this.props.display) && (e.keyCode === 27) ){
                 this.props.closeLightbox();
             }
         }.bind(this));
-    }, 
-
-    pinnedButton: function(item){ 
-    	var pinButton; 
-			if(this.checkIfInInspirations(item, this.props.boards, "check")){ 
-				pinButton = <button className="button add" style={{"color":"#999"}} onClick = {this.something.bind(null, item)}> <i className="fa fa-times" id = {"favButton"+item._id} aria-hidden="true"></i> </button>
-			}
-			else{ 
-				pinButton = <button className="button add" onClick = {this.openLightbox.bind(null, item, 'dropdown')}> <i className="fa fa-star-o" id = {"favButton"+item._id} aria-hidden="true"></i> </button> 
-            }
-			return pinButton
     },
+    /*LIGHTBOX CODE ENDS HERE */
+
+    /* MAKE NEW BOARD CODE */ 
 
     makeANewBoard: function(){ 
+        //Input: -- 
+        //Output: set boolean to display make new board div 
         if(this.state.newBoard) { this.setState({newBoard: false}) } 
         else {this.setState({newBoard: true})}
     }, 
 
     handleBoardNameChange: function(e) {
+        //Input: key press event 
+        //Output: -- 
+        //Saves the board name to the newBoardName state 
         this.setState({newBoardName: e.target.value})
     },
 
     saveNewBoard: function(){ 
-        console.log('this is the name of the board', this.state.newBoardName);
+        //Input: -- 
+        //Output: saves new board name, closes the make new board div, and sends new board name to server 
         this.setState({newBoard: false})
         this.setState({newBoardName: ''})
         this.props.saveNewBoard(this.state.newBoardName);  
     }, 
+ 
+    /*SAVE NEW BOARD CODE ENDS HERE */ 
+    /*CHECK IF INSPIRATIONS ARE IN BOARD */ 
+	checkIfInInspirations: function(object, boards, string){ 
+        //Input: piece object, all boards, and which string to check if object in boards or get id of board if object in board
+		var i; 
+        switch (string){ 
+            case "check": 
+                //This case will check all boards to see if the object is in it 
+                for(i = 0; i < boards.length; i++){ 
+                    if(this.checkIfObjectInBoard(object, boards[i].pieces, "check")){ 
+                        return true; 
+                    }
+                }
+                return false;
+                break; 
+            case "getid":
+                //This case will check all boards to see if object is in it and then return the board ids 
+                var boardsUsed = []; 
+                 for(i = 0; i < boards.length; i++){ 
+                    if(this.checkIfObjectInBoard(object, boards[i].pieces)){
+                        boardsUsed.push(boards[i]._id); 
+                    }
+                }
+                return boardsUsed;
+                break;
+            default: 
+                console.log("wrong string, not accept:", string) 
+        }
+        
+	},
+
+    checkIfObjectInBoard: function(piece, boardPieces){
+        //Input: item clicked and pieces in each board 
+        // Output: will return true if piece is amonsgt the board pieces  
+        var i; 
+        for(i = 0; i < boardPieces.length; i++){ 
+            if(boardPieces[i]._id === piece._id){ 
+                return true;
+            }
+        }
+        return false;
+    },
+
+    /* CHECKING BOARD CODE ENDS HERE */ 
+
+    /* DISPLAYING AND UPDATING BOARD CODE STARTS HERE */ 
 
     reverseBoards: function(boards){ 
+        //Input: all boards from server 
+        //Output will return the boards in reversed order 
         var reversedBoards = []
         for (var i = 1; i < (boards.length + 1); i++){ 
             reversedBoards.push(boards[boards.length-i])   
@@ -209,14 +217,10 @@ var Feed = React.createClass({
         return reversedBoards;             
     },
 
-    updateItemInBoards : function(){    
-        console.log("HERE ARE YOU BOARDS", this.state.boardsADD);
-        console.log("HERE IS YOUR TYPE BOARDS", typeof(this.state.boardsADD));
-
+    updateItemInBoards : function(){ 
+        //Input: -- 
+        //Output: will be called to reset the boards pop up and add the boards to the server    
         if(this.state.boardsADD.length > 0){ 
-            // $("#favButton"+this.state.favItem._id).css({'color' : '#428f89'})
-            console.log("about to add" + this.state.favItem.title + "to board" + this.state.boardsADD)
-            console.log("boards ADD" + this.state.boardsADD +  "and type:" + typeof(this.state.boardsADD))
             this.setState({tree : {}})
             this.setState({display: false})
             this.setState({expandBoolean: false})
@@ -226,53 +230,64 @@ var Feed = React.createClass({
             this.setState({newBoard: false})
             this.setState({newBoardName: ''})
             this.setState({boardsADD: []})
-            this.setState({boardsDELETE: []})
             this.props.addInspir(this.state.favItem, this.state.boardsADD) 
-        }
-        if(this.state.boardsDELETE.length > 0){ 
-            console.log("boards to delete in updateiteminboards", this.state.boardsDELETE); 
-            this.props.deleteElement(this.state.favItem, "not upload board", this.state.boardsDELETE); 
         }
     },
 
     handleBoardClickCheck: function(piece, b){
+        //Input: piece that is checked in form and board to pin board to 
+        //Output: will add the board to boardsADD list, which upon save will save the piece to those boards
         var index = this.state.boardsADD.indexOf(b._id)
         if ((index ===-1) && (!this.checkIfObjectInBoard(piece, b.pieces, "check"))){ 
             var updatedBoard = this.state.boardsADD; 
             updatedBoard.push(b._id); 
             this.setState({boardsADD: updatedBoard})
-            console.log("boards aDD", this.state.boardsADD); 
         }
     }, 
 
     handleBoardClickUnCheck: function(piece, b){ 
+        //Input: piece to uncheck in form and board to uncheck from
+        //Output: will remove the board from list of boards to save piece to  
         var index = this.state.boardsADD.indexOf(b._id)
 
-        if(this.checkIfObjectInBoard(piece, b.pieces, "check")){ 
-            console.log("going to delete this piece from this board, ", piece.title, "board", b.title)
-            var updatedBoardDelete = this.state.boardsDELETE; 
-            updatedBoardDelete.push(b._id); 
-            this.setState({boardsDELETE: updatedBoardDelete})
-        }else if(index > -1){ 
+        if(index > -1){ 
             var arrayToSplice = this.state.boardsADD; 
             arrayToSplice.splice(index, 1); 
             this.setState({boardsADD : arrayToSplice})
         }
     },
 
-    something: function(item){ 
+    deleteElementFromFeed: function(item){ 
+        //Input: feed item to delete from board of inspirations 
+        //Output: will delete the item from all boards of inspirations
         var boardsWithItem = this.checkIfInInspirations(item, this.props.boards, "getid"); 
-        console.log("type of boards with the item", boardsWithItem)
         this.props.deleteElement(item, "not uploads", boardsWithItem); 
     },
 
+    /* DISPLAYING BOARD LOGIC ENDS HERE */ 
+    /* PIN BUTTON */ 
+    pinnedButton: function(item){ 
+        //Input: piece 
+        //Output: if it is already saved to a board, display the ability to pin 
+        //if it is not already saved to a board, display light gray box to add to a board 
+        var pinButton; 
+            if(this.checkIfInInspirations(item, this.props.boards, "check")){ 
+                pinButton = <button className="button add" style={{"color":"#999"}} onClick = {this.deleteElementFromFeed.bind(null, item)}> <i className="fa fa-times" id = {"favButton"+item._id} aria-hidden="true"></i> </button>
+            }
+            else{ 
+                pinButton = <button className="button add" onClick = {this.openLightbox.bind(null, item, 'dropdown')}> <i className="fa fa-star-o" id = {"favButton"+item._id} aria-hidden="true"></i> </button> 
+            }
+            return pinButton
+    },
+    /*PIN BUTTON CODE ENDS HERE */ 
+
 	render: function(){ 
 		var parent = this; 
-        var length_images = this.state.images.length;
-        console.log("clicked board ids", this.state.boardsADD); 
+        var length_images = this.state.allFeedItems.length;
         if (length_images > 0){ 
 
-            var childElements = this.state.images.map(function(element, i){
+            //Map each feed item to display in card view and give it all the buttons 
+            var childElements = this.state.allFeedItems.map(function(element, i){
     		   var pinButton = parent.pinnedButton(element)
                return (
                		<div key={'div'+i} className="image-div-class">
@@ -286,10 +301,11 @@ var Feed = React.createClass({
     	            </div>
                 );
             });
-            console.log("normal", this.props.boards)
-            console.log("reversal", this.reverseBoards(this.props.boards))
 
+            //Map each board to display on lightgray box to save piece to board 
             var allBoards = this.reverseBoards(this.props.boards).map(function(board){ 
+                    //If a piece is already pinned to a board or in the boardsADD list, then display check next to name to show that it is already added or will be added 
+                    //also allow ability to remove from boardsADD list if they do not actually want to save it to that board
                     if(parent.checkIfObjectInBoard(parent.state.favItem, board.pieces, "check") || (parent.state.boardsADD.indexOf(board._id) > -1)){ 
                         return (
                             <div key = {"inboard" + board._id} className = "panel-body stuff" onClick = {parent.handleBoardClickUnCheck.bind(null, parent.state.favItem, board)}> 
@@ -297,7 +313,7 @@ var Feed = React.createClass({
                             </div> 
 
                         ); 
-
+                    //Else if piece not in a board or not in boardsADD, then do not display check mark and allow ability add board to boardsADD list
                     }else if (!parent.checkIfObjectInBoard(parent.state.favItem, board.pieces, "check") || (parent.state.boardsADD.indexOf(board._id) < 0 )){ 
                         return (
                             <div key = {"inboard" + board._id} className = "panel-body stuff"> 
@@ -311,7 +327,7 @@ var Feed = React.createClass({
 
             return (
             	<div>
-                    <SearchBar pieces = {this.state.images} pinnedButton = {this.pinnedButton} openLightbox = {this.openLightbox}/>
+                    <SearchBar pieces = {this.state.allFeedItems} pinnedButton = {this.pinnedButton} openLightbox = {this.openLightbox}/>
                 	<div id="feed"> 
                         <h2> Feed </h2>
     					<Masonry
