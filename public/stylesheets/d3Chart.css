@@ -1,0 +1,73 @@
+.svgWrapper {
+  position: relative;
+  z-index:4;
+}
+
+.node {
+  cursor: pointer;
+}
+
+.node circle {
+  fill: #fff;
+  stroke: #428F89;
+  stroke-width: 1.5px;
+}
+
+.node text {
+  font: 20px sans-serif;
+}
+
+.link {
+  shape-rendering: crispEdges;
+  fill: none;
+  stroke: black;
+  stroke-width: 1.5px;
+}
+
+div.popup{ 
+  position: absolute;     
+  text-align: center;     
+  width: auto;          
+  height: auto;         
+  padding: 2px;       
+  font: 12px sans-serif;    
+  background: #428F89; 
+  border-radius: 3px;
+  display: none;
+}
+
+div.popup2{ 
+  cursor: pointer;
+  position: absolute;     
+  text-align: center;     
+  width: auto;          
+  height: auto;         
+  padding: 2px;       
+  font: 12px sans-serif;    
+  background: #428F89; 
+  border-radius: 3px;
+  display: none;
+}
+
+.exitIframe {
+  height: 8px;
+  color: white;
+}
+
+.dismiss{
+  color: #428F89;
+  font-size: 16px;
+  margin-top: -35px;
+}
+
+.iframeWrapper{
+  position: relative;
+  width: 200px;
+  height: auto;
+}
+
+.iframeWrapper iframe {
+  position: relative;
+  width: 200px;
+  height: auto;
+}

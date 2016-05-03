@@ -227,7 +227,7 @@ var Upload = React.createClass({
 					</div>
 					<br/>
 					<div>
-						<h2> Choose Inspirations </h2>
+						<h2> Choose Boards </h2>
 						<div id="inspirationslist">
 							{childElements}
 				        </div>
