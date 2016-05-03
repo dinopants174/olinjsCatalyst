@@ -4,11 +4,23 @@ var Dashboard = require('./dashboard.jsx');
 
 var Masonry = require('./masonry.jsx');
 
+//Masonry Options need as props for masonry
 var masonryOptions = {
     transitionDuration: 0
 };
 
 var MyBoard = React.createClass({
+                        
+    propTypes: {
+        showMyBoard: React.PropTypes.func.isRequired,
+        switchUploads: React.PropTypes.func.isRequired,
+        user: React.PropTypes.object.isRequired,
+        subpage: React.PropTypes.string.isRequired,
+        uploads: React.PropTypes.array.isRequired,
+        myBoardsInspirations: React.PropTypes.array.isRequired,
+        deleteElement: React.PropTypes.func.isRequired,
+        deleteBoard: React.PropTypes.func.isRequired,
+    },
 
     getInitialState: function() {
         return {
@@ -21,10 +33,13 @@ var MyBoard = React.createClass({
     },
 
 	rawMarkup: function(elem) {
+        //Input: html code 
+        //Output: html rendered
     	return { __html: elem };
   	},
 
     componentWillReceiveProps: function() {
+        //If new props are received, states will be reset to account for changed boards
             this.setState({
                 subpage: this.props.subpage,
                 elementnum: [], 
@@ -35,7 +50,7 @@ var MyBoard = React.createClass({
     },
 
     switchInspirations: function(listInspirations, boardId) {
-        console.log('this is boardid!!!',boardId);
+        //switches to inspirations subpage and renders specific list of inspirations for specific board
             this.setState({
                 subpage: 'inspirations',
                 boardId: boardId,
@@ -44,8 +59,12 @@ var MyBoard = React.createClass({
     },
 
     toggleElement: function (element, element_id) {
+        //If board element is toggled, masonry pieces of that specific board is saved in state (either added or removed depending if 
+        //the element was opened or closed)
         var parent = this;
         var board_pieces = (this.props.myBoardsInspirations)[element].pieces;
+
+        //Masonry pieces of specific board made
         var masonryPieces = board_pieces.map(function(piece, j){
             return (
                 <div key={'div'+j} className="image-div-class">
@@ -56,6 +75,7 @@ var MyBoard = React.createClass({
             );
         });
 
+        //masonrypieces variable either added to list of pieces that will be displayed or not displayed
         if ((this.state.elementnum).indexOf(element) > -1) {
             $("#title"+element).removeClass('panel-title arrow-up').addClass('panel-title arrow-down');
 
@@ -88,9 +108,8 @@ var MyBoard = React.createClass({
 
     render: function(){
         var parent = this; 
-        console.log("this.props.uploads",this.props.uploads);
-        console.log("this.props.inspirations",this.props.myBoardsInspirations);
 
+        //All Upload Elements are automatically added into profile page
         var uploadsElements = this.props.uploads.map(function(element, i){
 
            return (
@@ -102,12 +121,13 @@ var MyBoard = React.createClass({
             );
         });
 
+        //childElements will either have masonry for each board or not depending on whether or not the elementnum is in this.state.elementnum
         var childElements = this.props.myBoardsInspirations.map(function(element, i){
-            console.log("element",element);
+            //If the list of pieces is greater than 0 (this means that at least one board has been toggled)
             if (parent.state.pieces.length > 0){
-                var indexOf_elementnum = (parent.state.elementnum).indexOf(i);
-                if (indexOf_elementnum > -1){
-                    console.log('indexof', indexOf_elementnum);
+
+                var indexOf_elementnum = (parent.state.elementnum).indexOf(i); //finds if element index even exists in elementnum
+                if (indexOf_elementnum > -1){ //if so make masonry displayed under
                         return (
                             <div key={'div'+i} className="container piece2">
                                 <div className="panel-heading panel-piece2" onClick={parent.toggleElement.bind(null,i,element._id)}>
@@ -126,7 +146,7 @@ var MyBoard = React.createClass({
                                 </Masonry>
                             </div>
                         )
-                } else {
+                } else { //else just show board without div
                         return (
                             <div key={'div'+i} className="container piece2">
                                 <div className="panel-heading panel-piece2" onClick={parent.toggleElement.bind(null,i,element._id)}>
@@ -139,7 +159,7 @@ var MyBoard = React.createClass({
                             </div>
                         )
                 }
-            } else {
+            } else { //no toggled pieces, all boards are just regular
                     return (
                         <div key={'div'+i} className="container piece2">
                             <div className="panel-heading panel-piece2" onClick={parent.toggleElement.bind(null,i,element._id)}>
@@ -155,16 +175,14 @@ var MyBoard = React.createClass({
         });
 
 
+        //depending on subpage ("uploads", "inspirations", or "main profile page"), we return different views (could be a lot cleaner with more components)
         if (this.state.subpage === "uploads") {
-            console.log("at uploads");
             var subpage = <div><div className='centering-div'>
                    <h1>My Uploads</h1>
                     <button onClick={this.props.switchMyBoard} className="button board"><i className="fa fa-arrow-left" aria-hidden="true"></i></button>
                 </div>
                 <Dashboard boardtype={this.state.subpage} boardIdd="none" uploadslist={this.props.uploads} deleteElement={this.props.deleteElement}/></div>
         } else if (this.state.subpage === "inspirations") {
-            console.log("at inspirations");
-
             var subpage = <div><div className='centering-div'>
                 <h1>My Inspirations</h1>
                     <button onClick={this.props.switchMyBoard} className="button board"><i className="fa fa-arrow-left" aria-hidden="true"></i></button>

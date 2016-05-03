@@ -1,3 +1,5 @@
+/* Part of https://github.com/bobiblazeski/react-3d-carousel Code*/
+
 var Ease = require('ease-functions');
 var Layout = require('./layout');
 var Util = require('./util');

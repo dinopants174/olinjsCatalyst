@@ -1,18 +1,24 @@
 var React = require('react');
+
 var SearchBar = require('./search.jsx'); 
-
-var dir = require('node-dir'); 
-var path = require('path'); 
-var fs = require('fs');
-
 var Masonry = require('./masonry.jsx');
 var Barchart = require('./d3Chart.jsx');
 
+//Masonry Options need as props for masonry
 var masonryOptions = {
     transitionDuration: 0
 };
 
 var Feed = React.createClass({ 
+
+    propTypes: {
+        deleteElement: React.PropTypes.func.isRequired,
+        addInspir: React.PropTypes.func.isRequired,
+        feedObjects: React.PropTypes.array.isRequired,
+        getPiece: React.PropTypes.func.isRequired,
+        saveNewBoard: React.PropTypes.func.isRequired,
+        boards: React.PropTypes.array.isRequired,
+    },
 
     getInitialState: function(){ 
         return{

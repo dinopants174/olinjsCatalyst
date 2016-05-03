@@ -1,5 +1,6 @@
 /* Carousel Component with opening imaging functionality, deleting image from user's list of saved images
-and onhover display different things*/
+and onhover display different things, also incorporated https://github.com/bobiblazeski/react-3d-carousel Code*/
+
 
 var React = require('react');
 var Util = require('./util');
@@ -7,8 +8,16 @@ var Layout = require('./layout');
 var Depot = require('./depot');
 
 var Carousel = React.createClass({
+    
     propTypes: {
-
+        all_info: React.PropTypes.func.isRequired,
+        width: React.PropTypes.number.isRequired,
+        ease: React.PropTypes.string.isRequired,
+        duration: React.PropTypes.number.isRequired,
+        layout: React.PropTypes.string.isRequired,
+        deleteElement: React.PropTypes.func.isRequired,
+        boardtype: React.PropTypes.string.isRequired,
+        boardIdd: React.PropTypes.string.isRequired,
     },
 
     getInitialState: function () {

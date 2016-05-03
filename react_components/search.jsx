@@ -1,8 +1,16 @@
 var React = require('react'); 
 var Search = require('react-search'); 
 
+//SearchBar to filter through different pieces in the feed and display output of search
 var SearchBar = React.createClass({
-	getInitialState: function(){ 
+
+    propTypes: {
+        pieces: React.PropTypes.array.isRequired,
+        pinnedButton: React.PropTypes.func.isRequired,
+        openLightbox: React.PropTypes.func.isRequired,
+    },
+
+    getInitialState: function(){ 
 		return{ 
 			keys:[{'author':['fbId', 'name', 'proPic', 'inspirations', 'inspirations', 'uploads']}, 'src', 'date', 'title', 'inspirations', 'inspired'], 
             key:'title',
@@ -11,19 +19,23 @@ var SearchBar = React.createClass({
 	}, 
 
 	rawMarkup: function(e){ 
+        //Input: html code 
+        //Output: html rendered
 		return {__html: e}
 	},
 
 	handleSearchResults: function(input, output){ 
-        console.log("input and output" , input, output)
-        console.log("search results before", this.state.searchResults)
+        //Input: takes input and output of search results and sets searchResults to have the output objects
+        //Output: --
         this.setState({searchResults: output})
     }, 
 
 	render: function(){ 
 		var parent = this;
 		var results = this.state.searchResults.map(function(result, i){
-            var pinButton = parent.props.pinnedButton(result);  
+        var pinButton = parent.props.pinnedButton(result);  
+
+        //returns as masonry with image-div-class's
             return (
                 <div key={'div'+i} className="image-div-class">
                     <p id="title">{result.title} by {result.author.name}</p>

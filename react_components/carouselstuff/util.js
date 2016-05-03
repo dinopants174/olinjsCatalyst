@@ -1,3 +1,5 @@
+/* Part of https://github.com/bobiblazeski/react-3d-carousel Code*/
+
 var exports = module.exports = {};
 
 

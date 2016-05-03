@@ -4,21 +4,28 @@ var Masonry = require('./masonry.jsx');
 
 var Upload = React.createClass({
 
+	propTypes: {
+	  uploadCode: React.PropTypes.func.isRequired,
+	  myBoardsInspirations: React.PropTypes.array.isRequired,  
+	},
+
 	getInitialState: function() {
 	    return {
 	    	title: '',
 	     	embedcode: '',
 	     	checkedInspirations: [],
 	     	elementnum: [], 
-	     	pieces:[]
+	     	pieces:[],
 	    };
 	},
 
     convertMedia: function(html){
+    	//three different possibilities of patterns for videos (youtube link, vimeo link, png link address, else embed code)
         var pattern1 = /(?:http?s?:\/\/)?(?:www\.)?(?:vimeo\.com)\/?(.+)/g;
         var pattern2 = /(?:http?s?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/g;
         var pattern3 = /([-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?(?:jpg|jpeg|gif|png))/gi;
         
+        //tests three patterns to find correct src link for iframe or a href
         if(pattern1.test(html)){
            	var replacement = '<iframe width="560" height="315" src="https://player.vimeo.com/video/$1" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>';
 			var html = html.replace(pattern1, replacement);
@@ -36,22 +43,26 @@ var Upload = React.createClass({
             var html = html.replace(pattern3, replacement);
         }
 
+        //returns the iframe or a href html or regular html code (if none fit)
         return html;
     },
 
 	handleEmbedChange: function(ev) {
+		//sets embedcode to the converted embed code
 		this.setState({
 			embedcode: this.convertMedia(ev.target.value),
 		});
 	},
 
 	handleTitleChange: function(ev) {
+		//sets title every time input changes
 		this.setState({
 			title: ev.target.value,
 		});
 	},
 
 	handleCheckedInspir: function(elem_id) {
+		//Detects if inspiration is checked and then adds or removes it into updatedinspirations that is then set
         if (document.getElementById('checkbox-piece'+elem_id).checked) {
         	if ((this.state.checkedInspirations).indexOf(elem_id) === -1){
 				var updatedinspirations = this.state.checkedInspirations.concat([elem_id]);
@@ -69,13 +80,13 @@ var Upload = React.createClass({
 
 
 	handleCheckedBoard: function(board_num) {
+		//Detects if board is checked and then adds or removes all inspirations in board to updatedinspirations which also updates checkedinspirations
         if (document.getElementById('checkbox-board'+board_num).checked) {
 			var updatedinspirations = this.state.checkedInspirations;
 			for (var i = 0, len = this.props.myBoardsInspirations[board_num].pieces.length; i < len; i++) {
 				updatedinspirations.push(this.props.myBoardsInspirations[board_num].pieces[i]._id);
 			}
 
-			console.log(this.state.checkedInspirations, updatedinspirations);
 			this.setState({
 				checkedInspirations: updatedinspirations,
 			});
@@ -85,7 +96,6 @@ var Upload = React.createClass({
 				updatedinspirations.splice(updatedinspirations.indexOf(this.props.myBoardsInspirations[board_num].pieces[i]._id),1);
 			}
 
-			console.log(this.state.checkedInspirations, updatedinspirations);			
 			this.setState({
 				checkedInspirations: updatedinspirations,
 			});
@@ -94,14 +104,19 @@ var Upload = React.createClass({
 
 
 	rawMarkup: function() {
+        //Input: html code 
+        //Output: html rendered
     	return { __html: this.state.embedcode };
   	},
 
   	embedCodeRawMarkup: function(e) {
+        //Input: html code 
+        //Output: html rendered
 		return {__html: e}
   	},
 
   	toggleElement: function (element) {
+  		//If board is toggled, the pieces of the board are either shown or removed through setting or removing from pieces in state
   		var parent = this;
   		var board_pieces = (this.props.myBoardsInspirations)[element].pieces;
   		var masonryPieces = board_pieces.map(function(piece, j){
@@ -115,7 +130,6 @@ var Upload = React.createClass({
 
   		if ((this.state.elementnum).indexOf(element) > -1) {
 	  		$("#title"+element).removeClass('panel-title arrow-up').addClass('panel-title arrow-down');
-	  		// $("#checkbox-board"+element).css({'display':'block'});
 
 	  		var elementIndex = (this.state.elementnum).indexOf(element);
 	  		var updateElementnum = this.state.elementnum;
@@ -147,55 +161,55 @@ var Upload = React.createClass({
     render: function(){
     	var parent = this;
 
-    			var childElements = parent.props.myBoardsInspirations.map(function(element, i){
-    				if (parent.state.pieces.length > 0){
-    					var indexOf_elementnum = (parent.state.elementnum).indexOf(i);
-    					if (indexOf_elementnum > -1){
-    						console.log('indexof', indexOf_elementnum);
-								return (
-									<div key={'div'+i} className="container piece">
-						           		<div className="panel-heading panel-piece" onClick={parent.toggleElement.bind(null,i)}>
-											<h4 id={"title"+i} className="panel-title arrow-down">
-										          {element.title}
-											</h4>
-							           	</div>
-							           	<input type="checkbox" id={'checkbox-board'+i} onChange={parent.handleCheckedBoard.bind(null, i)} value="board"/><br/>
-							           	<Masonry
-							                className={'my-gallery-class'}
-							                elementType={'div'}
-							                disableImagesLoaded={false}
-							            >
-							                {parent.state.pieces[indexOf_elementnum]}
-							            </Masonry>
-						            </div>
-								)
-						} else {
-								return (
-									<div key={'div'+i} className="container piece">
-						           		<div className="panel-heading panel-piece" onClick={parent.toggleElement.bind(null,i)}>
-											<h4 id={"title"+i} className="panel-title arrow-down">
-										          {element.title}
-											</h4>
-							           	</div>
-							           	<input type="checkbox" id={'checkbox-board'+i} onChange={parent.handleCheckedBoard.bind(null, i)} value="board"/><br/>
-							           	<div></div>
-						            </div>
-								)
-    					}
-					} else {
-							return (
-								<div key={'div'+i} className="container piece">
-					           		<div className="panel-heading panel-piece" onClick={parent.toggleElement.bind(null,i)}>
-										<h4 id={"title"+i} className="panel-title arrow-down">
-									          {element.title}
-										</h4>
-						           	</div>
-						           	<input type="checkbox" id={'checkbox-board'+i} onChange={parent.handleCheckedBoard.bind(null, i)} value="board"/><br/>
-						           	<div></div>
-					            </div>
-							)
-					}
-		        });
+    	//childelements are the boards with masonry depending on whether or not the board was toggled
+		var childElements = parent.props.myBoardsInspirations.map(function(element, i){
+			if (parent.state.pieces.length > 0){
+				var indexOf_elementnum = (parent.state.elementnum).indexOf(i);
+				if (indexOf_elementnum > -1){
+						return (
+							<div key={'div'+i} className="container piece">
+				           		<div className="panel-heading panel-piece" onClick={parent.toggleElement.bind(null,i)}>
+									<h4 id={"title"+i} className="panel-title arrow-down">
+								          {element.title}
+									</h4>
+					           	</div>
+					           	<input type="checkbox" id={'checkbox-board'+i} onChange={parent.handleCheckedBoard.bind(null, i)} value="board"/><br/>
+					           	<Masonry
+					                className={'my-gallery-class'}
+					                elementType={'div'}
+					                disableImagesLoaded={false}
+					            >
+					                {parent.state.pieces[indexOf_elementnum]}
+					            </Masonry>
+				            </div>
+						)
+				} else {
+						return (
+							<div key={'div'+i} className="container piece">
+				           		<div className="panel-heading panel-piece" onClick={parent.toggleElement.bind(null,i)}>
+									<h4 id={"title"+i} className="panel-title arrow-down">
+								          {element.title}
+									</h4>
+					           	</div>
+					           	<input type="checkbox" id={'checkbox-board'+i} onChange={parent.handleCheckedBoard.bind(null, i)} value="board"/><br/>
+					           	<div></div>
+				            </div>
+						)
+				}
+			} else {
+					return (
+						<div key={'div'+i} className="container piece">
+			           		<div className="panel-heading panel-piece" onClick={parent.toggleElement.bind(null,i)}>
+								<h4 id={"title"+i} className="panel-title arrow-down">
+							          {element.title}
+								</h4>
+				           	</div>
+				           	<input type="checkbox" id={'checkbox-board'+i} onChange={parent.handleCheckedBoard.bind(null, i)} value="board"/><br/>
+				           	<div></div>
+			            </div>
+					)
+			}
+        });
 
         return (
         	<div className='centering-div'>
@@ -218,8 +232,9 @@ var Upload = React.createClass({
 									name="embed-name"
 									id ="embed-name"
 									onChange={this.handleEmbedChange}/>
-							<label htmlFor="embed-name">Embed Code</label>
+							<label htmlFor="embed-name">Url/Embed Code</label>
 						</p>
+						<p>Url/Embed Code Format: Youtube and Vimeo links, SoundCloud Embed Codes (iframes), and Image Addresses (e.g. http://i.imgur.com/Vi6ximE.png)</p>
 					</div>
 					<br/>
 					<div id='embed-background-grid'>

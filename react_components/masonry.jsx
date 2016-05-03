@@ -1,3 +1,5 @@
+/*Masonry Code from: https://github.com/eiriklv/react-masonry-component */
+
 var isBrowser = (typeof window !== 'undefined');
 var Masonry = isBrowser ? window.Masonry || require('masonry-layout') : null;
 var imagesloaded = isBrowser ? require('imagesloaded') : null;
@@ -25,7 +27,7 @@ var MasonryComponent = React.createClass({
 
     propTypes: {
         disableImagesLoaded: React.PropTypes.bool,
-        options: React.PropTypes.object
+        options: React.PropTypes.object,
     },
 
     getDefaultProps: function() {

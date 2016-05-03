@@ -3,11 +3,16 @@ var React = require('react');
 var ReactDOM = require('react-dom');
 
 var Navbar = React.createClass({
+                        
   propTypes: {
-
+    switchHome: React.PropTypes.func.isRequired,
+    switchMyBoard: React.PropTypes.func.isRequired,
+    switchMyBoardUploads: React.PropTypes.func.isRequired,
+    displayName: React.PropTypes.string.isRequired,
+    proPic: React.PropTypes.string.isRequired
   },
   
-  collapse: function(){ 
+  collapse: function(){ //do not have this collapse functionality working yet
     document.getElementsByClassName("navbar")[0].classList.toggle("responsive");
   },
 

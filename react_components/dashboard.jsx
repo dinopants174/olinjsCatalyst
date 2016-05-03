@@ -5,8 +5,12 @@ var Carousel = require('./carouselstuff/carousel.jsx');
 var Ease = require('ease-functions');
 
 var DashboardHistory = React.createClass({
+    
     propTypes: {
-
+        boardtype: React.PropTypes.string.isRequired,
+        boardIdd: React.PropTypes.string.isRequired,
+        uploadslist: React.PropTypes.array.isRequired,
+        deleteElement: React.PropTypes.func.isRequired,
     },
 
     getInitialState: function () {

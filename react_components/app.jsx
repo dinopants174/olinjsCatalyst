@@ -27,55 +27,10 @@ var CatalystBox = React.createClass({
         };
     },
 
-    testAddInspiration: function(){
-        $.ajax({
-            url: '/api/user/postInspiration',
-            dataType: 'json',
-            cache: false,
-            type: 'POST',
-            data: {srcId: '57253346f40d81a96d0d4271',boardId: '5723c80d1a3e5556251be663'},
-            success: function(res){
-                console.log("Here is the testaddinspiration: ", res);
-            }.bind(this),
-            error: function(xhr, status, err) {
-                console.error('/api/user/postInspiration', status, err.toString());
-            }.bind(this)
-        });
-    },
-
-    testAddBoard: function(){
-        $.ajax({
-            url: '/api/user/postBoard',
-            dataType: 'json',
-            cache: false,
-            type: 'POST',
-            data: {boardTitle: 'Milk'},
-            success: function(res){
-                console.log("Here is the testaddinspiration: ", res);
-            }.bind(this),
-            error: function(xhr, status, err) {
-                console.error('/api/user/postInspiration', status, err.toString());
-            }.bind(this)
-        });
-    },
-
-    testDeletePiece: function(){
-        $.ajax({
-            url: '/api/user/deleteUpload',
-            dataType: 'json',
-            cache: false,
-            type: 'POST',
-            data: {srcId: '5712c5032eef20e13588d409'},
-            success: function(user) {
-                console.log("Updated user: ", user);
-            }.bind(this),
-            error: function(xhr, status, err){
-                console.error('/api/user/deleteUpload', status, err.toString());
-            }.bind(this)   
-        });
-    },
-
     handleUploadCode: function(uploadcode) {
+        //POST ajax request to post an upload 
+        //Input: upload code object with embedcode, title
+        //Output: --
         $.ajax({
             url: '/api/user/postUpload/',
             dataType: 'json',
@@ -83,10 +38,6 @@ var CatalystBox = React.createClass({
             type: 'POST',
             data: {src: uploadcode.embedcode, title: uploadcode.title, inspirations: uploadcode.checkedInspirations},
             success: function(user) {
-                // this.setState({
-                //     display: DisplayEnum.DISPLAY_HOME, 
-                //     user: user,
-                // });
                 this.handleFeed({user : user}); 
             }.bind(this),
             error: function(xhr, status, err) {
@@ -96,15 +47,16 @@ var CatalystBox = React.createClass({
     },
 
     handleFeed: function(object){ 
+        //GET ajax request to get feed items, and add new display and feed to the object that we are resetting the state with
+        //Input: --
+        //Output: --
         $.ajax({ 
             url: '/api/pieces/feed',
             dataType: 'json', 
             type: 'GET', 
             success: function(feedItems){ 
                 object.display= DisplayEnum.DISPLAY_HOME;
-                console.log('feed items', feedItems)
                 object.feed = feedItems;
-                console.log("object", object); 
                 this.setState(object); 
 
             }.bind(this), 
@@ -115,7 +67,9 @@ var CatalystBox = React.createClass({
     },
 
     createNewBoard: function(boardName){ 
-        console.log("about to save this board:", boardName); 
+        //POST ajax request to create a new board, and sets state with new user information
+        //Input: string of board name
+        //Output: --
         $.ajax({
             url: '/api/user/postBoard',
             dataType: 'json',
@@ -123,7 +77,6 @@ var CatalystBox = React.createClass({
             type: 'POST',
             data: {user: this.state.user, boardTitle: boardName},
             success: function(user) {
-                console.log("new user after saving board", user)
                 this.setState({user: user})
             }.bind(this),
             error: function(xhr, status, err) {
@@ -134,17 +87,20 @@ var CatalystBox = React.createClass({
     },
 
     componentDidMount: function() {
+        //Calls login to facebook as soon as component is mounting
         this.loginFacebook();
         return null;
     },
 
     handleAdd: function(){
+        //Changes the display to the upload page
         this.setState({
             display: DisplayEnum.DISPLAY_UPLOAD,
         });
     },
 
     showMyBoard: function() {
+        //Changes the display to myboard profile page home
         this.setState({
             display: DisplayEnum.DISPLAY_MYBOARD,
             subpage: 'home',
@@ -152,6 +108,7 @@ var CatalystBox = React.createClass({
     },
 
     showMyBoardUploads: function() {
+        //Changes the display to my board uploads page
         this.setState({
             display: DisplayEnum.DISPLAY_MYBOARD,
             subpage: 'uploads',
@@ -159,10 +116,14 @@ var CatalystBox = React.createClass({
     },
 
     showHome: function() {
+        //calls handleFeed to show the home page
         this.handleFeed({}); 
     },
 
     loginFacebook: function(){
+        //GET ajax request to call handlefeed and put in the user information and displayname obtained from getting user info
+        //Input: --
+        //Output: --
         $.ajax({
             url: '/api/user/',
             dataType: 'json',
@@ -178,8 +139,9 @@ var CatalystBox = React.createClass({
     },
 
     addInspiration: function(piece, boards){ 
-        console.log("you're about to add this inspiration" + piece + "to these boards:" + [boards])
-        console.log("type of boards", Array.isArray(boards))
+        //POST ajax request to add inspiration to a list of boards, and resetting the user objects
+        //Input: piece object and list of board ids
+        //Output: --
         $.ajax({ 
             url: '/api/user/postInspiration',
             dataType: 'json',
@@ -187,7 +149,6 @@ var CatalystBox = React.createClass({
             type: 'POST',
             data: {srcId: piece._id, boardIds: boards}, 
             success: function(user){ 
-                console.log("user upon add inspiration", user)
                 this.setState({user: user}); 
             }.bind(this), 
             error: function(xhr, status, err){ 
@@ -198,7 +159,9 @@ var CatalystBox = React.createClass({
     }, 
 
     getPieceAndTree: function(item, callback){ 
-        console.log("You're about to get this item", item)
+        //GET ajax request to get the piece tree information and callsback the tree info
+        //Input: item object
+        //Output: piece tree item
         $.ajax({ 
             url: '/api/pieces/getPiece/'+ item._id, 
             dataType: 'json', 
@@ -213,6 +176,9 @@ var CatalystBox = React.createClass({
     }, 
 
     deleteBoard: function(item_id){
+        //POST ajax request to delete board using board id and sets state of user to new userobject
+        //Input: id of item
+        //Output: --
         $.ajax({
             url: '/api/user/deleteBoard',
             dataType: 'json',
@@ -220,7 +186,6 @@ var CatalystBox = React.createClass({
             type: 'POST',
             data: {boardId: item_id},
             success: function(userObject) {
-                
                 this.setState({user: userObject}); 
             }.bind(this),
             error: function(xhr, status, err){
@@ -230,9 +195,11 @@ var CatalystBox = React.createClass({
     },
 
     deleteElement: function(item, boardtype, boardIds) {
-        console.log("board ids in delete element", boardIds)
+        //POST ajax request to either delete upload or delete inspiration
+        //Input: deleting upload with item object, "none" boardIds and boardtype of "uploads"; deleting inspiration with item object,
+        //list of board ids and boardtype of "inspiration"
+        //Output: --
         if (boardtype==="uploads"){
-            console.log("here");
             $.ajax({
                 url: '/api/user/deleteUpload',
                 dataType: 'json',
@@ -240,7 +207,6 @@ var CatalystBox = React.createClass({
                 type: 'POST',
                 data: {srcId: item._id},
                 success: function(userObject) {
-                    
                     this.setState({user: userObject}); 
                 }.bind(this),
                 error: function(xhr, status, err){
@@ -255,7 +221,6 @@ var CatalystBox = React.createClass({
                 type: 'POST',
                 data: {srcId: item._id, boardIds: boardIds}, 
                 success: function(userObject){ 
-                    console.log("user object after deleting piece from multiple boards", userObject)                   
                     this.setState({user: userObject}); 
                 }.bind(this), 
                 error: function(xhr, status, err){ 
