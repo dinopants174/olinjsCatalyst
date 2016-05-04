@@ -23,6 +23,8 @@ router.get('/', ensureAuthenticated, function(req, res){
 						if (err){
 							console.log("Error: ", err);
 						} else {
+							// Wrap the creation of the default board in a method that you can call instead of having it unfold
+							// in this huge tree 
 							//every new user by default gets a 'My Inspirations' board to add their inspirations to
 							var newBoard = new Board({author: user.id, title: 'My Inspirations', dateCreated: new Date()});
 							console.log("New Board: ", newBoard);
@@ -30,6 +32,7 @@ router.get('/', ensureAuthenticated, function(req, res){
 								if (err){
 									console.log("Error: ", err);
 								} else {
+									// nice
 									user.myBoards = [board.id]	//we now need to put this new board id in the user's myBoards array
 									user.save(function(err, user){
 										if (err){
@@ -54,6 +57,8 @@ router.get('/', ensureAuthenticated, function(req, res){
 //We then populate the user object again with their uploads and their updated boards which have pieces array populated with the pieces the boards contain,
 //including the given piece
 router.post('/postInspiration', ensureAuthenticated, function(req, res){
+	// In order to access this as "req.body.boardsIds" you need to stringify the object you send over to this route JSON.stringify(example_obj) ;)
+	// Once you do this you will receive it as an array, I believe. I have seen this error again and it is due to a bug in the POST nature of jquery to the server of the applications 
 	var boardIds = req.body['boardIds[]'];	//we found that a post request with a single element in an array is received on server no longer as an array
 	if (typeof(boardIds) === 'string'){ 
 		var boardIdsArray = [boardIds];

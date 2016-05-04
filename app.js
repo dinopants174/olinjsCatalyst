@@ -16,6 +16,8 @@ var auth = require('./secrets');
 var user = require('./routes/user');
 var pieces = require('./routes/pieces');
 
+// It would be ideal to have this logic on a different file
+// Also out of curiosity, why would you want to keep the gender?
 //Catalyst users can only sign in using their Facebook account
 passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID || auth.facebook.clientID,
@@ -33,6 +35,7 @@ mongoose.connect('mongodb://olinjs:catalyst@ds025239.mlab.com:25239/catalyst');
 var connection = mongoose.connection;
 connection.on('error', console.error.bind(console, 'connection error:'));
 connection.once('open', function(){
+  // Remove log statements 
   console.log('Mongodb Connection Successful');
 });
 
@@ -48,6 +51,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Small thing: Just for modularity make the secret an environment variable as process.env.SECRET_KEY 
 app.use(session({ 	//copied from olinjs example code using sessions
   secret: 'superS3CRE7',
   resave: false,
