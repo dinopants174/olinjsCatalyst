@@ -2,7 +2,7 @@ var React = require('react');
 var ReactDOM = require('react-dom');
 var Upload = require('./upload.jsx');
 var Navbar = require('./navbar.jsx');
-var Feed = require('./feed.jsx'); 
+var Feed = require('./feed.jsx');
 var LoginPage = require('./login.jsx');
 
 var MyBoard = require('./myboard.jsx');
@@ -20,15 +20,15 @@ var CatalystBox = React.createClass({
         return {
             user: {},
             display: DisplayEnum.DISPLAY_LOGIN,
-            displayName: '', 
+            displayName: '',
             feed: [],
-            subpage: '', 
+            subpage: '',
             piece: {}
         };
     },
 
     handleUploadCode: function(uploadcode) {
-        //POST ajax request to post an upload 
+        //POST ajax request to post an upload
         //Input: upload code object with embedcode, title
         //Output: --
         $.ajax({
@@ -38,7 +38,7 @@ var CatalystBox = React.createClass({
             type: 'POST',
             data: {src: uploadcode.embedcode, title: uploadcode.title, inspirations: uploadcode.checkedInspirations},
             success: function(user) {
-                this.handleFeed({user : user}); 
+                this.handleFeed({user : user});
             }.bind(this),
             error: function(xhr, status, err) {
                 console.error('/api/user/postUpload', status, err.toString());
@@ -46,27 +46,27 @@ var CatalystBox = React.createClass({
         });
     },
 
-    handleFeed: function(object){ 
+    handleFeed: function(object){
         //GET ajax request to get feed items, and add new display and feed to the object that we are resetting the state with
         //Input: --
         //Output: --
-        $.ajax({ 
+        $.ajax({
             url: '/api/pieces/feed',
-            dataType: 'json', 
-            type: 'GET', 
-            success: function(feedItems){ 
+            dataType: 'json',
+            type: 'GET',
+            success: function(feedItems){
                 object.display= DisplayEnum.DISPLAY_HOME;
                 object.feed = feedItems;
-                this.setState(object); 
+                this.setState(object);
 
-            }.bind(this), 
-            error: function(xhr, status, err){ 
-                console.log("cannot get feed, '/api/pieces/feed'", status, err.toString()); 
+            }.bind(this),
+            error: function(xhr, status, err){
+                console.log("cannot get feed, '/api/pieces/feed'", status, err.toString());
             }.bind(this)
         })
     },
 
-    createNewBoard: function(boardName){ 
+    createNewBoard: function(boardName){
         //POST ajax request to create a new board, and sets state with new user information
         //Input: string of board name
         //Output: --
@@ -82,7 +82,7 @@ var CatalystBox = React.createClass({
             error: function(xhr, status, err) {
                 console.error('/api/user/postBoard', status, err.toString());
             }.bind(this)
-        });  
+        });
 
     },
 
@@ -117,7 +117,7 @@ var CatalystBox = React.createClass({
 
     showHome: function() {
         //calls handleFeed to show the home page
-        this.handleFeed({}); 
+        this.handleFeed({});
     },
 
     loginFacebook: function(){
@@ -138,42 +138,42 @@ var CatalystBox = React.createClass({
         });
     },
 
-    addInspiration: function(piece, boards){ 
+    addInspiration: function(piece, boards){
         //POST ajax request to add inspiration to a list of boards, and resetting the user objects
         //Input: piece object and list of board ids
         //Output: --
-        $.ajax({ 
+        $.ajax({
             url: '/api/user/postInspiration',
             dataType: 'json',
             cache: false,
             type: 'POST',
-            data: {srcId: piece._id, boardIds: boards}, 
-            success: function(user){ 
-                this.setState({user: user}); 
-            }.bind(this), 
-            error: function(xhr, status, err){ 
+            data: {srcId: piece._id, boardIds: boards},
+            success: function(user){
+                this.setState({user: user});
+            }.bind(this),
+            error: function(xhr, status, err){
                 console.log("there has been an error")
                 console.error('/api/user/postInspiration', status, err.toString())
             }.bind(this)
         })
-    }, 
+    },
 
-    getPieceAndTree: function(item, callback){ 
+    getPieceAndTree: function(item, callback){
         //GET ajax request to get the piece tree information and callsback the tree info
         //Input: item object
         //Output: piece tree item
-        $.ajax({ 
-            url: '/api/pieces/getPiece/'+ item._id, 
-            dataType: 'json', 
-            type: 'GET', 
-            success: function(piece){ 
+        $.ajax({
+            url: '/api/pieces/getPiece/'+ item._id,
+            dataType: 'json',
+            type: 'GET',
+            success: function(piece){
                 return callback(piece)
-            }.bind(this), 
+            }.bind(this),
             error: function(xhr, status, err) {
                 console.log("error displaying piece")
             }.bind(this)
         })
-    }, 
+    },
 
     deleteBoard: function(item_id){
         //POST ajax request to delete board using board id and sets state of user to new userobject
@@ -186,11 +186,11 @@ var CatalystBox = React.createClass({
             type: 'POST',
             data: {boardId: item_id},
             success: function(userObject) {
-                this.setState({user: userObject}); 
+                this.setState({user: userObject});
             }.bind(this),
             error: function(xhr, status, err){
                 console.error('/api/user/deleteBoard', status, err.toString());
-            }.bind(this)   
+            }.bind(this)
         });
     },
 
@@ -207,35 +207,35 @@ var CatalystBox = React.createClass({
                 type: 'POST',
                 data: {srcId: item._id},
                 success: function(userObject) {
-                    this.setState({user: userObject}); 
+                    this.setState({user: userObject});
                 }.bind(this),
                 error: function(xhr, status, err){
                     console.error('/api/user/deleteUpload', status, err.toString());
-                }.bind(this)   
+                }.bind(this)
             });
         } else {
-            $.ajax({ 
+            $.ajax({
                 url: '/api/user/deleteInspiration',
                 dataType: 'json',
                 cache: false,
                 type: 'POST',
-                data: {srcId: item._id, boardIds: boardIds}, 
-                success: function(userObject){ 
-                    this.setState({user: userObject}); 
-                }.bind(this), 
-                error: function(xhr, status, err){ 
+                data: {srcId: item._id, boardIds: boardIds},
+                success: function(userObject){
+                    this.setState({user: userObject});
+                }.bind(this),
+                error: function(xhr, status, err){
                     console.log("there has been an error")
                     console.error('/api/user/deleteInspiration', status, err.toString())
 
                 }.bind(this)
-            }) 
+            })
         }
     },
 
 
     render: function() {
         var page;
-
+        // This would be a great place to use react_router (it's dope)
         // Decide whether to show login page, tinder news wheel, or dashboard
         switch (this.state.display) {
             case DisplayEnum.DISPLAY_UPLOAD:
@@ -255,7 +255,7 @@ var CatalystBox = React.createClass({
                         switchMyBoardUploads={this.showMyBoardUploads} displayName={this.state.displayName || ''} proPic={this.state.user.proPic}/>
                         <br/>
                         <MyBoard switchMyBoard={this.showMyBoard} switchUploads={this.showMyBoardUploads}
-                        user={this.state.user} subpage={this.state.subpage} uploads={this.state.user.uploads || []} myBoardsInspirations={this.state.user.myBoards || []} 
+                        user={this.state.user} subpage={this.state.subpage} uploads={this.state.user.uploads || []} myBoardsInspirations={this.state.user.myBoards || []}
                         deleteElement={this.deleteElement} deleteBoard={this.deleteBoard}/>
                         <input className="add-article" type="button" onClick={this.handleAdd} value="+"/>
                     </div>

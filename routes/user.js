@@ -6,8 +6,10 @@ var router = express.Router();
 
 //the /api/user endpoint uses the Facebook data serialized by passport in req.user to either find the existing user in our db
 //or create a new user and send it to the client
+//looks like this api would have benifited from using the async library or promises for dealing with the multiple async requests in some of the request handlers
 router.get('/', ensureAuthenticated, function(req, res){
 	console.log("PROFILE FROM SERVER", req.user);
+    //this could probably use some refactoring
 	if (req.user){ //if the user is not logged in, the request to /api/user will not return anything
 		//uses the facebook id to find the user, populates each of the user's uploads, boards, and the pieces in those boards
 		User.findOne({fbId: req.user.id}).populate({path: 'uploads myBoards', populate:{path: 'pieces'}}).exec(function (err, user){
@@ -55,7 +57,7 @@ router.get('/', ensureAuthenticated, function(req, res){
 //including the given piece
 router.post('/postInspiration', ensureAuthenticated, function(req, res){
 	var boardIds = req.body['boardIds[]'];	//we found that a post request with a single element in an array is received on server no longer as an array
-	if (typeof(boardIds) === 'string'){ 
+	if (typeof(boardIds) === 'string'){
 		var boardIdsArray = [boardIds];
 	} else {
 		var boardIdsArray = boardIds;
@@ -86,7 +88,7 @@ router.post('/postInspiration', ensureAuthenticated, function(req, res){
 router.post('/deleteInspiration', ensureAuthenticated, function(req, res){
 	//this route is basically the same as /postInspiration except we pull from the pieces array of the boards instead of push when we updated them
 	var boardIds = req.body['boardIds[]'];
-	if (typeof(boardIds) === 'string'){ 
+	if (typeof(boardIds) === 'string'){
 		var boardIdsArray = [boardIds];
 	} else {
 		var boardIdsArray = boardIds;
@@ -147,7 +149,7 @@ router.post('/postUpload', ensureAuthenticated, function(req, res){
 								console.log("And here should be your final updated user", user);
 								res.json(user);
 							}
-						});			
+						});
 					}
 				});
 			}
@@ -269,8 +271,8 @@ router.post('/deleteBoard', ensureAuthenticated, function(req, res){
 });
 
 function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) { 
-  	return next(); 
+  if (req.isAuthenticated()) {
+  	return next();
   } else {
   	res.redirect("/");
   }

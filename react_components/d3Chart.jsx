@@ -146,14 +146,14 @@ function createChart(dom, props, chart_type){
                 var popupdiv = d3.select(dom).append("div").attr("class", "popup");
                     popupdiv.style('display', 'inline-block');
                     popupdiv.html("<div class='iframeWrapper'>" + d.src + "</div>");
-                    popupdiv.style("left", (x) + "px")   
+                    popupdiv.style("left", (x) + "px")
                       .style("top", (y+130) + "px");
 
                 //Appends exit div that will remove the popup
                 var popupexit = d3.select(dom).append("div").attr("class", "popup2");
                     popupexit.style('display', 'inline-block');
                     popupexit.html("<h4 class='exitIframe'>X</h4>");
-                    popupexit.style("left", (x) + "px")   
+                    popupexit.style("left", (x) + "px")
                       .style("top", (y+130) + "px")
                       .on("click", function(d) {
                           d3.select(dom).selectAll('.popup').remove();
@@ -228,7 +228,7 @@ function createChart(dom, props, chart_type){
         d.children = d._children;
         d._children = null;
       }
-     
+
       update(d);
     }
 };

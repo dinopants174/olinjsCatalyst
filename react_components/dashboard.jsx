@@ -5,7 +5,7 @@ var Carousel = require('./carouselstuff/carousel.jsx');
 var Ease = require('ease-functions');
 
 var DashboardHistory = React.createClass({
-    
+
     propTypes: {
         boardtype: React.PropTypes.string.isRequired,
         boardIdd: React.PropTypes.string.isRequired,
@@ -23,6 +23,7 @@ var DashboardHistory = React.createClass({
     },
 
     componentWillMount: function () {
+        // where do these get used?
         this.onSides = function (event) {
             this.setState( {images: this.state.all_info.slice(0, event.target.value) });
         }.bind(this);
@@ -41,18 +42,21 @@ var DashboardHistory = React.createClass({
         return (
             <div className="carouselhistory">
                 <div>
-                <Carousel all_info={this.props.uploadslist}
-                		  width={this.state.width}
-                          ease={this.state.ease}
-                          duration={this.state.duration}
-                          layout={this.state.layout}
-                          deleteElement={this.props.deleteElement}
-                          boardtype={this.props.boardtype}
-                          boardIdd={this.props.boardIdd}/>
+                    // this is the airbnb style for react components with multiple props
+                    <Carousel
+                        all_info={this.props.uploadslist}
+                	    width={this.state.width}
+                        ease={this.state.ease}
+                        duration={this.state.duration}
+                        layout={this.state.layout}
+                        deleteElement={this.props.deleteElement}
+                        boardtype={this.props.boardtype}
+                        boardIdd={this.props.boardIdd}
+                    />
                 </div>
             </div>
         );
     }
 });
 
-module.exports = DashboardHistory; 
+module.exports = DashboardHistory;
